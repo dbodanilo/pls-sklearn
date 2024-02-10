@@ -176,24 +176,21 @@ pcr = PCR(n_components=n).fit(X_train, Y_train)
 
 x_pca: PCA = pcr.named_steps["pca"]
 X_test_pca = scale_transform(x_pca, X_test, x_train_mean, x_train_std)
-x_test_pca = X_test_pca[:, 0]
 
 y_pca = PCAScaled(n_components=n).fit(Y_train)
 Y_test_pca = scale_transform(y_pca, Y_test, y_train_mean, y_train_std)
-y_test_pca = Y_test_pca[:, 0]
 
 Y_pred_pcr = pcr.predict(X_test)
 Y_pred_pcr_t = scale_transform(y_pca, Y_pred_pcr, y_train_mean, y_train_std)
-y_pred_pcr = Y_pred_pcr_t[:, 0]
 
 # Only generate it once.
 path = "./out/pca_vs_pls-predictions.png"
 if not os.path.exists(path):
     fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 
-    axes[0].scatter(x_test_pca, y_test_pca, alpha=0.3,
+    axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
                     label="ground truth")
-    axes[0].scatter(x_test_pca, y_pred_pcr, alpha=0.3,
+    axes[0].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 0], alpha=0.3,
                     label="predictions")
     axes[0].set(
         xlabel="Projected X onto 1st PCA component",
@@ -248,16 +245,19 @@ y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
 y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
 limits_pls = np.arange(y_test_pls_min, y_test_pls_max, 0.01)
 
-y_test_pca_min = min(y_test_pca.min(), y_pred_pcr.min())
-y_test_pca_max = max(y_test_pca.max(), y_pred_pcr.max())
+y_test_pca_min = min(Y_test_pca[:, 0].min(), Y_pred_pcr_t[:, 0].min())
+y_test_pca_max = max(Y_test_pca[:, 0].max(), Y_pred_pcr_t[:, 0].max())
 limits_pca = np.arange(y_test_pca_min, y_test_pca_max, 0.01)
 
+# TODO: display R-squared for the prediction of the first components.
+# r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
+# r2_score(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])  # ~0.65
 path = "./out/pca_vs_pls-regression.png"
 if not os.path.exists(path):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
     axes[0].plot(limits_pca, limits_pca)
-    axes[0].scatter(y_test_pca, y_pred_pcr)
+    axes[0].scatter(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])
     axes[0].set(xlabel="Actual Y projected onto 1st PCA component",
                 ylabel="Predicted Y projected onto 1st PCA component",
                 title="PCA Regression")

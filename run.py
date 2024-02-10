@@ -120,7 +120,7 @@ targets = Y.columns.drop(["N.", "Semente"])
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
-path = "./out/pls_components.png"
+path = "./out/pls-components.png"
 if not os.path.exists(path):
     fig, axes = plt.subplots(2, 3, figsize=(30, 12))
 
@@ -214,7 +214,7 @@ if not os.path.exists(path):
     fig.tight_layout()
     fig.savefig(path)
 
-path = "./out/pca_vs_pls-components"
+path = "./out/pca_vs_pls-components.png"
 if not os.path.exists(path):
     fig, axes = plt.subplots(2, 3, figsize=(15, 6))
     axes[0, 0].bar(targets, y_pca_step.components_[0])

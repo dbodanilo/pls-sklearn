@@ -13,6 +13,7 @@ from decomposition import PCAScaled, PCR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
 from preprocessing import scale_transform
+from util import fig_paths
 
 
 X, Y = load_leme()
@@ -59,9 +60,10 @@ x0 = X_test_pca[:, 0]
 x1 = X_test_pca[:, 1]
 y = Y_test_pca[:, 0]
 
+paths = fig_paths("pca-projections")
+
 # Only generate it once.
-path = "./out/pca-projections.png"
-if not os.path.exists(path):
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
     axes[0].scatter(x0, y, alpha=0.3)
@@ -73,7 +75,9 @@ if not os.path.exists(path):
                 ylabel="Projected Y onto 1st PCA component")
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
@@ -81,8 +85,10 @@ X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
 
 _, Y_pred_plsr_t = plsr.transform(X_test, plsr.predict(X_test))
 
-path = "./out/pls-predictions.png"
-if not os.path.exists(path):
+paths = fig_paths("pls-predictions")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 3, figsize=(15, 3))
     axes[0].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
                     label="ground truth")
@@ -112,7 +118,9 @@ if not os.path.exists(path):
     axes[2].legend()
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 descriptors = X.columns.drop(["N.", "Semente"])
 targets = Y.columns.drop(["N.", "Semente"])
@@ -120,8 +128,10 @@ targets = Y.columns.drop(["N.", "Semente"])
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
-path = "./out/pls-components.png"
-if not os.path.exists(path):
+paths = fig_paths("pls-components")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(2, 3, figsize=(30, 12))
 
     axes[0, 0].bar(descriptors, x_plsr_components[:, 0])
@@ -149,7 +159,9 @@ if not os.path.exists(path):
     axes[1, 2].set(title="Y PLS 3")
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 
 print("\nPCA vs. PLS\n===========")
@@ -183,9 +195,10 @@ Y_test_pca = scale_transform(y_pca, Y_test, y_train_mean, y_train_std)
 Y_pred_pcr = pcr.predict(X_test)
 Y_pred_pcr_t = scale_transform(y_pca, Y_pred_pcr, y_train_mean, y_train_std)
 
+paths = fig_paths("pca_vs_pls-predictions")
+
 # Only generate it once.
-path = "./out/pca_vs_pls-predictions.png"
-if not os.path.exists(path):
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 
     axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
@@ -209,10 +222,14 @@ if not os.path.exists(path):
     axes[1].legend()
 
     fig.tight_layout()
-    fig.savefig(path)
 
-path = "./out/pca_vs_pls-components.png"
-if not os.path.exists(path):
+    for path in paths:
+        fig.savefig(path)
+
+paths = fig_paths("pca_vs_pls-components")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(2, 3, figsize=(15, 6))
     axes[0, 0].bar(targets, y_pca_step.components_[0])
     axes[0, 0].set_ylim((-1, 1))
@@ -239,7 +256,9 @@ if not os.path.exists(path):
     axes[1, 2].set(title="Y PLS 3")
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
 y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
@@ -252,8 +271,10 @@ limits_pca = np.arange(y_test_pca_min, y_test_pca_max, 0.01)
 # TODO: display R-squared for the prediction of the first components.
 # r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
 # r2_score(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])  # ~0.65
-path = "./out/pca_vs_pls-regression.png"
-if not os.path.exists(path):
+paths = fig_paths("pca_vs_pls-regression")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
     axes[0].plot(limits_pca, limits_pca)
@@ -269,7 +290,9 @@ if not os.path.exists(path):
                 title="PLS Regression")
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 n_evol = 3
 uv_pls = np.concatenate(
@@ -317,8 +340,10 @@ y_pred_evol0 = Y_pred_evol_t[:, 0]
 y_pred_evol1 = Y_pred_evol_t[:, 1]
 y_pred_evol2 = Y_pred_evol_t[:, 2]
 
-path = "./out/evol-predictions.png"
-if not os.path.exists(path):
+paths = fig_paths("evol-predictions")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 3, figsize=(15, 3))
     axes[0].scatter(x_test_evol0, y_test_evol0, alpha=0.3,
                     label="ground truth")
@@ -348,7 +373,9 @@ if not os.path.exists(path):
     axes[2].legend()
 
     fig.tight_layout()
-    fig.savefig(path)
+
+    for path in paths:
+        fig.savefig(path)
 
 r2s = []
 for n in range(1, n_max + 1):

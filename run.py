@@ -26,18 +26,21 @@ n_targets = Y_train.shape[1]
 
 # n > n_targets will only throw an error if using
 # PLSCanonical, not PLSRegression.
+# for PLSCanonical: min(n_samples, n_features, n_targets)
 # for PLSRegression: min(n_samples, n_features)
 n_max = min(n_samples, n_features, n_targets)
 
-x_pca = PCAScaled().fit(X_train)
-y_pca = PCAScaled().fit(Y_train)
+pcr = PCR(n_components=n_max).fit(X_train, Y_train)
+x_pca_step: PCA = pcr.named_steps["pca"]
 
-x_pca_step: PCA = x_pca.named_steps["pca"]
+y_pca = PCAScaled().fit(Y_train)
 y_pca_step: PCA = y_pca.named_steps["pca"]
 
 print("PCA\n===")
 print("X and Y\n-------")
 for n in range(1, n_max + 1):
+    # TODO: as with the R-square at the end:
+    # aggregate metric over all seeds (mean)
     x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
     y_explained = y_pca_step.explained_variance_ratio_[:n].sum()
     print("\nn =", n)
@@ -47,13 +50,13 @@ for n in range(1, n_max + 1):
 # Until comparable to that of Y's first two PCA components
 # (scaled and on worse train/test split).
 print("\nOnly X\n------")
-while x_explained < 0.9236:
+while x_explained < 0.9236 and n < n_max:
     n += 1
     x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
 
-X_test_pca = x_pca.transform(X_test)
+X_test_pca = x_pca_step.transform(X_test)
 Y_test_pca = y_pca.transform(Y_test)
 
 x0 = X_test_pca[:, 0]
@@ -164,32 +167,14 @@ if not all(os.path.exists(path) for path in paths):
         fig.savefig(path)
 
 
-print("\nPCA vs. PLS\n===========")
-for n in range(1, n_max + 1):
-    print("\nn =", n)
-    pcr = PCR(n_components=n)
-    pcr.fit(X_train, Y_train)
-
-    plsr = PLSRegression(n_components=n)
-    plsr.fit(X_train, Y_train)
-
-    print(f"PCR R-squared {pcr.score(X_test, Y_test):.3f}")
-    print(f"PLS R-squared {plsr.score(X_test, Y_test):.3f}")
-
 x_train_mean = X_train.mean(axis=0)
 x_train_std = X_train.std(axis=0)
 
 y_train_mean = Y_train.mean(axis=0)
 y_train_std = Y_train.std(axis=0)
 
-# preview accuracy on first components.
-n = n_max
-pcr = PCR(n_components=n).fit(X_train, Y_train)
+X_test_pca = scale_transform(x_pca_step, X_test, x_train_mean, x_train_std)
 
-x_pca: PCA = pcr.named_steps["pca"]
-X_test_pca = scale_transform(x_pca, X_test, x_train_mean, x_train_std)
-
-y_pca = PCAScaled(n_components=n).fit(Y_train)
 Y_test_pca = scale_transform(y_pca, Y_test, y_train_mean, y_train_std)
 
 Y_pred_pcr = pcr.predict(X_test)
@@ -201,6 +186,7 @@ paths = fig_paths("pca_vs_pls-predictions")
 if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 
+    # preview accuracy on first components.
     axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
                     label="ground truth")
     axes[0].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 0], alpha=0.3,
@@ -389,19 +375,28 @@ for n in range(1, n_max + 1):
         # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=rng)
         X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
 
-        pcr = PCR(n_components=n)
-        pcr.fit(X_train, Y_train)
+        pcr = PCR(n_components=n).fit(X_train, Y_train)
 
-        pls = PLSRegression(n_components=n)
-        pls.fit(X_train, Y_train)
+        plsr = PLSRegression(n_components=n).fit(X_train, Y_train)
 
         r2_pcr = pcr.score(X_test, Y_test)
-        r2_pls = pls.score(X_test, Y_test)
+        r2_plsr = plsr.score(X_test, Y_test)
 
         r2s.append({"n": n, "seed": seed, "algo": "PCA", "r2": r2_pcr})
-        r2s.append({"n": n, "seed": seed, "algo": "PLS", "r2": r2_pls})
+        r2s.append({"n": n, "seed": seed, "algo": "PLS", "r2": r2_plsr})
 
         # TODO: avoid aggregation outside pandas!
         # e.g., mean values over all seeds.
 
 r2s_df = pd.DataFrame(r2s)
+
+print("\nPCA vs. PLS\n===========")
+print("mean over all five seeds.")
+for n in range(1, n_max + 1):
+    print("\nn =", n)
+    r2s_df_n = r2s_df[r2s_df["n"] == n]
+
+    print(
+        f"PCR R-squared {r2s_df_n[r2s_df_n["algo"] == "PCA"]["r2"].mean():.3f}")
+    print(
+        f"PLS R-squared {r2s_df_n[r2s_df_n["algo"] == "PLS"]["r2"].mean():.3f}")

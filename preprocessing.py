@@ -5,5 +5,5 @@ def scale_test(X, mean, std):
     return X_scaled
 
 
-def scale_transform(model, X, mean, std):
-    return model.transform(scale_test(X, mean, std))
+def scale_transform(scaler, model, X):
+    return model.transform(scaler.transform(X))

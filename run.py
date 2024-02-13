@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler, normalize
 
 from decomposition import PCAScaled, PCR
 from evol import Evol, UV_EVOL
@@ -17,6 +17,9 @@ from util import fig_paths
 
 
 X, Y = load_leme()
+
+descriptors = X.columns.drop(["N.", "Semente"])
+targets = Y.columns.drop(["N.", "Semente"])
 
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
 
@@ -34,9 +37,10 @@ n_max = min(n_samples, n_features, n_targets)
 # === PCR ===
 
 pcr = PCR(n_components=n_max).fit(X_train, Y_train)
+x_scaler_step: StandardScaler = pcr.named_steps["standardscaler"]
 x_pca_step: PCA = pcr.named_steps["pca"]
 
-y_pca = PCAScaled().fit(Y_train)
+y_pca = PCAScaled(n_components=n_max).fit(Y_train)
 y_pca_step: PCA = y_pca.named_steps["pca"]
 
 print("PCA\n===")
@@ -59,26 +63,36 @@ while x_explained < 0.9236 and n < n_max:
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
 
-X_test_pca = x_pca_step.transform(X_test)
+X_test_pca = scale_transform(x_scaler_step, x_pca_step, X_test)
+
+Y_pred_pcr = pcr.predict(X_test)
+
 Y_test_pca = y_pca.transform(Y_test)
+Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
-x0 = X_test_pca[:, 0]
-x1 = X_test_pca[:, 1]
-y = Y_test_pca[:, 0]
-
-paths = fig_paths("pca-projections")
+paths = fig_paths("pcr-predictions_transformed")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
-    axes[0].scatter(x0, y, alpha=0.3)
+    axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
+                    label="ground truth")
+    axes[0].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 0], alpha=0.3,
+                    label="predictions")
     axes[0].set(xlabel="Projected X onto 1st PCA component",
-                ylabel="Projected Y onto 1st PCA component")
+                ylabel="Projected Y onto 1st PCA component",
+                title="X's 1st PCA component vs. Y's 1st PCA component")
+    axes[0].legend()
 
-    axes[1].scatter(x1, y, alpha=0.3)
+    axes[1].scatter(X_test_pca[:, 1], Y_test_pca[:, 0], alpha=0.3,
+                    label="ground truth")
+    axes[1].scatter(X_test_pca[:, 1], Y_pred_pcr_t[:, 0], alpha=0.3,
+                    label="predictions")
     axes[1].set(xlabel="Projected X onto 2nd PCA component",
-                ylabel="Projected Y onto 1st PCA component")
+                ylabel="Projected Y onto 1st PCA component",
+                title="X's 1st PCA component vs. Y's 1st PCA component")
+    axes[0].legend()
 
     for path in paths:
         fig.savefig(path)
@@ -88,11 +102,13 @@ if not all(os.path.exists(path) for path in paths):
 
 plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
+Y_pred_plsr = plsr.predict(X_test)
+
 X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
 
-_, Y_pred_plsr_t = plsr.transform(X_test, plsr.predict(X_test))
+_, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
 
-paths = fig_paths("pls-predictions")
+paths = fig_paths("plsr-predictions_transformed")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
@@ -127,9 +143,6 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-descriptors = X.columns.drop(["N.", "Semente"])
-targets = Y.columns.drop(["N.", "Semente"])
-
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
@@ -142,12 +155,11 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].bar(descriptors, x_plsr_components[:, 0])
     axes[0].set_ylim((-1, 1))
     axes[0].grid(True, axis="y")
-    axes[0].set(title="X PLS 1")
+    axes[0].set(title="1st PLS components")
 
     axes[1].bar(targets, y_plsr_components[:, 0])
     axes[1].set_ylim((-1, 1))
     axes[1].grid(True, axis="y")
-    axes[1].set(title="Y PLS 1")
 
     for path in paths:
         fig.savefig(path)
@@ -161,32 +173,29 @@ if not all(os.path.exists(path) for path in paths):
     axes[0, 0].bar(descriptors, x_plsr_components[:, 0])
     axes[0, 0].set_ylim((-1, 1))
     axes[0, 0].grid(True, axis="y")
-    axes[0, 0].set(title="X PLS 1")
+    axes[0, 0].set(title="1st PLS components")
 
     axes[0, 1].bar(descriptors, x_plsr_components[:, 1])
     axes[0, 1].set_ylim((-1, 1))
     axes[0, 1].grid(True, axis="y")
-    axes[0, 1].set(title="X PLS 2")
+    axes[0, 1].set(title="2nd PLS components")
 
     axes[0, 2].bar(descriptors, x_plsr_components[:, 2])
     axes[0, 2].set_ylim((-1, 1))
     axes[0, 2].grid(True, axis="y")
-    axes[0, 2].set(title="X PLS 3")
+    axes[0, 2].set(title="3rd PLS components")
 
     axes[1, 0].bar(targets, y_plsr_components[:, 0])
     axes[1, 0].set_ylim((-1, 1))
     axes[1, 0].grid(True, axis="y")
-    axes[1, 0].set(title="Y PLS 1")
 
     axes[1, 1].bar(targets, y_plsr_components[:, 1])
     axes[1, 1].set_ylim((-1, 1))
     axes[1, 1].grid(True, axis="y")
-    axes[1, 1].set(title="Y PLS 2")
 
     axes[1, 2].bar(targets, y_plsr_components[:, 2])
     axes[1, 2].set_ylim((-1, 1))
     axes[1, 2].grid(True, axis="y")
-    axes[1, 2].set(title="Y PLS 3")
 
     for path in paths:
         fig.savefig(path)
@@ -194,20 +203,7 @@ if not all(os.path.exists(path) for path in paths):
 
 # === PCR vs. PLSR ===
 
-x_train_mean = X_train.mean(axis=0)
-x_train_std = X_train.std(axis=0)
-
-y_train_mean = Y_train.mean(axis=0)
-y_train_std = Y_train.std(axis=0)
-
-X_test_pca = scale_transform(x_pca_step, X_test, x_train_mean, x_train_std)
-
-Y_test_pca = scale_transform(y_pca, Y_test, y_train_mean, y_train_std)
-
-Y_pred_pcr = pcr.predict(X_test)
-Y_pred_pcr_t = scale_transform(y_pca, Y_pred_pcr, y_train_mean, y_train_std)
-
-paths = fig_paths("pca_vs_pls-predictions")
+paths = fig_paths("pcr_vs_plsr-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
@@ -221,7 +217,7 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].set(
         xlabel="Projected X onto 1st PCA component",
         ylabel="Projected Y onto 1st PCA component",
-        title="PCR / PCA"
+        title="PCA Regression"
     )
     axes[0].legend()
 
@@ -231,7 +227,7 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[1].set(xlabel="Projected X onto 1st PLS component",
                 ylabel="Projected Y onto 1st PLS component",
-                title="PLS")
+                title="PLS Regression")
     axes[1].legend()
 
     for path in paths:
@@ -246,12 +242,12 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].bar(targets, y_pca_step.components_[0])
     axes[0].set_ylim((-1, 1))
     axes[0].grid(True, axis="y")
-    axes[0].set(title="Y PCA 1")
+    axes[0].set(title="1st PCA component")
 
     axes[1].bar(targets, y_plsr_components[:, 0])
     axes[1].set_ylim((-1, 1))
     axes[1].grid(True, axis="y")
-    axes[1].set(title="Y PLS 1")
+    axes[1].set(title="1st PLS component")
 
     for path in paths:
         fig.savefig(path)
@@ -264,32 +260,32 @@ if not all(os.path.exists(path) for path in paths):
     axes[0, 0].bar(targets, y_pca_step.components_[0])
     axes[0, 0].set_ylim((-1, 1))
     axes[0, 0].grid(True, axis="y")
-    axes[0, 0].set(title="Y PCA 1")
+    axes[0, 0].set(title="1st PCA component")
 
     axes[0, 1].bar(targets, y_pca_step.components_[1])
     axes[0, 1].set_ylim((-1, 1))
     axes[0, 1].grid(True, axis="y")
-    axes[0, 1].set(title="Y PCA 2")
+    axes[0, 1].set(title="2nd PCA component")
 
     axes[0, 2].bar(targets, y_pca_step.components_[2])
     axes[0, 2].set_ylim((-1, 1))
     axes[0, 2].grid(True, axis="y")
-    axes[0, 2].set(title="Y PCA 3")
+    axes[0, 2].set(title="3rd PCA component")
 
     axes[1, 0].bar(targets, y_plsr_components[:, 0])
     axes[1, 0].set_ylim((-1, 1))
     axes[1, 0].grid(True, axis="y")
-    axes[1, 0].set(title="Y PLS 1")
+    axes[1, 0].set(title="1st PLS component")
 
     axes[1, 1].bar(targets, y_plsr_components[:, 1])
     axes[1, 1].set_ylim((-1, 1))
     axes[1, 1].grid(True, axis="y")
-    axes[1, 1].set(title="Y PLS 2")
+    axes[1, 1].set(title="2nd PLS component")
 
     axes[1, 2].bar(targets, y_plsr_components[:, 2])
     axes[1, 2].set_ylim((-1, 1))
     axes[1, 2].grid(True, axis="y")
-    axes[1, 2].set(title="Y PLS 3")
+    axes[1, 2].set(title="3rd PLS component")
 
     for path in paths:
         fig.savefig(path)
@@ -305,7 +301,7 @@ limits_pca = np.arange(y_test_pca_min, y_test_pca_max, 0.01)
 # TODO: display R-squared for the prediction of the first components.
 # r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
 # r2_score(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])  # ~0.65
-paths = fig_paths("pca_vs_pls-regression")
+paths = fig_paths("pcr_vs_plsr-regression")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):

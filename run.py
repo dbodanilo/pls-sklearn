@@ -30,6 +30,9 @@ n_targets = Y_train.shape[1]
 # for PLSRegression: min(n_samples, n_features)
 n_max = min(n_samples, n_features, n_targets)
 
+
+# === PCR ===
+
 pcr = PCR(n_components=n_max).fit(X_train, Y_train)
 x_pca_step: PCA = pcr.named_steps["pca"]
 
@@ -67,7 +70,7 @@ paths = fig_paths("pca-projections")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     axes[0].scatter(x0, y, alpha=0.3)
     axes[0].set(xlabel="Projected X onto 1st PCA component",
@@ -77,10 +80,11 @@ if not all(os.path.exists(path) for path in paths):
     axes[1].set(xlabel="Projected X onto 2nd PCA component",
                 ylabel="Projected Y onto 1st PCA component")
 
-    fig.tight_layout()
-
     for path in paths:
         fig.savefig(path)
+
+
+# === PLSR ===
 
 plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
@@ -92,7 +96,7 @@ paths = fig_paths("pls-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 3))
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
     axes[0].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
                     label="ground truth")
     axes[0].scatter(X_test_pls[:, 0], Y_pred_plsr_t[:, 0], alpha=0.3,
@@ -120,8 +124,6 @@ if not all(os.path.exists(path) for path in paths):
                 title="PLS 3")
     axes[2].legend()
 
-    fig.tight_layout()
-
     for path in paths:
         fig.savefig(path)
 
@@ -131,41 +133,66 @@ targets = Y.columns.drop(["N.", "Semente"])
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
-paths = fig_paths("pls-components")
+paths = fig_paths("pls-first_components")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(2, 3, figsize=(30, 12))
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8), layout="constrained")
 
-    axes[0, 0].bar(descriptors, x_plsr_components[:, 0])
-    axes[0, 0].set_ylim((-1, 1))
-    axes[0, 0].set(title="X PLS 1")
+    axes[0].bar(descriptors, x_plsr_components[:, 0])
+    axes[0].set_ylim((-1, 1))
+    axes[0].grid(True, axis="y")
+    axes[0].set(title="X PLS 1")
 
-    axes[0, 1].bar(descriptors, x_plsr_components[:, 1])
-    axes[0, 1].set_ylim((-1, 1))
-    axes[0, 1].set(title="X PLS 2")
-
-    axes[0, 2].bar(descriptors, x_plsr_components[:, 2])
-    axes[0, 2].set_ylim((-1, 1))
-    axes[0, 2].set(title="X PLS 3")
-
-    axes[1, 0].bar(targets, y_plsr_components[:, 0])
-    axes[1, 0].set_ylim((-1, 1))
-    axes[1, 0].set(title="Y PLS 1")
-
-    axes[1, 1].bar(targets, y_plsr_components[:, 1])
-    axes[1, 1].set_ylim((-1, 1))
-    axes[1, 1].set(title="Y PLS 2")
-
-    axes[1, 2].bar(targets, y_plsr_components[:, 2])
-    axes[1, 2].set_ylim((-1, 1))
-    axes[1, 2].set(title="Y PLS 3")
-
-    fig.tight_layout()
+    axes[1].bar(targets, y_plsr_components[:, 0])
+    axes[1].set_ylim((-1, 1))
+    axes[1].grid(True, axis="y")
+    axes[1].set(title="Y PLS 1")
 
     for path in paths:
         fig.savefig(path)
 
+paths = fig_paths("pls-components")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(2, 3, figsize=(30, 8), layout="constrained")
+
+    axes[0, 0].bar(descriptors, x_plsr_components[:, 0])
+    axes[0, 0].set_ylim((-1, 1))
+    axes[0, 0].grid(True, axis="y")
+    axes[0, 0].set(title="X PLS 1")
+
+    axes[0, 1].bar(descriptors, x_plsr_components[:, 1])
+    axes[0, 1].set_ylim((-1, 1))
+    axes[0, 1].grid(True, axis="y")
+    axes[0, 1].set(title="X PLS 2")
+
+    axes[0, 2].bar(descriptors, x_plsr_components[:, 2])
+    axes[0, 2].set_ylim((-1, 1))
+    axes[0, 2].grid(True, axis="y")
+    axes[0, 2].set(title="X PLS 3")
+
+    axes[1, 0].bar(targets, y_plsr_components[:, 0])
+    axes[1, 0].set_ylim((-1, 1))
+    axes[1, 0].grid(True, axis="y")
+    axes[1, 0].set(title="Y PLS 1")
+
+    axes[1, 1].bar(targets, y_plsr_components[:, 1])
+    axes[1, 1].set_ylim((-1, 1))
+    axes[1, 1].grid(True, axis="y")
+    axes[1, 1].set(title="Y PLS 2")
+
+    axes[1, 2].bar(targets, y_plsr_components[:, 2])
+    axes[1, 2].set_ylim((-1, 1))
+    axes[1, 2].grid(True, axis="y")
+    axes[1, 2].set(title="Y PLS 3")
+
+    for path in paths:
+        fig.savefig(path)
+
+
+# === PCR vs. PLSR ===
 
 x_train_mean = X_train.mean(axis=0)
 x_train_std = X_train.std(axis=0)
@@ -184,7 +211,7 @@ paths = fig_paths("pca_vs_pls-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     # preview accuracy on first components.
     axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
@@ -207,7 +234,24 @@ if not all(os.path.exists(path) for path in paths):
                 title="PLS")
     axes[1].legend()
 
-    fig.tight_layout()
+    for path in paths:
+        fig.savefig(path)
+
+paths = fig_paths("pca_vs_pls-first_components")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
+
+    axes[0].bar(targets, y_pca_step.components_[0])
+    axes[0].set_ylim((-1, 1))
+    axes[0].grid(True, axis="y")
+    axes[0].set(title="Y PCA 1")
+
+    axes[1].bar(targets, y_plsr_components[:, 0])
+    axes[1].set_ylim((-1, 1))
+    axes[1].grid(True, axis="y")
+    axes[1].set(title="Y PLS 1")
 
     for path in paths:
         fig.savefig(path)
@@ -216,32 +260,36 @@ paths = fig_paths("pca_vs_pls-components")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(2, 3, figsize=(15, 6))
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8), layout="constrained")
     axes[0, 0].bar(targets, y_pca_step.components_[0])
     axes[0, 0].set_ylim((-1, 1))
+    axes[0, 0].grid(True, axis="y")
     axes[0, 0].set(title="Y PCA 1")
 
     axes[0, 1].bar(targets, y_pca_step.components_[1])
     axes[0, 1].set_ylim((-1, 1))
+    axes[0, 1].grid(True, axis="y")
     axes[0, 1].set(title="Y PCA 2")
 
     axes[0, 2].bar(targets, y_pca_step.components_[2])
     axes[0, 2].set_ylim((-1, 1))
+    axes[0, 2].grid(True, axis="y")
     axes[0, 2].set(title="Y PCA 3")
 
     axes[1, 0].bar(targets, y_plsr_components[:, 0])
     axes[1, 0].set_ylim((-1, 1))
+    axes[1, 0].grid(True, axis="y")
     axes[1, 0].set(title="Y PLS 1")
 
     axes[1, 1].bar(targets, y_plsr_components[:, 1])
     axes[1, 1].set_ylim((-1, 1))
+    axes[1, 1].grid(True, axis="y")
     axes[1, 1].set(title="Y PLS 2")
 
     axes[1, 2].bar(targets, y_plsr_components[:, 2])
     axes[1, 2].set_ylim((-1, 1))
+    axes[1, 2].grid(True, axis="y")
     axes[1, 2].set(title="Y PLS 3")
-
-    fig.tight_layout()
 
     for path in paths:
         fig.savefig(path)
@@ -261,7 +309,7 @@ paths = fig_paths("pca_vs_pls-regression")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
     axes[0].plot(limits_pca, limits_pca)
     axes[0].scatter(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])
@@ -275,10 +323,11 @@ if not all(os.path.exists(path) for path in paths):
                 ylabel="Predicted Y projected onto 1st PLS component",
                 title="PLS Regression")
 
-    fig.tight_layout()
-
     for path in paths:
         fig.savefig(path)
+
+
+# === Evol ===
 
 n_evol = 3
 uv_pls = np.concatenate(
@@ -330,7 +379,7 @@ paths = fig_paths("evol-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 3))
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
     axes[0].scatter(x_test_evol0, y_test_evol0, alpha=0.3,
                     label="ground truth")
     axes[0].scatter(x_test_evol0, y_pred_evol0, alpha=0.3,
@@ -357,8 +406,6 @@ if not all(os.path.exists(path) for path in paths):
                 ylabel="Projected Y onto 3rd evolved component",
                 title="Evol 3")
     axes[2].legend()
-
-    fig.tight_layout()
 
     for path in paths:
         fig.savefig(path)
@@ -391,7 +438,7 @@ for n in range(1, n_max + 1):
 r2s_df = pd.DataFrame(r2s)
 
 print("\nPCA vs. PLS\n===========")
-print("mean over all five seeds.")
+print("mean over all five seeds\n------------------------")
 for n in range(1, n_max + 1):
     print("\nn =", n)
     r2s_df_n = r2s_df[r2s_df["n"] == n]
@@ -400,3 +447,13 @@ for n in range(1, n_max + 1):
         f"PCR R-squared {r2s_df_n[r2s_df_n["algo"] == "PCA"]["r2"].mean():.3f}")
     print(
         f"PLS R-squared {r2s_df_n[r2s_df_n["algo"] == "PLS"]["r2"].mean():.3f}")
+
+print("\nmean over all five ns\n---------------------")
+for seed in range(1241, 1246):
+    print("\nseed =", seed)
+    r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
+
+    print(
+        f"PCR R-squared {r2s_df_seed[r2s_df_seed["algo"] == "PCA"]["r2"].mean():.3f}")
+    print(
+        f"PLS R-squared {r2s_df_seed[r2s_df_seed["algo"] == "PLS"]["r2"].mean():.3f}")

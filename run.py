@@ -67,6 +67,27 @@ X_test_pca = scale_transform(x_scaler_step, x_pca_step, X_test)
 
 Y_pred_pcr = pcr.predict(X_test)
 
+paths = fig_paths("pcr-predictions")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
+
+    # targets: Av0, fT, Pwr
+    indices = list(enumerate(targets))[2:]
+    for ax, (i, target) in zip(axes, indices):
+        ax.scatter(X_test_pca[:, 0], Y_test[:, i], alpha=0.3,
+                   label="ground truth")
+        ax.scatter(X_test_pca[:, 0], Y_pred_pcr[:, i], alpha=0.3,
+                   label="predictions")
+        ax.set(xlabel="Projected X onto 1st PCA component",
+               ylabel=target,
+               title="X's 1st PCA component vs. " + target)
+        ax.legend()
+
+    for path in paths:
+        fig.savefig(path)
+
 Y_test_pca = y_pca.transform(Y_test)
 Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
@@ -105,6 +126,29 @@ plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 Y_pred_plsr = plsr.predict(X_test)
 
 X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
+
+paths = fig_paths("plsr-predictions")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
+
+    # targets: Av0, fT, Pwr
+    indices = list(enumerate(targets))[2:]
+    for ax, (i, target) in zip(axes, indices):
+        # TODO: transform X_test via PCA for direct comparison with PCR,
+        # or any other neutral dimensionality reduction.
+        ax.scatter(X_test_pls[:, 0], Y_test[:, i], alpha=0.3,
+                   label="ground truth")
+        ax.scatter(X_test_pls[:, 0], Y_pred_plsr[:, i], alpha=0.3,
+                   label="predictions")
+        ax.set(xlabel="Projected X onto 1st PLS component",
+               ylabel=target,
+               title="X's 1st PLS component vs. " + target)
+        ax.legend()
+
+    for path in paths:
+        fig.savefig(path)
 
 _, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
 

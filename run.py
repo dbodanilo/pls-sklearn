@@ -8,8 +8,9 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler, normalize
+from sklearn.svm import SVR
 
-from decomposition import PCAScaled, PCR
+from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
 from preprocessing import scale_transform
@@ -36,11 +37,11 @@ n_max = min(n_samples, n_features, n_targets)
 
 # === PCR ===
 
-pcr = PCR(n_components=n_max).fit(X_train, Y_train)
+pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
 x_scaler_step: StandardScaler = pcr.named_steps["standardscaler"]
 x_pca_step: PCA = pcr.named_steps["pca"]
 
-y_pca = PCAScaled(n_components=n_max).fit(Y_train)
+y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
 y_pca_step: PCA = y_pca.named_steps["pca"]
 
 print("PCA\n===")
@@ -366,6 +367,70 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
+# === SVR ===
+
+x_train = scale_transform(x_scaler_step, x_pca_step, X_train)[:, 0]
+x_test = scale_transform(x_scaler_step, x_pca_step, X_test)[:, 0]
+
+y_train = y_pca.transform(Y_train)[:, 0]
+y_test = y_pca.transform(Y_test)[:, 0]
+
+svr_rbf = ScalerSVR(kernel="rbf").fit(X_train, y_train)
+svr_lin = ScalerSVR(kernel="linear").fit(X_train, y_train)
+svr_poly = ScalerSVR(kernel="poly", coef0=1, degree=2).fit(X_train, y_train)
+
+lw = 2
+svrs = [svr_rbf, svr_lin, svr_poly]
+svr_steps = [svr.named_steps["svr"] for svr in svrs]
+
+kernel_labels = ["RBF", "Linear", "Polynomial"]
+model_colors = ["m", "c", "g"]
+
+paths = fig_paths("svr-regressions")
+
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 10), sharey=True)
+
+    for ax, svr, step, label, color in zip(axes, svrs, svr_steps, kernel_labels, model_colors):
+        ax.plot(
+            x_test,
+            svr.predict(X_test),
+            color=color,
+            lw=lw,
+            label=f"{label} model",
+        )
+        ax.scatter(
+            x_train[step.support_],
+            y_train[step.support_],
+            facecolor="none",
+            edgecolor=color,
+            s=50,
+            label=f"{label} support vectors",
+        )
+        ax.scatter(
+            x_train[np.setdiff1d(np.arange(len(x_train)), step.support_)],
+            y_train[np.setdiff1d(np.arange(len(y_train)), step.support_)],
+            facecolor="none",
+            edgecolor="k",
+            s=50,
+            label="other training data",
+        )
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.1),
+            ncol=1,
+            fancybox=True,
+            shadow=True,
+        )
+
+    fig.text(0.5, 0.04, "data", ha="center", va="center")
+    fig.text(0.06, 0.5, "target", ha="center",
+             va="center", rotation="vertical")
+    fig.suptitle("Support Vector Regression", fontsize=14)
+
+    for path in paths:
+        fig.savefig(path)
+
 
 # === Evol ===
 
@@ -450,50 +515,55 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
+model_labels = ["PCR", "PLSR", "SVR"]
+models = [ScalerPCR, PLSRegression, ScalerSVR]
+
 r2s = []
-for n in range(1, n_max + 1):
-    # Semente
-    # 1241    200
-    # 1242    200
-    # 1243    200
-    # 1244    200
-    # 1245    200
-    for seed in range(1241, 1246):
-        # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=rng)
-        X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
+for seed in range(1241, 1246):
+    X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
 
-        pcr = PCR(n_components=n).fit(X_train, Y_train)
+    y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
 
-        plsr = PLSRegression(n_components=n).fit(X_train, Y_train)
+    y_train = y_pca.transform(Y_train)[:, 0]
+    y_test = y_pca.transform(Y_test)[:, 0]
 
-        r2_pcr = pcr.score(X_test, Y_test)
-        r2_plsr = plsr.score(X_test, Y_test)
+    for n in range(1, n_max + 1):
+        for label, model in zip(model_labels, models):
+            m = model(n_components=n).fit(X_train, y_train)
 
-        r2s.append({"n": n, "seed": seed, "algo": "PCA", "r2": r2_pcr})
-        r2s.append({"n": n, "seed": seed, "algo": "PLS", "r2": r2_plsr})
+            # impose [-1, 1] limit to avoid skewing the mean,
+            # as the r2 is bound by positive 1, but not by
+            # negative 1.
+            r2 = max(m.score(X_test, y_test), -1)
 
-        # TODO: avoid aggregation outside pandas!
-        # e.g., mean values over all seeds.
+            r2s.append({"seed": seed, "n": n, "algo": label, "r2": r2})
 
+# NOTE: avoid aggregation outside pandas!
+# e.g., mean values over all seeds.
 r2s_df = pd.DataFrame(r2s)
 
-print("\nPCA vs. PLS\n===========")
-print("mean over all five seeds\n------------------------")
+print("\nPCA vs. PLS vs. SVR", end="")
+print("\n===================")
+print("(mean, std) over all five seeds")
+print("-------------------------------")
 for n in range(1, n_max + 1):
     print("\nn =", n)
     r2s_df_n = r2s_df[r2s_df["n"] == n]
 
-    print(
-        f"PCR R-squared {r2s_df_n[r2s_df_n["algo"] == "PCA"]["r2"].mean():.3f}")
-    print(
-        f"PLS R-squared {r2s_df_n[r2s_df_n["algo"] == "PLS"]["r2"].mean():.3f}")
+    for model in model_labels:
+        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == model]
+        print(model, "R-squared:",
+              f"({r2s_df_n_algo["r2"].mean():.3f}, ", end="")
+        print(f"{r2s_df_n_algo["r2"].std():.3f})")
 
-print("\nmean over all five ns\n---------------------")
+print("\n(mean, std) over all five ns", end="")
+print("\n----------------------------")
 for seed in range(1241, 1246):
     print("\nseed =", seed)
     r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
 
-    print(
-        f"PCR R-squared {r2s_df_seed[r2s_df_seed["algo"] == "PCA"]["r2"].mean():.3f}")
-    print(
-        f"PLS R-squared {r2s_df_seed[r2s_df_seed["algo"] == "PLS"]["r2"].mean():.3f}")
+    for model in model_labels:
+        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == model]
+        print(model, "R-squared:",
+              f"({r2s_df_seed_algo["r2"].mean():.3f}, ", end="")
+        print(f"{r2s_df_seed_algo["r2"].std():.3f})")

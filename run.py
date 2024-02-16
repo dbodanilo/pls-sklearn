@@ -524,19 +524,32 @@ for seed in range(1241, 1246):
 
     y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
 
+    # TODO: train only multi-output regressors.
     y_train = y_pca.transform(Y_train)[:, 0]
     y_test = y_pca.transform(Y_test)[:, 0]
+
+    x_pca = ScalerPCA(n_components=n_max).fit(X_train)
+
+    x_train = x_pca.transform(X_train)[:, 0]
+    x_test = x_pca.transform(X_test)[:, 0]
 
     for n in range(1, n_max + 1):
         for label, model in zip(model_labels, models):
             m = model(n_components=n).fit(X_train, y_train)
 
+            # reverse model (predict sizing based on target metrics)
+            rm = model(n_components=n).fit(Y_train, x_train)
+
             # impose [-1, 1] limit to avoid skewing the mean,
             # as the r2 is bound by positive 1, but not by
             # negative 1.
-            r2 = max(m.score(X_test, y_test), -1)
+            # r2 = max(m.score(X_test, y_test), -1)
+            r2_m = m.score(X_test, y_test)
+            r2_rm = rm.score(Y_test, x_test)
 
-            r2s.append({"seed": seed, "n": n, "algo": label, "r2": r2})
+            r2s.append({"seed": seed, "n": n, "algo": label, "r2": r2_m})
+            r2s.append(
+                {"seed": seed, "n": n, "algo": "r" + label, "r2": r2_rm})
 
 # NOTE: avoid aggregation outside pandas!
 # e.g., mean values over all seeds.
@@ -552,8 +565,13 @@ for n in range(1, n_max + 1):
 
     for model in model_labels:
         r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == model]
-        print(model, "R-squared:",
-              f"({r2s_df_n_algo["r2"].mean():.3f}, ", end="")
+        # TODO: remove outliers based on distance from mean,
+        # not just the min and max samples.
+        # r2_min = r2s_df_n_algo["r2"].min()
+        # r2_max = r2s_df_n_algo["r2"].max()
+        # mean = (r2s_df_n_algo["r2"].sum() - (r2_min + r2_max)) / 3
+        mean = r2s_df_n_algo["r2"].mean()
+        print(model, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_n_algo["r2"].std():.3f})")
 
 print("\n(mean, std) over all five ns", end="")
@@ -564,6 +582,32 @@ for seed in range(1241, 1246):
 
     for model in model_labels:
         r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == model]
-        print(model, "R-squared:",
-              f"({r2s_df_seed_algo["r2"].mean():.3f}, ", end="")
+        mean = r2s_df_seed_algo["r2"].mean()
+        print(model, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_seed_algo["r2"].std():.3f})")
+
+print("\nPCA vs. PLS vs. SVR (reverse, X = model.predict(Y))", end="")
+print("\n===================================================")
+print("(mean, std) over all five seeds")
+print("-------------------------------")
+for n in range(1, n_max + 1):
+    print("\nn =", n)
+    r2s_df_n = r2s_df[r2s_df["n"] == n]
+
+    for model in model_labels:
+        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == "r" + model]
+        mean = r2s_df_n_algo["r2"].mean()
+        print(model, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_n_algo["r2"].std():.3f})")
+
+print("\n(mean, std) over all five ns", end="")
+print("\n----------------------------")
+for seed in range(1241, 1246):
+    print("\nseed =", seed)
+    r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
+
+    for model in model_labels:
+        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == "r" + model]
+        mean = r2s_df_seed_algo["r2"].mean()
+        print(model, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_seed_algo["r2"].std():.3f})")

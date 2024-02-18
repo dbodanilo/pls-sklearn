@@ -7,13 +7,11 @@ import pandas as pd
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
-from sklearn.preprocessing import StandardScaler, normalize
-from sklearn.svm import SVR
+from sklearn.preprocessing import normalize
 
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
-from preprocessing import scale_transform
 from util import fig_paths
 
 
@@ -35,11 +33,10 @@ n_targets = Y_train.shape[1]
 n_max = min(n_samples, n_features, n_targets)
 
 
-# === PCR ===
+# === PCA ===
 
-pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
-x_scaler_step: StandardScaler = pcr.named_steps["standardscaler"]
-x_pca_step: PCA = pcr.named_steps["pca"]
+x_pca = ScalerPCA(n_components=n_max).fit(X_train)
+x_pca_step: PCA = x_pca.named_steps["pca"]
 
 y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
 y_pca_step: PCA = y_pca.named_steps["pca"]
@@ -57,6 +54,7 @@ for n in range(1, n_max + 1):
 
 # Until comparable to that of Y's first two PCA components
 # (scaled and on worse train/test split).
+# TODO: go back to exploring n > 5, at least for X.
 print("\nOnly X\n------")
 while x_explained < 0.9236 and n < n_max:
     n += 1
@@ -64,7 +62,12 @@ while x_explained < 0.9236 and n < n_max:
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
 
-X_test_pca = scale_transform(x_scaler_step, x_pca_step, X_test)
+
+# === PCR ===
+
+pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
+
+X_test_pca = x_pca.transform(X_test)
 
 Y_pred_pcr = pcr.predict(X_test)
 
@@ -89,7 +92,34 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
+
+r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+
 Y_test_pca = y_pca.transform(Y_test)
+
+X_pred_pcr = r_pcr.predict(Y_test)
+X_pred_pcr_t = x_pca.transform(X_pred_pcr)
+
+paths = fig_paths("pcr-predictions_reversed")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
+
+    # X's Principal Components
+    for i, (ax, ord) in enumerate(zip(axes, ["1st", "2nd", "3rd"])):
+        ax.scatter(Y_test_pca[:, 0], X_test_pca[:, i], alpha=0.3,
+                   label="ground truth")
+        ax.scatter(Y_test_pca[:, 0], X_pred_pcr_t[:, i], alpha=0.3,
+                   label="predictions")
+        ax.set(xlabel="Projected Y onto 1st PCA component",
+               ylabel=f"Projected X onto {ord} PCA component",
+               title=f"Y's 1st PCA component vs. X's {ord} PCA component")
+        ax.legend()
+
+    for path in paths:
+        fig.savefig(path)
+
 Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
 paths = fig_paths("pcr-predictions_transformed")
@@ -124,9 +154,9 @@ if not all(os.path.exists(path) for path in paths):
 
 plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
-Y_pred_plsr = plsr.predict(X_test)
-
 X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
+
+Y_pred_plsr = plsr.predict(X_test)
 
 paths = fig_paths("plsr-predictions")
 
@@ -146,6 +176,34 @@ if not all(os.path.exists(path) for path in paths):
         ax.set(xlabel="Projected X onto 1st PLS component",
                ylabel=target,
                title="X's 1st PLS component vs. " + target)
+        ax.legend()
+
+    for path in paths:
+        fig.savefig(path)
+
+r_plsr = PLSRegression(n_components=n_max).fit(Y_train, X_train)
+
+Y_test_pls, X_test_pls = r_plsr.transform(Y_test, X_test)
+
+X_pred_plsr = r_plsr.predict(Y_test)
+
+_, X_pred_plsr_t = r_plsr.transform(Y_test, X_pred_plsr)
+
+paths = fig_paths("plsr-predictions_reversed")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
+
+    # X's principal components.
+    for i, (ax, ord) in enumerate(zip(axes, ["1st", "2nd", "3rd"])):
+        ax.scatter(Y_test_pls[:, 0], X_test_pls[:, i], alpha=0.3,
+                   label="ground truth")
+        ax.scatter(Y_test_pls[:, 0], X_pred_plsr_t[:, i], alpha=0.3,
+                   label="predictions")
+        ax.set(xlabel="Projected Y onto 1st PLS component",
+               ylabel=f"Projected X onto {ord} PLS component",
+               title=f"Y's 1st PLS component vs. X's {ord} PLS component")
         ax.legend()
 
     for path in paths:
@@ -369,8 +427,8 @@ if not all(os.path.exists(path) for path in paths):
 
 # === SVR ===
 
-x_train = scale_transform(x_scaler_step, x_pca_step, X_train)[:, 0]
-x_test = scale_transform(x_scaler_step, x_pca_step, X_test)[:, 0]
+x_train = x_pca.transform(X_train)[:, 0]
+x_test = x_pca.transform(X_test)[:, 0]
 
 y_train = y_pca.transform(Y_train)[:, 0]
 y_test = y_pca.transform(Y_test)[:, 0]
@@ -389,7 +447,8 @@ model_colors = ["m", "c", "g"]
 paths = fig_paths("svr-regressions")
 
 if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 10), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 10), layout="constrained",
+                             sharey=True)
 
     for ax, svr, step, label, color in zip(axes, svrs, svr_steps, kernel_labels, model_colors):
         ax.plot(
@@ -518,20 +577,20 @@ if not all(os.path.exists(path) for path in paths):
 model_labels = ["PCR", "PLSR", "SVR"]
 models = [ScalerPCR, PLSRegression, ScalerSVR]
 
-r2s = []
+r2s = np.empty(150, dtype=object)
+i = 0
 for seed in range(1241, 1246):
     X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
 
+    x_pca = ScalerPCA(n_components=n_max).fit(X_train)
     y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
 
     # TODO: train only multi-output regressors.
-    y_train = y_pca.transform(Y_train)[:, 0]
-    y_test = y_pca.transform(Y_test)[:, 0]
-
-    x_pca = ScalerPCA(n_components=n_max).fit(X_train)
-
     x_train = x_pca.transform(X_train)[:, 0]
     x_test = x_pca.transform(X_test)[:, 0]
+
+    y_train = y_pca.transform(Y_train)[:, 0]
+    y_test = y_pca.transform(Y_test)[:, 0]
 
     for n in range(1, n_max + 1):
         for label, model in zip(model_labels, models):
@@ -547,13 +606,17 @@ for seed in range(1241, 1246):
             r2_m = m.score(X_test, y_test)
             r2_rm = rm.score(Y_test, x_test)
 
-            r2s.append({"seed": seed, "n": n, "algo": label, "r2": r2_m})
-            r2s.append(
-                {"seed": seed, "n": n, "algo": "r" + label, "r2": r2_rm})
+            # TODO: have a numpy.ndarray for each column.
+            r2s[i] = {"seed": seed, "n": n, "algo": label, "r2": r2_m}
+            r2s[i + 1] = {"seed": seed, "n": n,
+                          "algo": "r" + label, "r2": r2_rm}
+            i += 2
 
 # NOTE: avoid aggregation outside pandas!
 # e.g., mean values over all seeds.
-r2s_df = pd.DataFrame(r2s)
+# TODO: avoid conversion back to python list,
+# but pd.DataFrame seems not to work with np.array[dict]
+r2s_df = pd.DataFrame(list(r2s))
 
 print("\nPCA vs. PLS vs. SVR", end="")
 print("\n===================")

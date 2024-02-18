@@ -10,7 +10,9 @@ def load_leme():
     return (X, Y)
 
 
-def train_test_seed_split(X, Y, seed=1244):
+# NOTE: seed=1244 was responsible for the worst R^2 when
+# predicting Y from X.
+def train_test_seed_split(X, Y, seed=1242):
     """Train on n - 1 seeds, test on remaining seed.
 
     Goal
@@ -18,8 +20,8 @@ def train_test_seed_split(X, Y, seed=1244):
     try to navigate to points in the unknown frontier
     by regressing the known ones.
 
-    seed : default=1244, as test was responsible for the
-    worst R^2.
+    seed : default=1242, as test was responsible for the
+    worst R^2 when predicting X from Y.
     """
     X_train = X[X["Semente"] != seed]
     Y_train = Y[Y["Semente"] != seed]

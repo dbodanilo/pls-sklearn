@@ -197,13 +197,13 @@ if not all(os.path.exists(path) for path in paths):
 
     # X's principal components.
     for i, (ax, ord) in enumerate(zip(axes, ["1st", "2nd", "3rd"])):
-        ax.scatter(Y_test_pls[:, 0], X_test_pls[:, i], alpha=0.3,
+        ax.scatter(Y_test_pls[:, i], X_test_pls[:, i], alpha=0.3,
                    label="ground truth")
-        ax.scatter(Y_test_pls[:, 0], X_pred_plsr_t[:, i], alpha=0.3,
+        ax.scatter(Y_test_pls[:, i], X_pred_plsr_t[:, i], alpha=0.3,
                    label="predictions")
-        ax.set(xlabel="Projected Y onto 1st PLS component",
+        ax.set(xlabel=f"Projected Y onto {ord} PLS component",
                ylabel=f"Projected X onto {ord} PLS component",
-               title=f"Y's 1st PLS component vs. X's {ord} PLS component")
+               title=f"Y's {ord} PLS component vs. X's {ord} PLS component")
         ax.legend()
 
     for path in paths:

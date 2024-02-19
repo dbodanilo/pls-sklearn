@@ -626,16 +626,16 @@ for n in range(1, n_max + 1):
     print("\nn =", n)
     r2s_df_n = r2s_df[r2s_df["n"] == n]
 
-    for model in model_labels:
-        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == model]
+    for label in model_labels:
+        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
         # TODO: remove outliers based on distance from mean,
         # not just the min and max samples.
         # r2_min = r2s_df_n_algo["r2"].min()
         # r2_max = r2s_df_n_algo["r2"].max()
         # mean = (r2s_df_n_algo["r2"].sum() - (r2_min + r2_max)) / 3
-        mean = r2s_df_n_algo["r2"].mean()
-        print(model, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_n_algo["r2"].std():.3f})")
+        mean = r2s_df_n_algo.mean()
+        print(label, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_n_algo.std():.3f})")
 
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
@@ -643,11 +643,13 @@ for seed in range(1241, 1246):
     print("\nseed =", seed)
     r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
 
-    for model in model_labels:
-        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == model]
-        mean = r2s_df_seed_algo["r2"].mean()
-        print(model, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_seed_algo["r2"].std():.3f})")
+    for label in model_labels:
+        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]
+        mean = r2s_df_seed_algo.mean()
+        print(label, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_seed_algo.std():.3f})")
+
+r_labels = ["r" + label for label in model_labels]
 
 print("\nPCA vs. PLS vs. SVR (reverse, X = model.predict(Y))", end="")
 print("\n===================================================")
@@ -657,11 +659,11 @@ for n in range(1, n_max + 1):
     print("\nn =", n)
     r2s_df_n = r2s_df[r2s_df["n"] == n]
 
-    for model in model_labels:
-        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == "r" + model]
-        mean = r2s_df_n_algo["r2"].mean()
-        print(model, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_n_algo["r2"].std():.3f})")
+    for label in r_labels:
+        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
+        mean = r2s_df_n_algo.mean()
+        print(label, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_n_algo.std():.3f})")
 
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
@@ -669,8 +671,8 @@ for seed in range(1241, 1246):
     print("\nseed =", seed)
     r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
 
-    for model in model_labels:
-        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == "r" + model]
-        mean = r2s_df_seed_algo["r2"].mean()
-        print(model, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_seed_algo["r2"].std():.3f})")
+    for label in r_labels:
+        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]
+        mean = r2s_df_seed_algo.mean()
+        print(label, "R-squared:", f"({mean:.3f}, ", end="")
+        print(f"{r2s_df_seed_algo.std():.3f})")

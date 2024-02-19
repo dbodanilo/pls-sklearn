@@ -425,6 +425,35 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
+x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
+x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
+limits_pls = np.arange(x_test_pls_min, x_test_pls_max, 0.01)
+
+x_test_pca_min = min(X_test_pca[:, 0].min(), X_pred_pcr_t[:, 0].min())
+x_test_pca_max = max(X_test_pca[:, 0].max(), X_pred_pcr_t[:, 0].max())
+limits_pca = np.arange(x_test_pca_min, x_test_pca_max, 0.01)
+
+paths = fig_paths("pcr_vs_plsr-regression_reversed")
+
+# Only generate it once.
+if not all(os.path.exists(path) for path in paths):
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
+
+    axes[0].plot(limits_pca, limits_pca)
+    axes[0].scatter(X_test_pca[:, 0], X_pred_pcr_t[:, 0])
+    axes[0].set(xlabel="Actual X projected onto 1st PCA component",
+                ylabel="Predicted X projected onto 1st PCA component",
+                title="PCA Regression")
+
+    axes[1].plot(limits_pls, limits_pls)
+    axes[1].scatter(X_test_pls[:, 0], X_pred_plsr_t[:, 0])
+    axes[1].set(xlabel="Actual X projected onto 1st PLS component",
+                ylabel="Predicted X projected onto 1st PLS component",
+                title="PLS Regression")
+
+    for path in paths:
+        fig.savefig(path)
+
 # === SVR ===
 
 x_train = x_pca.transform(X_train)[:, 0]

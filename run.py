@@ -26,6 +26,8 @@ n_samples = X_train.shape[0]
 n_features = X_train.shape[1]
 n_targets = Y_train.shape[1]
 
+n_test = X_test.shape[0]
+
 # n > n_targets will only throw an error if using
 # PLSCanonical, not PLSRegression.
 # for PLSCanonical: min(n_samples, n_features, n_targets)
@@ -393,13 +395,13 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
-y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
-limits_pls = np.arange(y_test_pls_min, y_test_pls_max, 0.01)
-
 y_test_pca_min = min(Y_test_pca[:, 0].min(), Y_pred_pcr_t[:, 0].min())
 y_test_pca_max = max(Y_test_pca[:, 0].max(), Y_pred_pcr_t[:, 0].max())
-limits_pca = np.arange(y_test_pca_min, y_test_pca_max, 0.01)
+y_limits_pca = np.linspace(y_test_pca_min, y_test_pca_max, n_test)
+
+y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
+y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
+y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
 
 # TODO: display R-squared for the prediction of the first components.
 # r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
@@ -410,13 +412,13 @@ paths = fig_paths("pcr_vs_plsr-regression")
 if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
-    axes[0].plot(limits_pca, limits_pca)
+    axes[0].plot(y_limits_pca, y_limits_pca)
     axes[0].scatter(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])
     axes[0].set(xlabel="Actual Y projected onto 1st PCA component",
                 ylabel="Predicted Y projected onto 1st PCA component",
                 title="PCA Regression")
 
-    axes[1].plot(limits_pls, limits_pls)
+    axes[1].plot(y_limits_pls, y_limits_pls)
     axes[1].scatter(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])
     axes[1].set(xlabel="Actual Y projected onto 1st PLS component",
                 ylabel="Predicted Y projected onto 1st PLS component",
@@ -425,13 +427,13 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
-x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
-limits_pls = np.arange(x_test_pls_min, x_test_pls_max, 0.01)
-
 x_test_pca_min = min(X_test_pca[:, 0].min(), X_pred_pcr_t[:, 0].min())
 x_test_pca_max = max(X_test_pca[:, 0].max(), X_pred_pcr_t[:, 0].max())
-limits_pca = np.arange(x_test_pca_min, x_test_pca_max, 0.01)
+x_limits_pca = np.linspace(x_test_pca_min, x_test_pca_max, n_test)
+
+x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
+x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
+x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 
 paths = fig_paths("pcr_vs_plsr-regression_reversed")
 
@@ -439,13 +441,13 @@ paths = fig_paths("pcr_vs_plsr-regression_reversed")
 if not all(os.path.exists(path) for path in paths):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
-    axes[0].plot(limits_pca, limits_pca)
+    axes[0].plot(x_limits_pca, x_limits_pca)
     axes[0].scatter(X_test_pca[:, 0], X_pred_pcr_t[:, 0])
     axes[0].set(xlabel="Actual X projected onto 1st PCA component",
                 ylabel="Predicted X projected onto 1st PCA component",
                 title="PCA Regression")
 
-    axes[1].plot(limits_pls, limits_pls)
+    axes[1].plot(x_limits_pls, x_limits_pls)
     axes[1].scatter(X_test_pls[:, 0], X_pred_plsr_t[:, 0])
     axes[1].set(xlabel="Actual X projected onto 1st PLS component",
                 ylabel="Predicted X projected onto 1st PLS component",

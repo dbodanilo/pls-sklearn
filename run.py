@@ -12,7 +12,7 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
-from util import fig_paths
+from util import fig_paths, fit_predict_try_transform
 
 
 X, Y = load_leme()
@@ -395,6 +395,16 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
+# seed=1241 was the best for the ratio of rPLSR's r2_score
+# over rPCR's.
+X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
+
+X_test_pca, X_pred_pcr_t, Y_test_pca, Y_pred_pcr_t = fit_predict_try_transform(
+    ScalerPCR, X_train, X_test, Y_train, Y_test)
+
+X_test_pls, X_pred_plsr_t, Y_test_pls, Y_pred_plsr_t = fit_predict_try_transform(
+    PLSRegression, X_train, X_test, Y_train, Y_test)
+
 y_test_pca_min = min(Y_test_pca[:, 0].min(), Y_pred_pcr_t[:, 0].min())
 y_test_pca_max = max(Y_test_pca[:, 0].max(), Y_pred_pcr_t[:, 0].max())
 y_limits_pca = np.linspace(y_test_pca_min, y_test_pca_max, n_test)
@@ -406,7 +416,7 @@ y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
 # TODO: display R-squared for the prediction of the first components.
 # r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
 # r2_score(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])  # ~0.65
-paths = fig_paths("pcr_vs_plsr-regression")
+paths = fig_paths("pcr_vs_plsr-regression-best_ratio")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
@@ -435,7 +445,7 @@ x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
 x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
 x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 
-paths = fig_paths("pcr_vs_plsr-regression_reversed")
+paths = fig_paths("pcr_vs_plsr-regression_reversed-best_ratio")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):
@@ -605,43 +615,38 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-model_labels = ["PCR", "PLSR", "SVR"]
-models = [ScalerPCR, PLSRegression, ScalerSVR]
+# DOING: train only multi-output regressors.
+model_labels = ["PCR", "PLSR"]  # , "SVR"
+r_labels = ["r" + label for label in model_labels]
 
-r2s = np.empty(150, dtype=object)
+models = [ScalerPCR, PLSRegression]  # , ScalerSVR
+
+r2s = np.empty(300, dtype=object)
 i = 0
 for seed in range(1241, 1246):
     X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
 
-    x_pca = ScalerPCA(n_components=n_max).fit(X_train)
-    y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
-
-    # TODO: train only multi-output regressors.
-    x_train = x_pca.transform(X_train)[:, 0]
-    x_test = x_pca.transform(X_test)[:, 0]
-
-    y_train = y_pca.transform(Y_train)[:, 0]
-    y_test = y_pca.transform(Y_test)[:, 0]
-
     for n in range(1, n_max + 1):
         for label, model in zip(model_labels, models):
-            m = model(n_components=n).fit(X_train, y_train)
+            r_label = "r" + label
 
-            # reverse model (predict sizing based on target metrics)
-            rm = model(n_components=n).fit(Y_train, x_train)
+            X_test_t, X_pred_t, Y_test_t, Y_pred_t = fit_predict_try_transform(
+                model, X_train, X_test, Y_train, Y_test)
 
-            # impose [-1, 1] limit to avoid skewing the mean,
-            # as the r2 is bound by positive 1, but not by
-            # negative 1.
-            # r2 = max(m.score(X_test, y_test), -1)
-            r2_m = m.score(X_test, y_test)
-            r2_rm = rm.score(Y_test, x_test)
+            for n_used in range(1, n + 1):
+                # TODO: review imposing a [-1, 1] limit to
+                # avoid skewing the mean, as the r2 is bound
+                # by positive 1, but not by negative 1.
+                # r2 = max(r2_score(Y_test, Y_pred), -1)
+                r2_m = r2_score(Y_test_t[:, :n_used], Y_pred_t[:, :n_used])
+                r2_rm = r2_score(X_test_t[:, :n_used], X_pred_t[:, :n_used])
 
-            # TODO: have a numpy.ndarray for each column.
-            r2s[i] = {"seed": seed, "n": n, "algo": label, "r2": r2_m}
-            r2s[i + 1] = {"seed": seed, "n": n,
-                          "algo": "r" + label, "r2": r2_rm}
-            i += 2
+                # TODO: have a numpy.ndarray for each column.
+                r2s[i] = {"seed": seed, "n": n,
+                          "n_used": n_used, "algo": label, "r2": r2_m}
+                r2s[i + 1] = {"seed": seed, "n": n,
+                              "n_used": n_used, "algo": r_label, "r2": r2_rm}
+                i += 2
 
 # NOTE: avoid aggregation outside pandas!
 # e.g., mean values over all seeds.
@@ -679,8 +684,6 @@ for seed in range(1241, 1246):
         mean = r2s_df_seed_algo.mean()
         print(label, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_seed_algo.std():.3f})")
-
-r_labels = ["r" + label for label in model_labels]
 
 print("\nPCA vs. PLS vs. SVR (reverse, X = model.predict(Y))", end="")
 print("\n===================================================")

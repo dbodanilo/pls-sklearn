@@ -28,24 +28,18 @@ n_targets = Y_train.shape[1]
 
 n_test = X_test.shape[0]
 
-# n > n_targets will only throw an error if using
-# PLSCanonical, not PLSRegression.
-# for PLSCanonical: min(n_samples, n_features, n_targets)
-# for PLSRegression: min(n_samples, n_features)
-n_max = min(n_samples, n_features, n_targets)
-
 
 # === PCA ===
 
-x_pca = ScalerPCA(n_components=n_max).fit(X_train)
+x_pca = ScalerPCA(n_components=n_features).fit(X_train)
 x_pca_step: PCA = x_pca.named_steps["pca"]
 
-y_pca = ScalerPCA(n_components=n_max).fit(Y_train)
+y_pca = ScalerPCA(n_components=n_targets).fit(Y_train)
 y_pca_step: PCA = y_pca.named_steps["pca"]
 
 print("PCA\n===")
 print("X and Y\n-------")
-for n in range(1, n_max + 1):
+for n in range(1, n_targets + 1):
     # TODO: as with the R-square at the end:
     # aggregate metric over all seeds (mean)
     x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
@@ -58,14 +52,19 @@ for n in range(1, n_max + 1):
 # (scaled and on worse train/test split).
 # TODO: go back to exploring n > 5, at least for X.
 print("\nOnly X\n------")
-while x_explained < 0.9236 and n < n_max:
-    n += 1
+for n in range(n_targets + 1, n_features + 1):
     x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
 
 
 # === PCR ===
+
+# n > n_targets will only throw an error if using
+# PLSCanonical, not PLSRegression.
+# for PLSCanonical: min(n_samples, n_features, n_targets)
+# for PLSRegression: min(n_samples, n_features)
+n_max = min(n_samples, n_features, n_targets)
 
 pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
 
@@ -399,10 +398,10 @@ if not all(os.path.exists(path) for path in paths):
 # over rPCR's.
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
 
-X_test_pca, X_pred_pcr_t, Y_test_pca, Y_pred_pcr_t = fit_predict_try_transform(
+X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
     ScalerPCR, X_train, X_test, Y_train, Y_test)
 
-X_test_pls, X_pred_plsr_t, Y_test_pls, Y_pred_plsr_t = fit_predict_try_transform(
+X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
     PLSRegression, X_train, X_test, Y_train, Y_test)
 
 y_test_pca_min = min(Y_test_pca[:, 0].min(), Y_pred_pcr_t[:, 0].min())
@@ -630,8 +629,8 @@ for seed in range(1241, 1246):
         for label, model in zip(model_labels, models):
             r_label = "r" + label
 
-            X_test_t, X_pred_t, Y_test_t, Y_pred_t = fit_predict_try_transform(
-                model, X_train, X_test, Y_train, Y_test)
+            X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t = fit_predict_try_transform(
+                model, X_train, X_test, Y_train, Y_test, n_components=n)
 
             for n_used in range(1, n + 1):
                 # TODO: review imposing a [-1, 1] limit to
@@ -640,6 +639,17 @@ for seed in range(1241, 1246):
                 # r2 = max(r2_score(Y_test, Y_pred), -1)
                 r2_m = r2_score(Y_test_t[:, :n_used], Y_pred_t[:, :n_used])
                 r2_rm = r2_score(X_test_t[:, :n_used], X_pred_t[:, :n_used])
+
+                # Compare predictions in original feature
+                # space, this confirms that calculating the
+                # score on the transformed feature space
+                # makes it easier for lower `n` to achieve
+                # higher `r2_score`, which makes it harder
+                # to observe the expected increase in
+                # `r2_score` as `n` increases.
+                if n_used == n:
+                    r2_m = r2_score(Y_test, Y_pred)
+                    r2_rm = r2_score(X_test, X_pred)
 
                 # TODO: have a numpy.ndarray for each column.
                 r2s[i] = {"seed": seed, "n": n,
@@ -659,8 +669,9 @@ print("\n===================")
 print("(mean, std) over all five seeds")
 print("-------------------------------")
 for n in range(1, n_max + 1):
-    print("\nn =", n)
-    r2s_df_n = r2s_df[r2s_df["n"] == n]
+    # Print results on original feature space only.
+    print("\nn == n_used =", n)
+    r2s_df_n = r2s_df[(r2s_df["n"] == n) & (r2s_df["n_used"] == n)]
 
     for label in model_labels:
         r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
@@ -690,8 +701,8 @@ print("\n===================================================")
 print("(mean, std) over all five seeds")
 print("-------------------------------")
 for n in range(1, n_max + 1):
-    print("\nn =", n)
-    r2s_df_n = r2s_df[r2s_df["n"] == n]
+    print("\nn == n_used =", n)
+    r2s_df_n = r2s_df[(r2s_df["n"] == n) & (r2s_df["n_used"] == n)]
 
     for label in r_labels:
         r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]

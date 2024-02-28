@@ -12,13 +12,14 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
-from util import fig_paths, fit_predict_try_transform
+from util import fig_paths, fit_predict_try_transform, latexify
 
 
 X, Y = load_leme()
 
-descriptors = X.columns.drop(["N.", "Semente"])
-targets = Y.columns.drop(["N.", "Semente"])
+descriptors = latexify(X.columns.drop(["N.", "Semente"]))
+
+targets = latexify(Y.columns.drop(["N.", "Semente"]))
 
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
 

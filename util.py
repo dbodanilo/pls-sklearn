@@ -20,6 +20,10 @@ def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs)
     return X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t
 
 
+def latexify(strs):
+    return [f"${s}$" if s.find("_") > 0 else s for s in strs]
+
+
 def try_transform(model, X):
     if hasattr(model, "transform"):
         return model.transform(X)

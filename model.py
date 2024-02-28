@@ -35,4 +35,4 @@ def train_test_seed_split(X, Y, seed=1242):
     X_test = X_test.drop(["N.", "Semente"], axis=1).to_numpy()
     Y_test = Y_test.drop(["N.", "Semente"], axis=1).to_numpy()
 
-    return [X_train, X_test, Y_train, Y_test]
+    return (X_train, X_test, Y_train, Y_test)

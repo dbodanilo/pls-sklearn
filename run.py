@@ -537,7 +537,12 @@ r_labels = ["r" + label for label in model_labels]
 
 models = [ScalerPCR, PLSRegression]  # , ScalerSVR
 
-r2s = np.empty(300, dtype=object)
+algos = np.empty(400, dtype="U5")
+n_useds = np.empty(400, dtype=int)
+ns = np.empty(400, dtype=int)
+r2s = np.empty(400, dtype=float)
+seeds = np.empty(400, dtype=int)
+ts = np.empty(400, dtype=bool)
 i = 0
 for seed in range(1241, 1246):
     X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
@@ -550,12 +555,27 @@ for seed in range(1241, 1246):
                 model, X_train, X_test, Y_train, Y_test, n_components=n)
 
             for n_used in range(1, n + 1):
-                # TODO: review imposing a [-1, 1] limit to
-                # avoid skewing the mean, as the r2 is bound
-                # by positive 1, but not by negative 1.
-                # r2 = max(r2_score(Y_test, Y_pred), -1)
+                # TODO: review imposing a lower bound
+                # (-1 or 0) to avoid skewing the mean, as
+                # the r2's upper bound is positive 1, but
+                # there's no lower bound.
+                # 0 seems to be more mathematically sound
+                # than -1. But -1 retains the information on
+                # whether the regressor performs worse than
+                # DummyRegressor(strategy='mean').
+                # r2 = max(r2_score(Y_test, Y_pred), 0)
                 r2_m = r2_score(Y_test_t[:, :n_used], Y_pred_t[:, :n_used])
                 r2_rm = r2_score(X_test_t[:, :n_used], X_pred_t[:, :n_used])
+
+                # A numpy.ndarray for each column.
+                for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
+                    algos[i] = algo
+                    n_useds[i] = n_used
+                    ns[i] = n
+                    r2s[i] = r2
+                    seeds[i] = seed
+                    ts[i] = True
+                    i += 1
 
                 # Compare predictions in original feature
                 # space, this confirms that calculating the
@@ -568,18 +588,32 @@ for seed in range(1241, 1246):
                     r2_m = r2_score(Y_test, Y_pred)
                     r2_rm = r2_score(X_test, X_pred)
 
-                # TODO: have a numpy.ndarray for each column.
-                r2s[i] = {"seed": seed, "n": n,
-                          "n_used": n_used, "algo": label, "r2": r2_m}
-                r2s[i + 1] = {"seed": seed, "n": n,
-                              "n_used": n_used, "algo": r_label, "r2": r2_rm}
-                i += 2
+                    # TODO: explicitly aggregate r2_score
+                    # over each variable, i.e., use its
+                    # `multioutput` parameter and extract
+                    # mean and std over variables.
+                    for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
+                        algos[i] = algo
+                        n_useds[i] = n_used
+                        ns[i] = n
+                        r2s[i] = r2
+                        seeds[i] = seed
+                        ts[i] = False
+                        i += 1
+
 
 # NOTE: avoid aggregation outside pandas!
-# e.g., mean values over all seeds.
-# TODO: avoid conversion back to python list,
-# but pd.DataFrame seems not to work with np.array[dict]
-r2s_df = pd.DataFrame(list(r2s))
+# e.g., mean values over all seeds;
+# and avoid conversion back to python list,
+# pandas.DataFrame seems not to work with numpy.array[dict]
+r2s_df = pd.DataFrame({
+    "algo": algos,
+    "n_used": n_useds,
+    "n": ns,
+    "r2": r2s,
+    "seed": seeds,
+    "t": ts
+})
 
 print("\nPCA vs. PLS vs. SVR", end="")
 print("\n===================")

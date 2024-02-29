@@ -73,6 +73,8 @@ X_test_pca = x_pca.transform(X_test)
 
 Y_pred_pcr = pcr.predict(X_test)
 
+R2_Y_pcr = r2_score(Y_test, Y_pred_pcr, multioutput="raw_values")
+
 paths = fig_paths("pcr-predictions")
 
 # Only generate it once.
@@ -88,7 +90,7 @@ if not all(os.path.exists(path) for path in paths):
                    label="predictions")
         ax.set(xlabel="Projected X onto 1st PCA component",
                ylabel=target,
-               title="X's 1st PCA component vs. " + target)
+               title=f"X's 1st PCA component vs. {target}, $R^2 = {R2_Y_pcr[i]:.3f}$")
         ax.legend()
 
     for path in paths:
@@ -101,6 +103,8 @@ Y_test_pca = y_pca.transform(Y_test)
 
 X_pred_pcr = r_pcr.predict(Y_test)
 X_pred_pcr_t = x_pca.transform(X_pred_pcr)
+
+R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
 paths = fig_paths("pcr-predictions_reversed")
 
@@ -116,13 +120,15 @@ if not all(os.path.exists(path) for path in paths):
                    label="predictions")
         ax.set(xlabel="Projected Y onto 1st PCA component",
                ylabel=f"Projected X onto {ord} PCA component",
-               title=f"Y's 1st PCA component vs. X's {ord} PCA component")
+               title=f"Y's PCA 1 vs. X's PCA {i + 1}, $R^2 = {R2_X_pcr_t[i]:.3f}$")
         ax.legend()
 
     for path in paths:
         fig.savefig(path)
 
 Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
+
+R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 
 paths = fig_paths("pcr-predictions_transformed")
 
@@ -136,16 +142,16 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[0].set(xlabel="Projected X onto 1st PCA component",
                 ylabel="Projected Y onto 1st PCA component",
-                title="X's 1st PCA component vs. Y's 1st PCA component")
+                title=f"X's PCA 1 vs. Y's PCA 1, $R^2 = {R2_Y_pcr_t[0]:.3f}$")
     axes[0].legend()
 
-    axes[1].scatter(X_test_pca[:, 1], Y_test_pca[:, 0], alpha=0.3,
+    axes[1].scatter(X_test_pca[:, 0], Y_test_pca[:, 1], alpha=0.3,
                     label="ground truth")
-    axes[1].scatter(X_test_pca[:, 1], Y_pred_pcr_t[:, 0], alpha=0.3,
+    axes[1].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 1], alpha=0.3,
                     label="predictions")
-    axes[1].set(xlabel="Projected X onto 2nd PCA component",
-                ylabel="Projected Y onto 1st PCA component",
-                title="X's 1st PCA component vs. Y's 1st PCA component")
+    axes[1].set(xlabel="Projected X onto 1st PCA component",
+                ylabel="Projected Y onto 2nd PCA component",
+                title=f"X's PCA 1 vs. Y's PCA 2, $R^2 = {R2_Y_pcr_t[1]:.3f}$")
     axes[0].legend()
 
     for path in paths:
@@ -159,6 +165,8 @@ plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
 
 Y_pred_plsr = plsr.predict(X_test)
+
+R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
 paths = fig_paths("plsr-predictions")
 
@@ -177,7 +185,7 @@ if not all(os.path.exists(path) for path in paths):
                    label="predictions")
         ax.set(xlabel="Projected X onto 1st PLS component",
                ylabel=target,
-               title="X's 1st PLS component vs. " + target)
+               title=f"X's 1st PLS component vs. {target}, $R^2 = {R2_Y_plsr[i]:.3f}$")
         ax.legend()
 
     for path in paths:
@@ -190,6 +198,8 @@ Y_test_pls, X_test_pls = r_plsr.transform(Y_test, X_test)
 X_pred_plsr = r_plsr.predict(Y_test)
 
 _, X_pred_plsr_t = r_plsr.transform(Y_test, X_pred_plsr)
+
+R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
 paths = fig_paths("plsr-predictions_reversed")
 
@@ -205,13 +215,15 @@ if not all(os.path.exists(path) for path in paths):
                    label="predictions")
         ax.set(xlabel=f"Projected Y onto {ord} PLS component",
                ylabel=f"Projected X onto {ord} PLS component",
-               title=f"Y's {ord} PLS component vs. X's {ord} PLS component")
+               title=f"PLS {i + 1}, $R^2 = {R2_X_plsr_t[i]:.3f}$")
         ax.legend()
 
     for path in paths:
         fig.savefig(path)
 
 _, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
+
+R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
 paths = fig_paths("plsr-predictions_transformed")
 
@@ -224,7 +236,7 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[0].set(xlabel="Projected X onto 1st PLS component",
                 ylabel="Projected Y onto 1st PLS component",
-                title="PLS 1")
+                title=f"PLS 1, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
     axes[0].legend()
 
     axes[1].scatter(X_test_pls[:, 1], Y_test_pls[:, 1], alpha=0.3,
@@ -233,7 +245,7 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[1].set(xlabel="Projected X onto 2nd PLS component",
                 ylabel="Projected Y onto 2nd PLS component",
-                title="PLS 2")
+                title=f"PLS 2, $R^2 = {R2_Y_plsr_t[1]:.3f}$")
     axes[1].legend()
 
     axes[2].scatter(X_test_pls[:, 2], Y_test_pls[:, 2], alpha=0.3,
@@ -242,7 +254,7 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[2].set(xlabel="Projected X onto 3rd PLS component",
                 ylabel="Projected Y onto 3rd PLS component",
-                title="PLS 3")
+                title=f"PLS 3, $R^2 = {R2_Y_plsr_t[2]:.3f}$")
     axes[2].legend()
 
     for path in paths:
@@ -322,7 +334,7 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].set(
         xlabel="Projected X onto 1st PCA component",
         ylabel="Projected Y onto 1st PCA component",
-        title="PCA Regression"
+        title=f"PCA Regression, $R^2 = {R2_Y_pcr_t[0]:.3f}$"
     )
     axes[0].legend()
 
@@ -332,7 +344,7 @@ if not all(os.path.exists(path) for path in paths):
                     label="predictions")
     axes[1].set(xlabel="Projected X onto 1st PLS component",
                 ylabel="Projected Y onto 1st PLS component",
-                title="PLS Regression")
+                title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
     axes[1].legend()
 
     for path in paths:
@@ -413,9 +425,11 @@ y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
 y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
 y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
 
-# TODO: display R-squared for the prediction of the first components.
-# r2_score(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])  # ~0.24
-# r2_score(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])  # ~0.65
+# NOTE: display R-squared for the prediction of each
+# component.
+R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+
 paths = fig_paths("pcr_vs_plsr-regression-best_ratio")
 
 # Only generate it once.
@@ -426,13 +440,13 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].scatter(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])
     axes[0].set(xlabel="Actual Y projected onto 1st PCA component",
                 ylabel="Predicted Y projected onto 1st PCA component",
-                title="PCA Regression")
+                title=f"PCA Regression, $R^2 = {R2_Y_pcr_t[0]:.3f}$")
 
     axes[1].plot(y_limits_pls, y_limits_pls)
     axes[1].scatter(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])
     axes[1].set(xlabel="Actual Y projected onto 1st PLS component",
                 ylabel="Predicted Y projected onto 1st PLS component",
-                title="PLS Regression")
+                title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
 
     for path in paths:
         fig.savefig(path)
@@ -445,6 +459,9 @@ x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
 x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
 x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 
+R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
+R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
+
 paths = fig_paths("pcr_vs_plsr-regression_reversed-best_ratio")
 
 # Only generate it once.
@@ -455,14 +472,13 @@ if not all(os.path.exists(path) for path in paths):
     axes[0].scatter(X_test_pca[:, 0], X_pred_pcr_t[:, 0])
     axes[0].set(xlabel="Actual X projected onto 1st PCA component",
                 ylabel="Predicted X projected onto 1st PCA component",
-                title="PCA Regression")
+                title=f"PCA Regression, $R^2 = {R2_X_pcr_t[0]:.3f}$")
 
     axes[1].plot(x_limits_pls, x_limits_pls)
     axes[1].scatter(X_test_pls[:, 0], X_pred_plsr_t[:, 0])
     axes[1].set(xlabel="Actual X projected onto 1st PLS component",
                 ylabel="Predicted X projected onto 1st PLS component",
-                title="PLS Regression")
-
+                title=f"PLS Regression, $R^2 = {R2_X_plsr_t[0]:.3f}$")
     for path in paths:
         fig.savefig(path)
 

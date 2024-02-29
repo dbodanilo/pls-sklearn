@@ -1,0 +1,31 @@
+import os
+
+import matplotlib.pyplot as plt
+
+from util import fig_paths
+
+
+def plot_predictions(name, xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_y=True, nrows=1, ncols=2):
+    paths = fig_paths(name + "-predictions")
+
+    # Only generate it once.
+    if not all(os.path.exists(path) for path in paths):
+        fig, axes = plt.subplots(nrows, ncols,
+                                 figsize=(5 * ncols, 4 * nrows), layout="constrained")
+
+        # preview accuracy on first components.
+        for i, ax in enumerate(axes):
+            j = i if iter_y else 0
+            i = i if iter_x else 0
+
+            ax.scatter(X[:, i], Y_true[:, j], alpha=0.3,
+                       label="ground truth")
+            ax.scatter(X[:, i], Y_pred[:, j], alpha=0.3,
+                       label="predictions")
+            ax.set(xlabel=xlabels[i],
+                   ylabel=ylabels[j],
+                   title=f"{xlabels[i]} vs. {ylabels[j]}, $R^2 = {R2[j]:.3f}$")
+            ax.legend()
+
+        for path in paths:
+            fig.savefig(path)

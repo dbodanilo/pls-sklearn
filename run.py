@@ -12,6 +12,7 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
+from plots import plot_predictions
 from util import fig_paths, fit_predict_try_transform, latexify
 
 
@@ -73,29 +74,20 @@ X_test_pca = x_pca.transform(X_test)
 
 Y_pred_pcr = pcr.predict(X_test)
 
-R2_Y_pcr = r2_score(Y_test, Y_pred_pcr, multioutput="raw_values")
+# Last three targets are the most important (Av0, fT, Pwr).
+pcr_predictions = {
+    "name": "pcr",
+    "xlabels": ["X's PCA " + str(i) for i in range(1, 4)],
+    "ylabels": targets[-3:],
+    "X": X_test_pca,
+    "Y_true": Y_test[:, -3:],
+    "Y_pred": Y_pred_pcr[:, -3:],
+    "R2": r2_score(Y_test[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
+    "iter_x": False,
+    "ncols": 3,
+}
 
-paths = fig_paths("pcr-predictions")
-
-# Only generate it once.
-if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
-
-    # targets: Av0, fT, Pwr
-    indices = list(enumerate(targets))[2:]
-    for ax, (i, target) in zip(axes, indices):
-        ax.scatter(X_test_pca[:, 0], Y_test[:, i], alpha=0.3,
-                   label="ground truth")
-        ax.scatter(X_test_pca[:, 0], Y_pred_pcr[:, i], alpha=0.3,
-                   label="predictions")
-        ax.set(xlabel="Projected X onto 1st PCA component",
-               ylabel=target,
-               title=f"X's 1st PCA component vs. {target}, $R^2 = {R2_Y_pcr[i]:.3f}$")
-        ax.legend()
-
-    for path in paths:
-        fig.savefig(path)
-
+plot_predictions(**pcr_predictions)
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 

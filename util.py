@@ -24,6 +24,21 @@ def latexify(strs):
     return [f"${s}$" if s.find("_") > 0 else s for s in strs]
 
 
+def try_getattr(pipeline, attr):
+    if hasattr(pipeline, attr):
+        return getattr(pipeline, attr)
+
+    elif hasattr(pipeline, "steps"):
+        for _, step in pipeline.steps:
+            if not hasattr(step, attr):
+                continue
+
+            return getattr(step, attr)
+
+    name = type(pipeline).__name__
+    raise AttributeError(f"{name} has no '{attr}' attribute")
+
+
 def try_transform(model, X):
     if hasattr(model, "transform"):
         return model.transform(X)

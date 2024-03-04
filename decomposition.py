@@ -1,8 +1,14 @@
+from cca_zoo.linear import CCA
+
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
+
+
+def ScalerCCA(n_components=1):
+    return make_pipeline(StandardScaler(), CCA(latent_dimensions=n_components))
 
 
 def ScalerPCA(n_components=1):

@@ -1,3 +1,4 @@
+cca-zoo==2.3.11
 matplotlib==3.8.3
 numpy==1.26.4
 pandas==2.2.1

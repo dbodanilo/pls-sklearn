@@ -283,46 +283,10 @@ pls_components = {
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components,
-    "Y": y_plsr_components,    
+    "Y": y_plsr_components,
 }
 
 plot_components(**pls_components)
-
-paths = fig_paths("pls-components")
-
-# Only generate it once.
-if not all(os.path.exists(path) for path in paths):
-    fig, axes = plt.subplots(2, 3, figsize=(30, 8), layout="constrained")
-
-    axes[0, 0].bar(descriptors, x_plsr_components[:, 0])
-    axes[0, 0].set_ylim((-1, 1))
-    axes[0, 0].grid(True, axis="y")
-    axes[0, 0].set(title="1st PLS components")
-
-    axes[0, 1].bar(descriptors, x_plsr_components[:, 1])
-    axes[0, 1].set_ylim((-1, 1))
-    axes[0, 1].grid(True, axis="y")
-    axes[0, 1].set(title="2nd PLS components")
-
-    axes[0, 2].bar(descriptors, x_plsr_components[:, 2])
-    axes[0, 2].set_ylim((-1, 1))
-    axes[0, 2].grid(True, axis="y")
-    axes[0, 2].set(title="3rd PLS components")
-
-    axes[1, 0].bar(targets, y_plsr_components[:, 0])
-    axes[1, 0].set_ylim((-1, 1))
-    axes[1, 0].grid(True, axis="y")
-
-    axes[1, 1].bar(targets, y_plsr_components[:, 1])
-    axes[1, 1].set_ylim((-1, 1))
-    axes[1, 1].grid(True, axis="y")
-
-    axes[1, 2].bar(targets, y_plsr_components[:, 2])
-    axes[1, 2].set_ylim((-1, 1))
-    axes[1, 2].grid(True, axis="y")
-
-    for path in paths:
-        fig.savefig(path)
 
 
 plsr_all = PLSRegression(n_components=1).fit(X.drop(columns=["N.", "Semente"]), Y.drop(columns=["N.", "Semente"]))
@@ -443,6 +407,7 @@ if not all(os.path.exists(path) for path in paths):
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
+# TODO: print seed used when outputting plots and scores.
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
 
 X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(

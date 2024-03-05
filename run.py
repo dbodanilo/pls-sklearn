@@ -12,7 +12,7 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
-from plots import plot_predictions
+from plots import plot_predictions, plot_components
 from util import fig_paths, fit_predict_try_transform, latexify
 
 
@@ -272,6 +272,48 @@ if not all(os.path.exists(path) for path in paths):
 
     for path in paths:
         fig.savefig(path)
+
+
+ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
+
+pls_components = {
+    "name": "pls",
+    "title": "PLS",
+    "ords": ords,
+    "xlabels": descriptors,
+    "ylabels": targets,
+    "X": x_plsr_components,
+    "Y": y_plsr_components,    
+}
+
+plot_components(**pls_components)
+
+
+plsr_all = PLSRegression(n_components=1).fit(X.drop(columns=["N.", "Semente"]), Y.drop(columns=["N.", "Semente"]))
+
+x_all_plsr_components = normalize(plsr_all.x_rotations_, axis=0)
+y_all_plsr_components = normalize(plsr_all.y_rotations_, axis=0)
+
+for seed in range(1241, 1246):
+    X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
+    plsr = PLSRegression(n_components=1).fit(X_train, Y_train)
+
+    x_all_plsr_components = np.append(x_all_plsr_components, normalize(plsr.x_rotations_, axis=0), axis=1)
+    y_all_plsr_components = np.append(y_all_plsr_components, normalize(plsr.y_rotations_, axis=0), axis=1)
+
+
+pls_all_components = {
+    "name": "pls_all",
+    "title": "PLS",
+    "ords": ["all"] + ["seed: " + str(seed) for seed in range(1241, 1246)],
+    "xlabels": descriptors,
+    "ylabels": targets,
+    "X": x_all_plsr_components,
+    "Y": y_all_plsr_components,
+    "ncols": 6,
+}
+
+plot_components(**pls_all_components)
 
 paths = fig_paths("pls-components")
 

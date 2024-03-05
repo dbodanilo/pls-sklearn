@@ -5,6 +5,28 @@ import matplotlib.pyplot as plt
 from util import fig_paths
 
 
+def plot_components(name, title, ords, xlabels, ylabels, X, Y, nrows=2, ncols=3):
+    paths = fig_paths(name + "-components")
+
+    if not all(os.path.exists(path) for path in paths):
+        fig, axes = plt.subplots(nrows, ncols, figsize=(10 * ncols, 4 * nrows), layout="constrained")
+
+        for i, (x_ax, ordinal) in enumerate(zip(axes[0], ords)):
+            x_ax.bar(xlabels, X[:, i])
+            x_ax.set_ylim((-1, 1))
+            x_ax.grid(True, axis="y")
+            x_ax.set(title=f"X's {ordinal} {title} component")
+
+        for j, (y_ax, ordinal) in enumerate(zip(axes[1], ords)):
+            y_ax.bar(ylabels, Y[:, j])
+            y_ax.set_ylim((-1, 1))
+            y_ax.grid(True, axis="y")
+            y_ax.set(title=f"Y's {ordinal} {title} component")
+
+        for path in paths:
+            fig.savefig(path)
+
+
 def plot_predictions(name, xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_y=True, nrows=1, ncols=2):
     paths = fig_paths(name + "-predictions")
 

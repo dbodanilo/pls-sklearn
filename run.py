@@ -279,7 +279,8 @@ ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
 pls_components = {
     "name": "pls",
     "title": "PLS",
-    "ords": ords,
+    "xords": ords,
+    "yords": ords,
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components,
@@ -305,7 +306,8 @@ for seed in range(1241, 1246):
 pls_all_components = {
     "name": "pls_all",
     "title": "PLS",
-    "ords": ["all"] + ["seed: " + str(seed) for seed in range(1241, 1246)],
+    "xords": ["X's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
+    "yords": ["Y's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_all_plsr_components,
@@ -314,6 +316,33 @@ pls_all_components = {
 }
 
 plot_components(**pls_all_components)
+
+
+# seed=1241: best seed for `X = predict(Y)` and second-best
+# for `Y = predict(X)` (based on r2_score).
+X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
+
+plsr_all_targets = PLSRegression(n_components=1).fit(X_train, Y_train)
+
+plsr_each_components = normalize(plsr_all_targets.x_rotations_, axis=0)
+
+for target, Y_train_target in zip(targets, Y_train.T):
+    plsr_each_target = PLSRegression(n_components=1).fit(X_train, Y_train_target)
+
+    plsr_each_components = np.append(plsr_each_components, normalize(plsr_each_target.x_rotations_, axis=0), axis=1)
+
+pls_targets_components = {
+    "name": "pls_targets",
+    "title": "PLS",
+    "xords": [ "X's " + t for t in ["all", *targets[:-3]] ],
+    "yords": [ "X's " + t for t in targets[-3:] ],
+    "xlabels": descriptors,
+    "ylabels": descriptors,
+    "X": plsr_each_components[:, :3],
+    "Y": plsr_each_components[:, 3:],
+}
+
+plot_components(**pls_targets_components)
 
 
 # === PCR vs. PLSR ===

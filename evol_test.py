@@ -8,7 +8,7 @@ from sklearn.metrics import r2_score
 
 from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
-from util import fig_paths
+from util import get_paths
 
 X, Y = load_leme()
 
@@ -67,7 +67,7 @@ y_pred_evol0 = Y_pred_evol_t[:, 0]
 y_pred_evol1 = Y_pred_evol_t[:, 1]
 y_pred_evol2 = Y_pred_evol_t[:, 2]
 
-paths = fig_paths("evol-predictions")
+paths = get_paths("evol-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):

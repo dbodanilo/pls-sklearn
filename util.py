@@ -1,5 +1,27 @@
-def fig_paths(path, prefix="./out/", exts=[".pdf", ".png"]):
-    return ["".join([prefix + path, e]) for e in exts]
+import os
+
+from datetime import datetime
+from glob import glob
+
+
+def get_globs(path, prefix, exts):
+    return set(g for ext in exts for g in glob(f"{prefix}*{path}{ext}"))
+
+
+def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):
+    if timestamp:
+        _now = datetime.now()
+        today = _now.strftime("%Y-%m-%d")
+
+        # YYYY-mm-dd/
+        prefix += f"{today}/"
+
+        if not os.path.exists(prefix):
+            os.makedirs(prefix, exist_ok=True)
+
+        # YYYY-mm-dd_HH-mm_<path>
+        path = today + _now.strftime("_%H-%M_") + path
+    return ["".join([prefix + path, e]) for e in exts], prefix, exts
 
 
 def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs):

@@ -2,13 +2,15 @@ import os
 
 import matplotlib.pyplot as plt
 
-from util import fig_paths
+from util import get_globs, get_paths
 
 
 def plot_components(name, title, xords, yords, xlabels, ylabels, X, Y, nrows=2, ncols=3):
-    paths = fig_paths(name + "-components")
+    path = name + "-components"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-    if not all(os.path.exists(path) for path in paths):
+    if not any(os.path.exists(path) for path in globs):
         fig, axes = plt.subplots(nrows, ncols, figsize=(10 * ncols, 4 * nrows), layout="constrained")
 
         for i, (x_ax, ordinal) in enumerate(zip(axes[0], xords)):
@@ -28,10 +30,12 @@ def plot_components(name, title, xords, yords, xlabels, ylabels, X, Y, nrows=2, 
 
 
 def plot_predictions(name, xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_y=True, nrows=1, ncols=2):
-    paths = fig_paths(name + "-predictions")
+    path = name + "-predictions"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
     # Only generate it once.
-    if not all(os.path.exists(path) for path in paths):
+    if not any(os.path.exists(path) for path in globs):
         fig, axes = plt.subplots(nrows, ncols,
                                  figsize=(5 * ncols, 4 * nrows), layout="constrained")
 

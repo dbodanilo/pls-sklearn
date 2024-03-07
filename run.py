@@ -4,17 +4,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from datetime import datetime
+
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import normalize
 
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
-from evol import Evol, UV_EVOL
 from model import load_leme, train_test_seed_split
 from plots import plot_predictions, plot_components
-from util import fig_paths, fit_predict_try_transform, latexify
+from util import fit_predict_try_transform, get_globs, get_paths, latexify
 
+
+NOW = datetime.now()
+TODAY = NOW.strftime("%Y-%m-%d")
 
 X, Y = load_leme()
 
@@ -98,10 +102,12 @@ X_pred_pcr_t = x_pca.transform(X_pred_pcr)
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
-paths = fig_paths("pcr-predictions_reversed")
+path = "pcr-predictions_reversed"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # X's Principal Components
@@ -122,10 +128,12 @@ Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 
-paths = fig_paths("pcr-predictions_transformed")
+path = "pcr-predictions_transformed"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
@@ -160,10 +168,12 @@ Y_pred_plsr = plsr.predict(X_test)
 
 R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
-paths = fig_paths("plsr-predictions")
+path = "plsr-predictions"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # targets: Av0, fT, Pwr
@@ -193,10 +203,12 @@ _, X_pred_plsr_t = r_plsr.transform(Y_test, X_pred_plsr)
 
 R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
-paths = fig_paths("plsr-predictions_reversed")
+path = "plsr-predictions_reversed"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # X's principal components.
@@ -217,10 +229,12 @@ _, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
 
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-paths = fig_paths("plsr-predictions_transformed")
+path = "plsr-predictions_transformed"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
     axes[0].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
                     label="ground truth")
@@ -255,10 +269,12 @@ if not all(os.path.exists(path) for path in paths):
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
-paths = fig_paths("pls-first_components")
+path = "pls-first_components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), layout="constrained")
 
     axes[0].bar(descriptors, x_plsr_components[:, 0])
@@ -347,10 +363,12 @@ plot_components(**pls_targets_components)
 
 # === PCR vs. PLSR ===
 
-paths = fig_paths("pcr_vs_plsr-predictions")
+path = "pcr_vs_plsr-predictions"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     # preview accuracy on first components.
@@ -377,10 +395,12 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-paths = fig_paths("pca_vs_pls-first_components")
+path = "pca_vs_pls-first_components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     axes[0].bar(targets, y_pca_step.components_[0])
@@ -396,10 +416,12 @@ if not all(os.path.exists(path) for path in paths):
     for path in paths:
         fig.savefig(path)
 
-paths = fig_paths("pca_vs_pls-components")
+path = "pca_vs_pls-components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(2, 3, figsize=(15, 8), layout="constrained")
     axes[0, 0].bar(targets, y_pca_step.components_[0])
     axes[0, 0].set_ylim((-1, 1))
@@ -458,10 +480,12 @@ y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-paths = fig_paths("pcr_vs_plsr-regression-best_ratio")
+path = "pcr_vs_plsr-regression-best_ratio"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
     axes[0].plot(y_limits_pca, y_limits_pca)
@@ -490,10 +514,12 @@ x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
-paths = fig_paths("pcr_vs_plsr-regression_reversed-best_ratio")
+path = "pcr_vs_plsr-regression_reversed-best_ratio"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not all(os.path.exists(path) for path in paths):
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
     axes[0].plot(x_limits_pca, x_limits_pca)
@@ -529,9 +555,12 @@ svr_steps = [svr.named_steps["svr"] for svr in svrs]
 kernel_labels = ["RBF", "Linear", "Polynomial"]
 model_colors = ["m", "c", "g"]
 
-paths = fig_paths("svr-regressions")
+path = "svr-regressions"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
 
-if not all(os.path.exists(path) for path in paths):
+# Only generate it once.
+if not any(os.path.exists(path) for path in globs):
     fig, axes = plt.subplots(1, 3, figsize=(15, 10), layout="constrained",
                              sharey=True)
 

@@ -689,6 +689,16 @@ r2s_df = pd.DataFrame({
     "t": ts
 })
 
+path = "r2s"
+paths, prefix, exts = get_paths(path, exts=[".csv"])
+globs = get_globs(path, prefix, exts)
+
+# Only save it once a day.
+if not any(os.path.exists(path) for path in globs):
+    # format "{:.5f}" was the highest one not to vary on
+    # equivalent runs.
+    r2s_df.to_csv(paths[0], sep="\t", float_format="{:.5f}".format)
+
 print("\nPCA vs. PLS vs. SVR", end="")
 print("\n===================")
 print("(mean, std) over all five seeds")

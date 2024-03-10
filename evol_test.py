@@ -67,7 +67,7 @@ y_pred_evol0 = Y_pred_evol_t[:, 0]
 y_pred_evol1 = Y_pred_evol_t[:, 1]
 y_pred_evol2 = Y_pred_evol_t[:, 2]
 
-paths = get_paths("evol-predictions")
+paths, prefix, exts = get_paths("evol-predictions")
 
 # Only generate it once.
 if not all(os.path.exists(path) for path in paths):

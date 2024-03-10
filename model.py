@@ -1,11 +1,15 @@
 import pandas as pd
 
 
-def load_leme():
-    leme_data = pd.read_csv("leme-fronteira.csv", delimiter="\t")
-    X = leme_data[["N.", "Semente", "I_{pol}", "V_{pol}", "W_{1,2}", "L_{1,2}", "W_{3,4}",
-                   "L_{3,4}", "W_{5,6}", "L_{5,6}", "W_{7,8}", "L_{7,8}", "W_{9}", "L_{9}", "W_{10}", "L_{10}"]]
+def load_leme(idwl=True):
+    path = "leme-fronteira.csv"
+    if idwl:
+        path = "leme-fronteira-IDWL.csv"
+
+    leme_data = pd.read_csv(path, delimiter="\t")
     Y = leme_data[["N.", "Semente", "SR", "Area", "A_{v0}", "f_{T}", "Pwr"]]
+    # Don't drop for X ["N.", "Semente"] id columns.
+    X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
 
     return (X, Y)
 
@@ -32,9 +36,9 @@ def train_test_seed_split(X, Y, seed=1241):
     Y_test = Y[Y["Semente"] == seed]
 
     # "N.", "Semente": Não são relevantes para regressão.
-    X_train = X_train.drop(["N.", "Semente"], axis=1).to_numpy()
-    Y_train = Y_train.drop(["N.", "Semente"], axis=1).to_numpy()
-    X_test = X_test.drop(["N.", "Semente"], axis=1).to_numpy()
-    Y_test = Y_test.drop(["N.", "Semente"], axis=1).to_numpy()
+    X_train = X_train.drop(columns=["N.", "Semente"]).to_numpy()
+    Y_train = Y_train.drop(columns=["N.", "Semente"]).to_numpy()
+    X_test = X_test.drop(columns=["N.", "Semente"]).to_numpy()
+    Y_test = Y_test.drop(columns=["N.", "Semente"]).to_numpy()
 
     return (X_train, X_test, Y_train, Y_test)

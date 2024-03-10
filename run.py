@@ -145,13 +145,13 @@ if not any(os.path.exists(path) for path in globs):
                 title=f"X's PCA 1 vs. Y's PCA 1, $R^2 = {R2_Y_pcr_t[0]:.3f}$")
     axes[0].legend()
 
-    axes[1].scatter(X_test_pca[:, 0], Y_test_pca[:, 1], alpha=0.3,
+    axes[1].scatter(X_test_pca[:, 1], Y_test_pca[:, 1], alpha=0.3,
                     label="ground truth")
-    axes[1].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 1], alpha=0.3,
+    axes[1].scatter(X_test_pca[:, 1], Y_pred_pcr_t[:, 1], alpha=0.3,
                     label="predictions")
-    axes[1].set(xlabel="Projected X onto 1st PCA component",
+    axes[1].set(xlabel="Projected X onto 2nd PCA component",
                 ylabel="Projected Y onto 2nd PCA component",
-                title=f"X's PCA 1 vs. Y's PCA 2, $R^2 = {R2_Y_pcr_t[1]:.3f}$")
+                title=f"X's PCA 2 vs. Y's PCA 2, $R^2 = {R2_Y_pcr_t[1]:.3f}$")
     axes[0].legend()
 
     for path in paths:

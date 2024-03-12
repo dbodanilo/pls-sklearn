@@ -14,7 +14,7 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from model import load_leme, train_test_seed_split
 from plots import plot_predictions, plot_components
-from util import fit_predict_try_transform, get_globs, get_paths, latexify
+from util import fit_predict_try_transform, get_globs, get_paths, latexify, show_or_save
 
 
 _SHOW = True
@@ -82,7 +82,6 @@ Y_pred_pcr = pcr.predict(X_test)
 
 # Last three targets are the most important (Av0, fT, Pwr).
 pcr_predictions = {
-    "name": "pcr",
     "xlabels": ["X's PCA " + str(i) for i in range(1, 4)],
     "ylabels": targets[-3:],
     "X": X_test_pca,
@@ -91,10 +90,13 @@ pcr_predictions = {
     "R2": r2_score(Y_test[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
     "iter_x": False,
     "ncols": 3,
-    "show": _SHOW,
 }
 
-plot_predictions(**pcr_predictions)
+path = "pcr-predictions"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, _SHOW, plot_predictions, **pcr_predictions)
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
@@ -300,7 +302,6 @@ if not any(os.path.exists(path) for path in globs):
 ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
 
 pls_components = {
-    "name": "pls",
     "title": "PLS",
     "xords": ords,
     "yords": ords,
@@ -308,10 +309,13 @@ pls_components = {
     "ylabels": targets,
     "X": x_plsr_components,
     "Y": y_plsr_components,
-    "show": _SHOW,
 }
 
-plot_components(**pls_components)
+path = "pls-components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, _SHOW, plot_components, **pls_components)
 
 
 plsr_all = PLSRegression(n_components=1).fit(X.drop(columns=["N.", "Semente"]), Y.drop(columns=["N.", "Semente"]))
@@ -328,7 +332,6 @@ for seed in range(1241, 1246):
 
 
 pls_all_components = {
-    "name": "pls_all",
     "title": "PLS",
     "xords": ["X's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
     "yords": ["Y's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
@@ -337,10 +340,13 @@ pls_all_components = {
     "X": x_all_plsr_components,
     "Y": y_all_plsr_components,
     "ncols": 6,
-    "show": _SHOW,
 }
 
-plot_components(**pls_all_components)
+path = "pls_all-components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, _SHOW, plot_components, **pls_all_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -357,7 +363,6 @@ for target, Y_train_target in zip(targets, Y_train.T):
     plsr_each_components = np.append(plsr_each_components, normalize(plsr_each_target.x_rotations_, axis=0), axis=1)
 
 pls_targets_components = {
-    "name": "pls_targets",
     "title": "PLS",
     "xords": [ "X's " + t for t in ["all", *targets[:-3]] ],
     "yords": [ "X's " + t for t in targets[-3:] ],
@@ -365,10 +370,13 @@ pls_targets_components = {
     "ylabels": descriptors,
     "X": plsr_each_components[:, :3],
     "Y": plsr_each_components[:, 3:],
-    "show": _SHOW,
 }
 
-plot_components(**pls_targets_components)
+path = "pls_targets-components"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, _SHOW, plot_components, **pls_targets_components)
 
 
 # === PCR vs. PLSR ===

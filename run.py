@@ -17,6 +17,8 @@ from plots import plot_predictions, plot_components
 from util import fit_predict_try_transform, get_globs, get_paths, latexify
 
 
+_SHOW = True
+
 NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
 
@@ -89,6 +91,7 @@ pcr_predictions = {
     "R2": r2_score(Y_test[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
     "iter_x": False,
     "ncols": 3,
+    "show": _SHOW,
 }
 
 plot_predictions(**pcr_predictions)
@@ -107,7 +110,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # X's Principal Components
@@ -121,8 +124,12 @@ if not any(os.path.exists(path) for path in globs):
                title=f"Y's PCA 1 vs. X's PCA {i + 1}, $R^2 = {R2_X_pcr_t[i]:.3f}$")
         ax.legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+        input("Press Enter to continue...")
+    else:
+        for path in paths:
+            fig.savefig(path)
 
 Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
@@ -301,6 +308,7 @@ pls_components = {
     "ylabels": targets,
     "X": x_plsr_components,
     "Y": y_plsr_components,
+    "show": _SHOW,
 }
 
 plot_components(**pls_components)
@@ -329,6 +337,7 @@ pls_all_components = {
     "X": x_all_plsr_components,
     "Y": y_all_plsr_components,
     "ncols": 6,
+    "show": _SHOW,
 }
 
 plot_components(**pls_all_components)
@@ -356,6 +365,7 @@ pls_targets_components = {
     "ylabels": descriptors,
     "X": plsr_each_components[:, :3],
     "Y": plsr_each_components[:, 3:],
+    "show": _SHOW,
 }
 
 plot_components(**pls_targets_components)

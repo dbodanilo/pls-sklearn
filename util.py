@@ -46,17 +46,19 @@ def latexify(strs):
     return [f"${s}$" if s.find("_") > 0 else s for s in strs]
 
 
-def show_or_save(paths, globs, show, plot, *args, **kwargs):
+def show_or_save(paths, globs, plot, show=False, pause=False, **kwargs):
     # Only generate it once.
     if not any(os.path.exists(path) for path in globs) or show:
-        fig = plot(*args, **kwargs)
+        fig = plot(**kwargs)
 
         if show:
             fig.show()
-            input("Press Enter to continue...")
         else:
             for path in paths:
                 fig.savefig(path)
+
+        if pause:
+            input("Press Enter to continue...")
 
 
 def try_transform(model, X):

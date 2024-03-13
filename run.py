@@ -96,7 +96,7 @@ path = "pcr-predictions"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, _SHOW, plot_predictions, **pcr_predictions)
+show_or_save(paths, globs, plot_predictions, _SHOW, **pcr_predictions)
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
@@ -297,7 +297,7 @@ path = "pls-first_components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, _SHOW, plot_components, **pls_first_components)
+show_or_save(paths, globs, plot_components, _SHOW, **pls_first_components)
 
 
 pls_components = {
@@ -314,7 +314,7 @@ path = "pls-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, _SHOW, plot_components, **pls_components)
+show_or_save(paths, globs, plot_components, _SHOW, **pls_components)
 
 
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
@@ -348,7 +348,7 @@ path = "pls_all-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, _SHOW, plot_components, **pls_all_components)
+show_or_save(paths, globs, plot_components, _SHOW, **pls_all_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -381,7 +381,7 @@ path = "pls_targets-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, _SHOW, plot_components, **pls_targets_components)
+show_or_save(paths, globs, plot_components, _SHOW, **pls_targets_components)
 
 
 # === PCR vs. PLSR ===

@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 
 
@@ -6,13 +5,13 @@ def plot_components(title, xords, yords, xlabels, ylabels, X, Y, nrows=2, ncols=
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(10 * ncols, 4 * nrows), layout="constrained")
 
-    for i, (x_ax, ordinal) in enumerate(zip(axes[0], xords)):
+    for i, (x_ax, ordinal) in enumerate(zip(axes.flat[:ncols], xords)):
         x_ax.bar(xlabels, X[:, i])
         x_ax.set_ylim((-1, 1))
         x_ax.grid(True, axis="y")
         x_ax.set(title=f"{ordinal} {title} component")
 
-    for j, (y_ax, ordinal) in enumerate(zip(axes[1], yords)):
+    for j, (y_ax, ordinal) in enumerate(zip(axes.flat[ncols:], yords)):
         y_ax.bar(ylabels, Y[:, j])
         y_ax.set_ylim((-1, 1))
         y_ax.grid(True, axis="y")

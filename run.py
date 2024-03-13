@@ -275,31 +275,30 @@ if not any(os.path.exists(path) for path in globs):
     for path in paths:
         fig.savefig(path)
 
+
+ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
+
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
+
+pls_first_components = {
+    "title": "PLS",
+    "xords": ords,
+    "yords": ords,
+    "xlabels": descriptors,
+    "ylabels": targets,
+    "X": x_plsr_components[:, 0].reshape(-1, 1),
+    "Y": y_plsr_components[:, 0].reshape(-1, 1),
+    "nrows": 2,
+    "ncols": 1,
+}
 
 path = "pls-first_components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs):
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8), layout="constrained")
+show_or_save(paths, globs, _SHOW, plot_components, **pls_first_components)
 
-    axes[0].bar(descriptors, x_plsr_components[:, 0])
-    axes[0].set_ylim((-1, 1))
-    axes[0].grid(True, axis="y")
-    axes[0].set(title="1st PLS components")
-
-    axes[1].bar(targets, y_plsr_components[:, 0])
-    axes[1].set_ylim((-1, 1))
-    axes[1].grid(True, axis="y")
-
-    for path in paths:
-        fig.savefig(path)
-
-
-ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
 
 pls_components = {
     "title": "PLS",
@@ -318,23 +317,26 @@ globs = get_globs(path, prefix, exts)
 show_or_save(paths, globs, _SHOW, plot_components, **pls_components)
 
 
-plsr_all = PLSRegression(n_components=1).fit(X.drop(columns=["N.", "Semente"]), Y.drop(columns=["N.", "Semente"]))
+X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
+
+plsr_all = PLSRegression(n_components=n_targets).fit(X_all, Y_all)
 
 x_all_plsr_components = normalize(plsr_all.x_rotations_, axis=0)
 y_all_plsr_components = normalize(plsr_all.y_rotations_, axis=0)
 
 for seed in range(1241, 1246):
     X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
-    plsr = PLSRegression(n_components=1).fit(X_train, Y_train)
+    plsr = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
-    x_all_plsr_components = np.append(x_all_plsr_components, normalize(plsr.x_rotations_, axis=0), axis=1)
-    y_all_plsr_components = np.append(y_all_plsr_components, normalize(plsr.y_rotations_, axis=0), axis=1)
-
+    x_all_plsr_components = np.append(x_all_plsr_components,
+                                      normalize(plsr.x_rotations_, axis=0), axis=1)
+    y_all_plsr_components = np.append(y_all_plsr_components,
+                                      normalize(plsr.y_rotations_, axis=0), axis=1)
 
 pls_all_components = {
     "title": "PLS",
-    "xords": ["X's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
-    "yords": ["Y's seed: " + str(seed) for seed in ["all", *range(1241, 1246)] ],
+    "xords": ["X's seed: " + str(seed) for seed in ["all", *range(1241, 1246)]],
+    "yords": ["Y's seed: " + str(seed) for seed in ["all", *range(1241, 1246)]],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_all_plsr_components,
@@ -353,19 +355,22 @@ show_or_save(paths, globs, _SHOW, plot_components, **pls_all_components)
 # for `Y = predict(X)` (based on r2_score).
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
 
-plsr_all_targets = PLSRegression(n_components=1).fit(X_train, Y_train)
+# TODO: evaluate stability among runs for each target variable.
+plsr_all_targets = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
 plsr_each_components = normalize(plsr_all_targets.x_rotations_, axis=0)
 
 for target, Y_train_target in zip(targets, Y_train.T):
-    plsr_each_target = PLSRegression(n_components=1).fit(X_train, Y_train_target)
+    plsr_each_target = PLSRegression(n_components=n_targets).fit(
+        X_train, Y_train_target)
 
-    plsr_each_components = np.append(plsr_each_components, normalize(plsr_each_target.x_rotations_, axis=0), axis=1)
+    plsr_each_components = np.append(plsr_each_components, normalize(
+        plsr_each_target.x_rotations_, axis=0), axis=1)
 
 pls_targets_components = {
     "title": "PLS",
-    "xords": [ "X's " + t for t in ["all", *targets[:-3]] ],
-    "yords": [ "X's " + t for t in targets[-3:] ],
+    "xords": ["X's " + t for t in ["all", *targets[:-3]]],
+    "yords": ["X's " + t for t in targets[-3:]],
     "xlabels": descriptors,
     "ylabels": descriptors,
     "X": plsr_each_components[:, :3],

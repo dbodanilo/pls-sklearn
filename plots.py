@@ -14,11 +14,16 @@ def plot_components(title, xords, yords, xlabels, ylabels, X, Y, nrows=2, ncols=
         x_ax.grid(True, axis="y")
         x_ax.set(title=f"{ordinal} {title} component")
 
+        # reference: https://github.com/matplotlib/matplotlib/issues/13774#issuecomment-478250353
+        plt.setp(x_ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+
     for j, (y_ax, ordinal) in enumerate(zip(axes.flat[ncols:], yords)):
         y_ax.bar(ylabels, Y[:, j])
         y_ax.set_ylim((-1, 1))
         y_ax.grid(True, axis="y")
         y_ax.set(title=f"{ordinal} {title} component")
+
+        plt.setp(y_ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
     return fig
 

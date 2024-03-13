@@ -1,17 +1,22 @@
 import pandas as pd
 
 
-def load_leme(idwl=True):
+def load_leme(idwl=True, split=True):
     path = "leme-fronteira.csv"
     if idwl:
         path = "leme-fronteira-IDWL.csv"
 
     leme_data = pd.read_csv(path, delimiter="\t")
-    Y = leme_data[["N.", "Semente", "SR", "Area", "A_{v0}", "f_{T}", "Pwr"]]
-    # Don't drop for X ["N.", "Semente"] id columns.
-    X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
 
-    return (X, Y)
+    if split:
+        Y = leme_data[["N.", "Semente", "SR",
+                       "Area", "A_{v0}", "f_{T}", "Pwr"]]
+        # Don't drop for X ["N.", "Semente"] id columns.
+        X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
+
+        return (X, Y)
+    else:
+        return leme_data
 
 
 # NOTE: seed=1244 was responsible for the worst r2_score for

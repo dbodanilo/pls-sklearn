@@ -146,7 +146,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
@@ -167,8 +167,14 @@ if not any(os.path.exists(path) for path in globs):
                 title=f"X's PCA 2 vs. Y's PCA 2, $R^2 = {R2_Y_pcr_t[1]:.3f}$")
     axes[0].legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
 
 
 # === PLSR ===
@@ -186,7 +192,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # targets: Av0, fT, Pwr
@@ -203,8 +209,15 @@ if not any(os.path.exists(path) for path in globs):
                title=f"X's 1st PLS component vs. {target}, $R^2 = {R2_Y_plsr[i]:.3f}$")
         ax.legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 r_plsr = PLSRegression(n_components=n_max).fit(Y_train, X_train)
 
@@ -221,7 +234,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     # X's principal components.
@@ -235,8 +248,15 @@ if not any(os.path.exists(path) for path in globs):
                title=f"PLS {i + 1}, $R^2 = {R2_X_plsr_t[i]:.3f}$")
         ax.legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 _, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
 
@@ -247,7 +267,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
     axes[0].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
                     label="ground truth")
@@ -276,8 +296,14 @@ if not any(os.path.exists(path) for path in globs):
                 title=f"PLS 3, $R^2 = {R2_Y_plsr_t[2]:.3f}$")
     axes[2].legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
 
 
 ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
@@ -463,7 +489,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     # preview accuracy on first components.
@@ -487,15 +513,22 @@ if not any(os.path.exists(path) for path in globs):
                 title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
     axes[1].legend()
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 path = "pca_vs_pls-first_components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
 
     axes[0].bar(targets, y_pca_step.components_[0])
@@ -508,15 +541,22 @@ if not any(os.path.exists(path) for path in globs):
     axes[1].grid(True, axis="y")
     axes[1].set(title="1st PLS component")
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 path = "pca_vs_pls-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(2, 3, figsize=(15, 8), layout="constrained")
     axes[0, 0].bar(targets, y_pca_step.components_[0])
     axes[0, 0].set_ylim((-1, 1))
@@ -548,8 +588,15 @@ if not any(os.path.exists(path) for path in globs):
     axes[1, 2].grid(True, axis="y")
     axes[1, 2].set(title="3rd PLS component")
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
@@ -580,7 +627,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
     axes[0].plot(y_limits_pca, y_limits_pca)
@@ -595,8 +642,15 @@ if not any(os.path.exists(path) for path in globs):
                 ylabel="Predicted Y projected onto 1st PLS component",
                 title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 x_test_pca_min = min(X_test_pca[:, 0].min(), X_pred_pcr_t[:, 0].min())
 x_test_pca_max = max(X_test_pca[:, 0].max(), X_pred_pcr_t[:, 0].max())
@@ -614,7 +668,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
 
     axes[0].plot(x_limits_pca, x_limits_pca)
@@ -628,8 +682,16 @@ if not any(os.path.exists(path) for path in globs):
     axes[1].set(xlabel="Actual X projected onto 1st PLS component",
                 ylabel="Predicted X projected onto 1st PLS component",
                 title=f"PLS Regression, $R^2 = {R2_X_plsr_t[0]:.3f}$")
-    for path in paths:
-        fig.savefig(path)
+
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 # === SVR ===
 
@@ -655,7 +717,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 # Only generate it once.
-if not any(os.path.exists(path) for path in globs):
+if not any(os.path.exists(path) for path in globs) or _SHOW:
     fig, axes = plt.subplots(1, 3, figsize=(15, 10), layout="constrained",
                              sharey=True)
 
@@ -696,8 +758,14 @@ if not any(os.path.exists(path) for path in globs):
              va="center", rotation="vertical")
     fig.suptitle("Support Vector Regression", fontsize=14)
 
-    for path in paths:
-        fig.savefig(path)
+    if _SHOW:
+        fig.show()
+    else:
+        for path in paths:
+            fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
 
 
 # DOING: train only multi-output regressors.

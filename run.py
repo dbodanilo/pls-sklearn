@@ -18,6 +18,7 @@ from util import fit_predict_try_transform, get_globs, get_paths, latexify, show
 
 
 _SHOW = True
+_PAUSE = True
 
 NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
@@ -25,8 +26,8 @@ TODAY = NOW.strftime("%Y-%m-%d")
 X, Y = load_leme()
 
 descriptors = latexify(X.columns.drop(["N.", "Semente"]))
-
 targets = latexify(Y.columns.drop(["N.", "Semente"]))
+seeds = X["Semente"].value_counts().index
 
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
 
@@ -96,7 +97,7 @@ path = "pcr-predictions"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_predictions, _SHOW, **pcr_predictions)
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE, **pcr_predictions)
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
@@ -128,10 +129,13 @@ if not any(os.path.exists(path) for path in globs) or _SHOW:
 
     if _SHOW:
         fig.show()
-        input("Press Enter to continue...")
     else:
         for path in paths:
             fig.savefig(path)
+
+    if _PAUSE:
+        input("Press Enter to continue...")
+
 
 Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
 
@@ -297,7 +301,8 @@ path = "pls-first_components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, **pls_first_components)
+show_or_save(paths, globs, plot_components, _SHOW,
+             _PAUSE, **pls_first_components)
 
 
 pls_components = {
@@ -314,29 +319,37 @@ path = "pls-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, **pls_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE, **pls_components)
 
 
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
 
 plsr_all = PLSRegression(n_components=n_targets).fit(X_all, Y_all)
 
-x_all_plsr_components = normalize(plsr_all.x_rotations_, axis=0)
-y_all_plsr_components = normalize(plsr_all.y_rotations_, axis=0)
+x_all_plsr_components = plsr_all.x_rotations_[:, 0].reshape(-1, 1)
+y_all_plsr_components = plsr_all.y_rotations_[:, 0].reshape(-1, 1)
 
 for seed in range(1241, 1246):
     X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
     plsr = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
+    x_first_component = plsr.x_rotations_[:, 0].reshape(-1, 1)
+    y_first_component = plsr.y_rotations_[:, 0].reshape(-1, 1)
+
     x_all_plsr_components = np.append(x_all_plsr_components,
-                                      normalize(plsr.x_rotations_, axis=0), axis=1)
+                                      x_first_component, axis=1)
     y_all_plsr_components = np.append(y_all_plsr_components,
-                                      normalize(plsr.y_rotations_, axis=0), axis=1)
+                                      y_first_component, axis=1)
+
+x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
+y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
+
+all_seeds = ["all", *(str(seed) for seed in seeds)]
 
 pls_all_components = {
     "title": "PLS",
-    "xords": ["X's seed: " + str(seed) for seed in ["all", *range(1241, 1246)]],
-    "yords": ["Y's seed: " + str(seed) for seed in ["all", *range(1241, 1246)]],
+    "xords": [f"X's seed: {seed}" for seed in all_seeds],
+    "yords": [f"Y's seed: {seed}" for seed in all_seeds],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_all_plsr_components,
@@ -348,7 +361,8 @@ path = "pls_all-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, **pls_all_components)
+show_or_save(paths, globs, plot_components,
+             _SHOW, _PAUSE, **pls_all_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -358,19 +372,24 @@ X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
 # TODO: evaluate stability among runs for each target variable.
 plsr_all_targets = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
-plsr_each_components = normalize(plsr_all_targets.x_rotations_, axis=0)
+plsr_each_components = plsr_all_targets.x_rotations_[:, 0].reshape(-1, 1)
 
 for target, Y_train_target in zip(targets, Y_train.T):
     plsr_each_target = PLSRegression(n_components=n_targets).fit(
         X_train, Y_train_target)
 
-    plsr_each_components = np.append(plsr_each_components, normalize(
-        plsr_each_target.x_rotations_, axis=0), axis=1)
+    plsr_each_components = np.append(
+        plsr_each_components,
+        plsr_each_target.x_rotations_[:, 0].reshape(-1, 1),
+        axis=1
+    )
+
+all_targets = ["all", *targets]
 
 pls_targets_components = {
     "title": "PLS",
-    "xords": ["X's " + t for t in ["all", *targets[:-3]]],
-    "yords": ["X's " + t for t in targets[-3:]],
+    "xords": ["X's " + t for t in all_targets[:-3]],
+    "yords": ["X's " + t for t in all_targets[-3:]],
     "xlabels": descriptors,
     "ylabels": descriptors,
     "X": plsr_each_components[:, :3],
@@ -381,7 +400,8 @@ path = "pls_targets-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, **pls_targets_components)
+show_or_save(paths, globs, plot_components, _SHOW,
+             _PAUSE, **pls_targets_components)
 
 
 # === PCR vs. PLSR ===

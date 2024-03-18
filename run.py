@@ -14,7 +14,7 @@ from sklearn.preprocessing import normalize
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from model import load_leme, train_test_seed_split
 from plots import plot_predictions, plot_components
-from util import fit_predict_try_transform, get_globs, get_paths, latexify, show_or_save
+from util import detexify, fit_predict_try_transform, get_globs, get_paths, latexify, show_or_save
 
 
 _SHOW = True
@@ -402,6 +402,58 @@ globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW,
              _PAUSE, **pls_targets_components)
+
+# 0th index: `seed=None` means all samples (no split).
+splits = [train_test_seed_split(X, Y, seed=None)]
+
+# NOTE: evaluate stability among runs for each target variable.
+for seed in range(1241, 1246):
+    splits.append(train_test_seed_split(X, Y, seed=seed))
+
+
+plsr_regressors = {}
+plsr_components = {}
+
+for seed, (X_train, X_test, Y_train, Y_test) in zip(range(1240, 1246), splits):
+    plsr_regressors[seed] = {"all":  PLSRegression(n_components=n_targets).fit(
+        X_train, Y_train)}
+
+    all_first_component = plsr_regressors[seed]["all"].x_rotations_[:, 0]
+
+    # Only set it in first pass.
+    if seed == 1240:
+        for target in targets:
+            plsr_components[target] = all_first_component.reshape(-1, 1)
+
+    for target, Y_train_target in zip(targets, Y_train.T):
+        plsr_regressors[seed][target] = PLSRegression(n_components=n_targets).fit(
+            X_train, Y_train_target)
+
+        target_first_component = plsr_regressors[seed][target].\
+            x_rotations_[:, 0].reshape(-1, 1)
+
+        plsr_components[target] = np.append(
+            plsr_components[target], target_first_component, axis=1)
+
+for target, components in plsr_components.items():
+    components = normalize(components, axis=0)
+
+    pls_target_components = {
+        "title": f"PLS for {target}",
+        "xords": [f"X's seed: {seed}" for seed in all_seeds[:-3]],
+        "yords": [f"X's seed: {seed}" for seed in all_seeds[-3:]],
+        "xlabels": descriptors,
+        "ylabels": descriptors,
+        "X": components[:, :3],
+        "Y": components[:, 3:],
+    }
+
+    path = f"pls_{detexify(target)}-components"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
+
+    show_or_save(paths, globs, plot_components, _SHOW,
+                 False, **pls_target_components)
 
 
 # === PCR vs. PLSR ===

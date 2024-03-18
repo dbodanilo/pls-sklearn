@@ -4,6 +4,10 @@ from datetime import datetime
 from glob import glob
 
 
+def detexify(path):
+    return path.replace("$", "").replace("{", "").replace("}", "")
+
+
 def get_globs(path, prefix, exts):
     return set(g for ext in exts for g in glob(f"{prefix}*{path}{ext}"))
 

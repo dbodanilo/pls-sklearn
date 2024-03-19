@@ -476,6 +476,7 @@ for target, components in plsr_components.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
+    # NOTE: pausing in a loop isn't practical.
     show_or_save(paths, globs, plot_components, _SHOW,
                  False, **pls_target_components)
 
@@ -521,34 +522,27 @@ if not any(os.path.exists(path) for path in globs) or _SHOW:
         input("Press Enter to continue...")
 
 
+# NOTE: different title for X and Y.
+pca_vs_pls_first_components = {
+    "xtitle": "PCA",
+    "ytitle": "PLS",
+    "xords": ["1st"],
+    "xlabels": targets,
+    "X": y_pca_step.components_[0].reshape(-1, 1),
+    "Y": y_plsr_components[:, 0].reshape(-1, 1),
+    "nrows": 2,
+    "ncols": 1,
+}
+
 path = "pca_vs_pls-first_components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
-
-    axes[0].bar(targets, y_pca_step.components_[0])
-    axes[0].set_ylim((-1, 1))
-    axes[0].grid(True, axis="y")
-    axes[0].set(title="1st PCA component")
-
-    axes[1].bar(targets, y_plsr_components[:, 0])
-    axes[1].set_ylim((-1, 1))
-    axes[1].grid(True, axis="y")
-    axes[1].set(title="1st PLS component")
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_components, _SHOW,
+             _PAUSE, **pca_vs_pls_first_components)
 
 
+# TODO: use plot_components() and show_or_save()
 path = "pca_vs_pls-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)

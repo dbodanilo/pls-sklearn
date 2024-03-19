@@ -312,9 +312,9 @@ x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
 pls_first_components = {
-    "title": "PLS",
-    "xords": ords,
-    "yords": ords,
+    "xtitle": "PLS",
+    "xords": ["X's " + o for o in ords],
+    "yords": ["Y's " + o for o in ords],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components[:, 0].reshape(-1, 1),
@@ -332,9 +332,9 @@ show_or_save(paths, globs, plot_components, _SHOW,
 
 
 pls_components = {
-    "title": "PLS",
-    "xords": ords,
-    "yords": ords,
+    "xtitle": "PLS",
+    "xords": ["X's " + o for o in ords],
+    "yords": ["Y's " + o for o in ords],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components,
@@ -373,7 +373,7 @@ y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 all_seeds = ["all", *(str(seed) for seed in seeds)]
 
 pls_all_components = {
-    "title": "PLS",
+    "xtitle": "PLS",
     "xords": [f"X's seed: {seed}" for seed in all_seeds],
     "yords": [f"Y's seed: {seed}" for seed in all_seeds],
     "xlabels": descriptors,
@@ -413,11 +413,10 @@ for target, Y_train_target in zip(targets, Y_train.T):
 all_targets = ["all", *targets]
 
 pls_targets_components = {
-    "title": "PLS",
+    "xtitle": "PLS",
     "xords": ["X's " + t for t in all_targets[:-3]],
     "yords": ["X's " + t for t in all_targets[-3:]],
     "xlabels": descriptors,
-    "ylabels": descriptors,
     "X": plsr_each_components[:, :3],
     "Y": plsr_each_components[:, 3:],
 }
@@ -465,11 +464,10 @@ for target, components in plsr_components.items():
     components = normalize(components, axis=0)
 
     pls_target_components = {
-        "title": f"PLS for {target}",
+        "xtitle": f"PLS for {target}",
         "xords": [f"X's seed: {seed}" for seed in all_seeds[:-3]],
         "yords": [f"X's seed: {seed}" for seed in all_seeds[-3:]],
         "xlabels": descriptors,
-        "ylabels": descriptors,
         "X": components[:, :3],
         "Y": components[:, 3:],
     }

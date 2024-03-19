@@ -542,52 +542,23 @@ show_or_save(paths, globs, plot_components, _SHOW,
              _PAUSE, **pca_vs_pls_first_components)
 
 
-# TODO: use plot_components() and show_or_save()
+pca_vs_pls_components = {
+    "xtitle": "PCA",
+    "ytitle": "PLS",
+    "xords": ["1st", "2nd", "3rd"],
+    "xlabels": targets,
+    "X": y_pca_step.components_.T,
+    "Y": y_plsr_components,
+    "nrows": 2,
+    "ncols": 3,
+}
+
 path = "pca_vs_pls-components"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(2, 3, figsize=(15, 8), layout="constrained")
-    axes[0, 0].bar(targets, y_pca_step.components_[0])
-    axes[0, 0].set_ylim((-1, 1))
-    axes[0, 0].grid(True, axis="y")
-    axes[0, 0].set(title="1st PCA component")
-
-    axes[0, 1].bar(targets, y_pca_step.components_[1])
-    axes[0, 1].set_ylim((-1, 1))
-    axes[0, 1].grid(True, axis="y")
-    axes[0, 1].set(title="2nd PCA component")
-
-    axes[0, 2].bar(targets, y_pca_step.components_[2])
-    axes[0, 2].set_ylim((-1, 1))
-    axes[0, 2].grid(True, axis="y")
-    axes[0, 2].set(title="3rd PCA component")
-
-    axes[1, 0].bar(targets, y_plsr_components[:, 0])
-    axes[1, 0].set_ylim((-1, 1))
-    axes[1, 0].grid(True, axis="y")
-    axes[1, 0].set(title="1st PLS component")
-
-    axes[1, 1].bar(targets, y_plsr_components[:, 1])
-    axes[1, 1].set_ylim((-1, 1))
-    axes[1, 1].grid(True, axis="y")
-    axes[1, 1].set(title="2nd PLS component")
-
-    axes[1, 2].bar(targets, y_plsr_components[:, 2])
-    axes[1, 2].set_ylim((-1, 1))
-    axes[1, 2].grid(True, axis="y")
-    axes[1, 2].set(title="3rd PLS component")
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_components, _SHOW,
+             _PAUSE, **pca_vs_pls_components)
 
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score

@@ -326,9 +326,10 @@ pls_first_components = {
     "Y": y_plsr_components[:, 0].reshape(-1, 1),
     "nrows": 2,
     "ncols": 1,
+    "sort": "desc",
 }
 
-path = "pls-first_components"
+path = "pls-first_components-sort_" + pls_first_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -344,9 +345,10 @@ pls_components = {
     "ylabels": targets,
     "X": x_plsr_components,
     "Y": y_plsr_components,
+    "sort": "desc",
 }
 
-path = "pls-components"
+path = "pls-components-sort_" + pls_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -386,9 +388,10 @@ pls_all_components = {
     "X": x_all_plsr_components,
     "Y": y_all_plsr_components,
     "ncols": 6,
+    "sort": "desc",
 }
 
-path = "pls_all-components"
+path = "pls_all-components-sort_" + pls_all_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -427,9 +430,11 @@ pls_targets_components = {
     "xlabels": descriptors,
     "X": plsr_targets_components.iloc[:, :3],
     "Y": plsr_targets_components.iloc[:, 3:],
+    "sort": "desc",
 }
 
-path = "pls_targets-components"
+path = f"pls_targets-components-seed_{seed}-sort_" + \
+    pls_targets_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -480,9 +485,11 @@ for target, components in plsr_components.items():
         "xlabels": descriptors,
         "X": components[:, :3],
         "Y": components[:, 3:],
+        "sort": "desc",
     }
 
-    path = f"pls_{detexify(target)}-components"
+    path = f"pls_{detexify(target)}-components-sort_" + \
+        pls_target_components["sort"]
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -543,9 +550,11 @@ pca_vs_pls_first_components = {
     "Y": y_plsr_components[:, 0].reshape(-1, 1),
     "nrows": 2,
     "ncols": 1,
+    "sort": "desc",
 }
 
-path = "pca_vs_pls-first_components"
+path = "pca_vs_pls-first_components-sort_" + \
+    pca_vs_pls_first_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -562,9 +571,10 @@ pca_vs_pls_components = {
     "Y": y_plsr_components,
     "nrows": 2,
     "ncols": 3,
+    "sort": "desc",
 }
 
-path = "pca_vs_pls-components"
+path = "pca_vs_pls-components-sort_" + pca_vs_pls_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -574,8 +584,10 @@ show_or_save(paths, globs, plot_components, _SHOW,
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
-# TODO: print seed used when outputting plots and scores.
-X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
+# NOTE: print seed used when outputting plots and scores.
+seed = 1241
+
+X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
 
 X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
     ScalerPCR, X_train, X_test, Y_train, Y_test)
@@ -596,7 +608,7 @@ y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-path = "pcr_vs_plsr-regression-best_ratio"
+path = f"pcr_vs_plsr-regression-seed_{seed}"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -637,7 +649,7 @@ x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
-path = "pcr_vs_plsr-regression_reversed-best_ratio"
+path = f"pcr_vs_plsr-regression_reversed-seed_{seed}"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

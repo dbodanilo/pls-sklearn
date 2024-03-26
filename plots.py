@@ -1,13 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from model import load_leme
 from util import latexify
 
 
-def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabels=None, nrows=2, ncols=3):
+def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabels=None, nrows=2, ncols=3, sort=None):
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(10 * ncols, 4 * nrows), layout="constrained")
+    is_pandas = type(X) == pd.DataFrame
+    sort_asc = None if sort is None else sort == "asc"
+
     if ytitle is None:
         ytitle = xtitle
     if yords is None:
@@ -21,23 +25,36 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
     x_mean_x = np.linspace(-1, n_xlabels, n_xlabels)
     y_mean_x = np.linspace(-1, n_ylabels, n_ylabels)
 
-    # j index of the maximum X[i, j] value.
-    xj_max = np.absolute(X).max(axis=1).argmax()
-    yj_max = xj_max
+    x0 = X.iloc[:, 0] if is_pandas else X[:, 0]
+    # No sort.
+    x_abs_argsort = np.arange(x0.shape[0])
+    y_abs_argsort = x_abs_argsort
     if X.shape != Y.shape:
-        yj_max = np.absolute(Y).max(axis=1).argmax()
+        y0 = Y.iloc[:, 0] if is_pandas else Y[:, 0]
+        y_abs_argsort = np.arange(y0.shape[0])
 
     for i, (x_ax, ordinal) in enumerate(zip(axes.flat[:ncols], xords)):
-        xi = X[:, i]
-        # force largest variable to be positive.
-        xi *= np.sign(xi[xj_max])
+        xi = X.iloc[:, i] if is_pandas else X[:, i]
 
-        x_ax.bar(xlabels, xi)
+        xi_abs_argsort = x_abs_argsort
+        if sort_asc is not None:
+            xi_abs_argsort = np.absolute(xi).argsort()
+            if not sort_asc:
+                xi_abs_argsort = np.flip(xi_abs_argsort)
+
+        xi = xi.iloc[xi_abs_argsort] if is_pandas else xi[xi_abs_argsort]
+        xlabels_i = xlabels[xi_abs_argsort]
+
+        # Force first variable to be positive.
+        xi0 = xi.iat[0] if is_pandas else xi[0]
+        xi *= np.sign(xi0)
+
+        x_ax.bar(xlabels_i, xi)
         x_ax.set_ylim((-1, 1))
         x_ax.grid(True, axis="y")
         x_ax.set(title=f"{ordinal} {xtitle} component")
 
-        # reference: https://github.com/matplotlib/matplotlib/issues/13774#issuecomment-478250353
+        # Reference: https://github.com/matplotlib/matplotlib/issues/13774#issuecomment-478250353
         plt.setp(x_ax.get_xticklabels(), rotation=45,
                  ha="right", rotation_mode="anchor")
 
@@ -50,10 +67,21 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         x_ax.set_ylim((-1, 1))
 
     for i, (y_ax, ordinal) in enumerate(zip(axes.flat[ncols:], yords)):
-        yi = Y[:, i]
-        yi *= np.sign(yi[yj_max])
+        yi = Y.iloc[:, i] if is_pandas else Y[:, i]
 
-        y_ax.bar(ylabels, yi)
+        yi_abs_argsort = y_abs_argsort
+        if sort_asc is not None:
+            yi_abs_argsort = np.absolute(yi).argsort()
+            if not sort_asc:
+                yi_abs_argsort = np.flip(yi_abs_argsort)
+
+        yi = yi.iloc[yi_abs_argsort] if is_pandas else yi[yi_abs_argsort]
+        ylabels_i = ylabels[yi_abs_argsort]
+
+        yi0 = yi.iat[0] if is_pandas else yi[0]
+        yi *= np.sign(yi0)
+
+        y_ax.bar(ylabels_i, yi)
         y_ax.set_ylim((-1, 1))
         y_ax.grid(True, axis="y")
         y_ax.set(title=f"{ordinal} {ytitle} component")

@@ -1,5 +1,8 @@
 import os
 
+import numpy as np
+import pandas as pd
+
 from datetime import datetime
 from glob import glob
 
@@ -40,14 +43,14 @@ def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs)
     Y_pred = m.predict(X_test)
     X_pred = rm.predict(Y_test)
 
-    X_pred_t = try_transform(m, X_pred)
-    Y_pred_t = try_transform(rm, Y_pred)
+    X_pred_t = try_transform(m, pd.DataFrame(X_pred, columns=X_train.columns))
+    Y_pred_t = try_transform(rm, pd.DataFrame(Y_pred, columns=Y_train.columns))
 
     return X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t
 
 
 def latexify(strs):
-    return [f"${s}$" if s.find("_") > 0 else s for s in strs]
+    return np.fromiter((f"${s}$" if s.find("_") > 0 else s for s in strs), dtype="<U21")
 
 
 def show_or_save(paths, globs, plot, show=False, pause=False, **kwargs):

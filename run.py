@@ -25,8 +25,13 @@ TODAY = NOW.strftime("%Y-%m-%d")
 
 X, Y = load_leme()
 
-descriptors = latexify(X.columns.drop(["N.", "Semente"]))
-targets = latexify(Y.columns.drop(["N.", "Semente"]))
+# For indexing (original format).
+ds = X.columns.drop(["N.", "Semente"])
+ts = Y.columns.drop(["N.", "Semente"])
+
+# For plotting (ensure LaTeX formatting).
+descriptors = latexify(ds)
+targets = latexify(ts)
 seeds = X["Semente"].value_counts().index
 
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
@@ -86,9 +91,9 @@ pcr_predictions = {
     "xlabels": ["X's PCA " + str(i) for i in range(1, 4)],
     "ylabels": targets[-3:],
     "X": X_test_pca,
-    "Y_true": Y_test[:, -3:],
+    "Y_true": Y_test.iloc[:, -3:],
     "Y_pred": Y_pred_pcr[:, -3:],
-    "R2": r2_score(Y_test[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
+    "R2": r2_score(Y_test.iloc[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
     "iter_x": False,
     "ncols": 3,
 }
@@ -104,7 +109,7 @@ r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 Y_test_pca = y_pca.transform(Y_test)
 
 X_pred_pcr = r_pcr.predict(Y_test)
-X_pred_pcr_t = x_pca.transform(X_pred_pcr)
+X_pred_pcr_t = x_pca.transform(pd.DataFrame(X_pred_pcr, columns=ds))
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
@@ -137,7 +142,7 @@ if not any(os.path.exists(path) for path in globs) or _SHOW:
         input("Press Enter to continue...")
 
 
-Y_pred_pcr_t = y_pca.transform(Y_pred_pcr)
+Y_pred_pcr_t = y_pca.transform(pd.DataFrame(Y_pred_pcr, columns=ts))
 
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 
@@ -183,7 +188,7 @@ plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
 X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
 
-Y_pred_plsr = plsr.predict(X_test)
+Y_pred_plsr = pd.DataFrame(plsr.predict(X_test), columns=ts)
 
 R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
@@ -223,7 +228,7 @@ r_plsr = PLSRegression(n_components=n_max).fit(Y_train, X_train)
 
 Y_test_pls, X_test_pls = r_plsr.transform(Y_test, X_test)
 
-X_pred_plsr = r_plsr.predict(Y_test)
+X_pred_plsr = pd.DataFrame(r_plsr.predict(Y_test), columns=ds)
 
 _, X_pred_plsr_t = r_plsr.transform(Y_test, X_pred_plsr)
 
@@ -348,7 +353,7 @@ globs = get_globs(path, prefix, exts)
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE, **pls_components)
 
 
-X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
+X_all, Y_all = train_test_seed_split(X, Y, seed=None)
 
 plsr_all = PLSRegression(n_components=n_targets).fit(X_all, Y_all)
 
@@ -393,23 +398,26 @@ show_or_save(paths, globs, plot_components,
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
 # for `Y = predict(X)` (based on r2_score).
-X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=1241)
+seed = None
 
 # TODO: evaluate stability among runs for each target variable.
-plsr_all_targets = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
+plsr_targets_regressors = pd.Series(PLSRegression(
+    n_components=n_targets).fit(X_all, Y_all), index=["all"])
 
-plsr_each_components = plsr_all_targets.x_rotations_[:, 0].reshape(-1, 1)
+plsr_targets_components = pd.DataFrame(
+    plsr_targets_regressors["all"].x_rotations_[:, 0], columns=["all"], index=ds)
 
-for target, Y_train_target in zip(targets, Y_train.T):
-    plsr_each_target = PLSRegression(n_components=n_targets).fit(
-        X_train, Y_train_target)
+for t in ts:
+    Y_train_target = Y_all[t]
 
-    plsr_each_components = np.append(
-        plsr_each_components,
-        plsr_each_target.x_rotations_[:, 0].reshape(-1, 1),
-        axis=1
-    )
+    plsr_targets_regressors[t] = PLSRegression(n_components=n_targets).fit(
+        X_all, Y_train_target)
 
+    plsr_targets_components[t] = plsr_targets_regressors[t].x_rotations_[:, 0]
+
+# For indexing.
+all_ts = ["all", *ts]
+# For plotting.
 all_targets = ["all", *targets]
 
 pls_targets_components = {
@@ -417,8 +425,8 @@ pls_targets_components = {
     "xords": ["X's " + t for t in all_targets[:-3]],
     "yords": ["X's " + t for t in all_targets[-3:]],
     "xlabels": descriptors,
-    "X": plsr_each_components[:, :3],
-    "Y": plsr_each_components[:, 3:],
+    "X": plsr_targets_components.iloc[:, :3],
+    "Y": plsr_targets_components.iloc[:, 3:],
 }
 
 path = "pls_targets-components"
@@ -429,7 +437,7 @@ show_or_save(paths, globs, plot_components, _SHOW,
              _PAUSE, **pls_targets_components)
 
 # 0th index: `seed=None` means all samples (no split).
-splits = [train_test_seed_split(X, Y, seed=None)]
+splits = [(X_all, X_all, Y_all, Y_all)]
 
 # NOTE: evaluate stability among runs for each target variable.
 for seed in range(1241, 1246):
@@ -450,11 +458,13 @@ for seed, (X_train, X_test, Y_train, Y_test) in zip(range(1240, 1246), splits):
         for target in targets:
             plsr_components[target] = all_first_component.reshape(-1, 1)
 
-    for target, Y_train_target in zip(targets, Y_train.T):
-        plsr_regressors[seed][target] = PLSRegression(n_components=n_targets).fit(
+    for t, target in zip(ts, targets):
+        Y_train_target = Y_train[t]
+
+        plsr_regressors[seed][t] = PLSRegression(n_components=n_targets).fit(
             X_train, Y_train_target)
 
-        target_first_component = plsr_regressors[seed][target].\
+        target_first_component = plsr_regressors[seed][t].\
             x_rotations_[:, 0].reshape(-1, 1)
 
         plsr_components[target] = np.append(
@@ -483,6 +493,7 @@ for target, components in plsr_components.items():
 
 # === PCR vs. PLSR ===
 
+# TODO: split it so that PLSR performs better than PCR.
 path = "pcr_vs_plsr-predictions"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)

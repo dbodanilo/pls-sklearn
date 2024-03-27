@@ -133,44 +133,26 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
              **pcr_predictions_reversed_transformed)
 
 
-Y_pred_pcr_t = y_pca.transform(pd.DataFrame(Y_pred_pcr, columns=ts))
+Y_pred_pcr_t = pd.DataFrame(y_pca.transform(Y_pred_pcr))
 
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+
+pcr_predictions_transformed = {
+    "X": X_test_pca,
+    "Y_true": Y_test_pca,
+    "Y_pred": Y_pred_pcr_t,
+    "xlabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
+    "ylabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
+    "R2": R2_Y_pcr_t,
+    "ncols": 3,
+}
 
 path = "pcr-predictions_transformed"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
-
-    axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
-                    label="ground truth")
-    axes[0].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 0], alpha=0.3,
-                    label="predictions")
-    axes[0].set(xlabel="Projected X onto 1st PCA component",
-                ylabel="Projected Y onto 1st PCA component",
-                title=f"X's PCA 1 vs. Y's PCA 1, $R^2 = {R2_Y_pcr_t[0]:.3f}$")
-    axes[0].legend()
-
-    axes[1].scatter(X_test_pca[:, 1], Y_test_pca[:, 1], alpha=0.3,
-                    label="ground truth")
-    axes[1].scatter(X_test_pca[:, 1], Y_pred_pcr_t[:, 1], alpha=0.3,
-                    label="predictions")
-    axes[1].set(xlabel="Projected X onto 2nd PCA component",
-                ylabel="Projected Y onto 2nd PCA component",
-                title=f"X's PCA 2 vs. Y's PCA 2, $R^2 = {R2_Y_pcr_t[1]:.3f}$")
-    axes[0].legend()
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+             **pcr_predictions_transformed)
 
 
 # === PLSR ===

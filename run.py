@@ -103,7 +103,9 @@ path = "pcr-predictions"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE, **pcr_predictions)
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+             **pcr_predictions)
+
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
@@ -263,8 +265,8 @@ path = "pls-first_components-sort_" + pls_first_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW,
-             _PAUSE, **pls_first_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_first_components)
 
 
 pls_components = {
@@ -282,7 +284,8 @@ path = "pls-components-sort_" + pls_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE, **pls_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_components)
 
 
 X_all, Y_all = train_test_seed_split(X, Y, seed=None)
@@ -325,8 +328,8 @@ path = "pls_all-components-sort_" + pls_all_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components,
-             _SHOW, _PAUSE, **pls_all_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_all_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -368,8 +371,9 @@ path = f"pls_targets-components-seed_{seed}-sort_" + \
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW,
-             _PAUSE, **pls_targets_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_targets_components)
+
 
 # 0th index: `seed=None` means all samples (no split).
 splits = [(X_all, X_all, Y_all, Y_all)]
@@ -424,8 +428,8 @@ for target, components in plsr_components.items():
     globs = get_globs(path, prefix, exts)
 
     # NOTE: pausing in a loop isn't practical.
-    show_or_save(paths, globs, plot_components, _SHOW,
-                 False, **pls_target_components)
+    show_or_save(paths, globs, plot_components, _SHOW, False,
+                 **pls_target_components)
 
 
 # === PCR vs. PLSR ===
@@ -466,7 +470,7 @@ for seed in (None, *range(1241, 1246)):
 
     # No pause in for loop.
     show_or_save(paths, globs, plot_predictions, _SHOW, False,
-                    **pcr_vs_plsr_predictions)
+                 **pcr_vs_plsr_predictions)
 
 
 # NOTE: different title for X and Y.
@@ -487,8 +491,8 @@ path = "pca_vs_pls-first_components-sort_" + \
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW,
-             _PAUSE, **pca_vs_pls_first_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pca_vs_pls_first_components)
 
 
 pca_vs_pls_components = {
@@ -507,8 +511,8 @@ path = "pca_vs_pls-components-sort_" + pca_vs_pls_components["sort"]
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW,
-             _PAUSE, **pca_vs_pls_components)
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pca_vs_pls_components)
 
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score

@@ -217,52 +217,27 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
              **plsr_predictions_reversed_transformed)
 
 
-_, Y_pred_plsr_t = plsr.transform(X_test, Y_pred_plsr)
+_, Y_pred_plsr_t = (pd.DataFrame(test_t) for test_t in plsr.transform(X_test, Y_pred_plsr))
 
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+
+plsr_predictions_transformed = {
+    "X": X_test_pls,
+    "Y_true": Y_test_pls,
+    "Y_pred": Y_pred_plsr_t,
+    "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
+    "ylabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
+    "R2": R2_Y_plsr_t,
+    "ncols": 3,
+    "nrows": 2,
+}
 
 path = "plsr-predictions_transformed"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
-    axes[0].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
-                    label="ground truth")
-    axes[0].scatter(X_test_pls[:, 0], Y_pred_plsr_t[:, 0], alpha=0.3,
-                    label="predictions")
-    axes[0].set(xlabel="Projected X onto 1st PLS component",
-                ylabel="Projected Y onto 1st PLS component",
-                title=f"PLS 1, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
-    axes[0].legend()
-
-    axes[1].scatter(X_test_pls[:, 1], Y_test_pls[:, 1], alpha=0.3,
-                    label="ground truth")
-    axes[1].scatter(X_test_pls[:, 1], Y_pred_plsr_t[:, 1], alpha=0.3,
-                    label="predictions")
-    axes[1].set(xlabel="Projected X onto 2nd PLS component",
-                ylabel="Projected Y onto 2nd PLS component",
-                title=f"PLS 2, $R^2 = {R2_Y_plsr_t[1]:.3f}$")
-    axes[1].legend()
-
-    axes[2].scatter(X_test_pls[:, 2], Y_test_pls[:, 2], alpha=0.3,
-                    label="ground truth")
-    axes[2].scatter(X_test_pls[:, 2], Y_pred_plsr_t[:, 2], alpha=0.3,
-                    label="predictions")
-    axes[2].set(xlabel="Projected X onto 3rd PLS component",
-                ylabel="Projected Y onto 3rd PLS component",
-                title=f"PLS 3, $R^2 = {R2_Y_plsr_t[2]:.3f}$")
-    axes[2].legend()
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+             **plsr_predictions_transformed)
 
 
 ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.

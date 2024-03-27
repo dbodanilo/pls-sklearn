@@ -129,9 +129,10 @@ def plot_predictions(xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(5 * ncols, 4 * nrows), layout="constrained")
     is_pandas = type(X) == pd.DataFrame
+    n_max = min(X.shape[1], Y_true.shape[1])
 
     # preview accuracy on first components.
-    for i, ax in enumerate(axes):
+    for i, ax in enumerate(axes.flat[:n_max]):
         xi = i if iter_x else 0
         yi = i if iter_y else 0
 

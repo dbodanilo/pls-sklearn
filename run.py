@@ -88,14 +88,15 @@ Y_pred_pcr = pd.DataFrame(pcr.predict(X_test), columns=Y_train.columns)
 
 # Last three targets are the most important (Av0, fT, Pwr).
 pcr_predictions = {
-    "xlabels": ["X's PCA " + str(i) for i in range(1, 4)],
-    "ylabels": targets[-3:],
+    "xlabels": [f"X's PCA {i}" for i in range(1, n_max + 1)],
+    "ylabels": targets,
     "X": X_test_pca,
-    "Y_true": Y_test.iloc[:, -3:],
-    "Y_pred": Y_pred_pcr.iloc[:, -3:],
-    "R2": r2_score(Y_test.iloc[:, -3:], Y_pred_pcr.iloc[:, -3:], multioutput="raw_values"),
+    "Y_true": Y_test,
+    "Y_pred": Y_pred_pcr,
+    "R2": r2_score(Y_test, Y_pred_pcr, multioutput="raw_values"),
     "iter_x": False,
     "ncols": 3,
+    "nrows": 2,
 }
 
 path = "pcr-predictions"
@@ -106,40 +107,30 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE, **pcr_predictions)
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
-Y_test_pca = y_pca.transform(Y_test)
+Y_test_pca = pd.DataFrame(y_pca.transform(Y_test))
 
-X_pred_pcr = r_pcr.predict(Y_test)
-X_pred_pcr_t = x_pca.transform(pd.DataFrame(X_pred_pcr, columns=ds))
+X_pred_pcr = pd.DataFrame(r_pcr.predict(Y_test), columns=X_train.columns)
+X_pred_pcr_t = pd.DataFrame(x_pca.transform(X_pred_pcr))
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
-path = "pcr-predictions_reversed"
+pcr_predictions_reversed_transformed = {
+    "X": Y_test_pca,
+    "Y_true": X_test_pca,
+    "Y_pred": X_pred_pcr_t,
+    "xlabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
+    "ylabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
+    "iter_x": False,
+    "R2": R2_X_pcr_t,
+    "ncols": 3,
+}
+
+path = "pcr-predictions_reversed_transformed"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
-
-    # X's Principal Components
-    for i, (ax, ord) in enumerate(zip(axes, ["1st", "2nd", "3rd"])):
-        ax.scatter(Y_test_pca[:, 0], X_test_pca[:, i], alpha=0.3,
-                   label="ground truth")
-        ax.scatter(Y_test_pca[:, 0], X_pred_pcr_t[:, i], alpha=0.3,
-                   label="predictions")
-        ax.set(xlabel="Projected Y onto 1st PCA component",
-               ylabel=f"Projected X onto {ord} PCA component",
-               title=f"Y's PCA 1 vs. X's PCA {i + 1}, $R^2 = {R2_X_pcr_t[i]:.3f}$")
-        ax.legend()
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+             **pcr_predictions_reversed_transformed)
 
 
 Y_pred_pcr_t = y_pca.transform(pd.DataFrame(Y_pred_pcr, columns=ts))

@@ -217,7 +217,8 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
              **plsr_predictions_reversed_transformed)
 
 
-_, Y_pred_plsr_t = (pd.DataFrame(test_t) for test_t in plsr.transform(X_test, Y_pred_plsr))
+_, Y_pred_plsr_t = (pd.DataFrame(test_t)
+                    for test_t in plsr.transform(X_test, Y_pred_plsr))
 
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
@@ -430,43 +431,42 @@ for target, components in plsr_components.items():
 # === PCR vs. PLSR ===
 
 # TODO: split it so that PLSR performs better than PCR.
-path = "pcr_vs_plsr-predictions"
+# NOTE: print seed used when outputting plots and scores.
+seed = 1241
+split = train_test_seed_split(X, Y, seed=seed)
+# split = None
+if len(split) < 4:
+    split = (split[0], split[0], split[1], split[1])
+X_train, X_test, Y_train, Y_test = split
+
+pcr_pred_ts = fit_predict_try_transform(ScalerPCR, *split, n_components=1)
+pcr_pred_ts = (pd.DataFrame(pred_t) for pred_t in pcr_pred_ts)
+X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = pcr_pred_ts
+
+plsr_pred_ts = fit_predict_try_transform(
+    PLSRegression, *split, n_components=1)
+plsr_pred_ts = (pd.DataFrame(pred_t) for pred_t in plsr_pred_ts)
+X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = plsr_pred_ts
+
+R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+
+pcr_vs_plsr_predictions = {
+    "X": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+    "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+    "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
+    "xlabels": ["X's PCA 1", "X's PLS 1"],
+    "ylabels": ["Y's PCA 1", "Y's PLS 1"],
+    "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
+}
+
+path = f"pcr_vs_plsr-predictions-seed_{seed}"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained")
-
-    # preview accuracy on first components.
-    axes[0].scatter(X_test_pca[:, 0], Y_test_pca[:, 0], alpha=0.3,
-                    label="ground truth")
-    axes[0].scatter(X_test_pca[:, 0], Y_pred_pcr_t[:, 0], alpha=0.3,
-                    label="predictions")
-    axes[0].set(
-        xlabel="Projected X onto 1st PCA component",
-        ylabel="Projected Y onto 1st PCA component",
-        title=f"PCA Regression, $R^2 = {R2_Y_pcr_t[0]:.3f}$"
-    )
-    axes[0].legend()
-
-    axes[1].scatter(X_test_pls[:, 0], Y_test_pls[:, 0], alpha=0.3,
-                    label="ground truth")
-    axes[1].scatter(X_test_pls[:, 0], Y_pred_plsr_t[:, 0], alpha=0.3,
-                    label="predictions")
-    axes[1].set(xlabel="Projected X onto 1st PLS component",
-                ylabel="Projected Y onto 1st PLS component",
-                title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
-    axes[1].legend()
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+# No pause in for loop.
+show_or_save(paths, globs, plot_predictions, _SHOW, False,
+                **pcr_vs_plsr_predictions)
 
 
 # NOTE: different title for X and Y.

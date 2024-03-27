@@ -82,9 +82,9 @@ n_max = min(n_samples, n_features, n_targets)
 
 pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
 
-X_test_pca = x_pca.transform(X_test)
+X_test_pca = pd.DataFrame(x_pca.transform(X_test))
 
-Y_pred_pcr = pcr.predict(X_test)
+Y_pred_pcr = pd.DataFrame(pcr.predict(X_test), columns=Y_train.columns)
 
 # Last three targets are the most important (Av0, fT, Pwr).
 pcr_predictions = {
@@ -92,8 +92,8 @@ pcr_predictions = {
     "ylabels": targets[-3:],
     "X": X_test_pca,
     "Y_true": Y_test.iloc[:, -3:],
-    "Y_pred": Y_pred_pcr[:, -3:],
-    "R2": r2_score(Y_test.iloc[:, -3:], Y_pred_pcr[:, -3:], multioutput="raw_values"),
+    "Y_pred": Y_pred_pcr.iloc[:, -3:],
+    "R2": r2_score(Y_test.iloc[:, -3:], Y_pred_pcr.iloc[:, -3:], multioutput="raw_values"),
     "iter_x": False,
     "ncols": 3,
 }

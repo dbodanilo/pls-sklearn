@@ -128,15 +128,20 @@ def plot_correlations():
 def plot_predictions(xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_y=True, nrows=1, ncols=2):
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(5 * ncols, 4 * nrows), layout="constrained")
+    is_pandas = type(X) == pd.DataFrame
 
     # preview accuracy on first components.
     for i, ax in enumerate(axes):
         xi = i if iter_x else 0
         yi = i if iter_y else 0
 
-        ax.scatter(X[:, xi], Y_true[:, yi], alpha=0.3,
+        X_i = X.iloc[:, xi] if is_pandas else X[:, xi]
+        Y_true_i = Y_true.iloc[:, yi] if is_pandas else Y_true[:, yi]
+        Y_pred_i = Y_pred.iloc[:, yi] if is_pandas else Y_pred[:, yi]
+
+        ax.scatter(X_i, Y_true_i, alpha=0.3,
                    label="ground truth")
-        ax.scatter(X[:, xi], Y_pred[:, yi], alpha=0.3,
+        ax.scatter(X_i, Y_pred_i, alpha=0.3,
                    label="predictions")
         ax.set(xlabel=xlabels[xi],
                ylabel=ylabels[yi],

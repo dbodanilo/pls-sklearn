@@ -159,42 +159,30 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
 
 plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
 
-X_test_pls, Y_test_pls = plsr.transform(X_test, Y_test)
+X_test_pls, Y_test_pls = (pd.DataFrame(test_t) for test_t in plsr.transform(X_test, Y_test))
 
-Y_pred_plsr = pd.DataFrame(plsr.predict(X_test), columns=ts)
+Y_pred_plsr = pd.DataFrame(plsr.predict(X_test), columns=Y_train.columns)
 
 R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
+
+plsr_predictions = {
+    "X": X_test_pls,
+    "Y_true": Y_test,
+    "Y_pred": Y_pred_plsr,
+    "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
+    "ylabels": targets,
+    "R2": R2_Y_plsr,
+    "iter_x": False,
+    "ncols": 3,
+    "nrows": 2,
+}
 
 path = "plsr-predictions"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
-
-    # targets: Av0, fT, Pwr
-    indices = list(enumerate(targets))[2:]
-    for ax, (i, target) in zip(axes, indices):
-        # TODO: transform X_test via PCA for direct comparison with PCR,
-        # or any other neutral dimensionality reduction.
-        ax.scatter(X_test_pls[:, 0], Y_test[:, i], alpha=0.3,
-                   label="ground truth")
-        ax.scatter(X_test_pls[:, 0], Y_pred_plsr[:, i], alpha=0.3,
-                   label="predictions")
-        ax.set(xlabel="Projected X onto 1st PLS component",
-               ylabel=target,
-               title=f"X's 1st PLS component vs. {target}, $R^2 = {R2_Y_plsr[i]:.3f}$")
-        ax.legend()
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+             **plsr_predictions)
 
 
 r_plsr = PLSRegression(n_components=n_max).fit(Y_train, X_train)

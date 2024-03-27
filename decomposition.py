@@ -5,11 +5,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
 
-def ScalerPCA(n_components=1):
+# n_components=2 to match PLSRegression's default.
+def ScalerPCA(n_components=2):
     return make_pipeline(StandardScaler(), PCA(n_components=n_components))
 
 
-def ScalerPCR(n_components=1):
+def ScalerPCR(n_components=2):
     return make_pipeline(StandardScaler(), PCA(n_components=n_components), LinearRegression())
 
 

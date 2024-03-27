@@ -432,41 +432,41 @@ for target, components in plsr_components.items():
 
 # TODO: split it so that PLSR performs better than PCR.
 # NOTE: print seed used when outputting plots and scores.
-seed = 1241
-split = train_test_seed_split(X, Y, seed=seed)
-# split = None
-if len(split) < 4:
-    split = (split[0], split[0], split[1], split[1])
-X_train, X_test, Y_train, Y_test = split
+for seed in (None, *range(1241, 1246)):
+    split = train_test_seed_split(X, Y, seed=seed)
+    # split = None
+    if len(split) < 4:
+        split = (split[0], split[0], split[1], split[1])
+    X_train, X_test, Y_train, Y_test = split
 
-pcr_pred_ts = fit_predict_try_transform(ScalerPCR, *split, n_components=1)
-pcr_pred_ts = (pd.DataFrame(pred_t) for pred_t in pcr_pred_ts)
-X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = pcr_pred_ts
+    pcr_pred_ts = fit_predict_try_transform(ScalerPCR, *split, n_components=1)
+    pcr_pred_ts = (pd.DataFrame(pred_t) for pred_t in pcr_pred_ts)
+    X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = pcr_pred_ts
 
-plsr_pred_ts = fit_predict_try_transform(
-    PLSRegression, *split, n_components=1)
-plsr_pred_ts = (pd.DataFrame(pred_t) for pred_t in plsr_pred_ts)
-X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = plsr_pred_ts
+    plsr_pred_ts = fit_predict_try_transform(
+        PLSRegression, *split, n_components=1)
+    plsr_pred_ts = (pd.DataFrame(pred_t) for pred_t in plsr_pred_ts)
+    X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = plsr_pred_ts
 
-R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
-R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+    R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+    R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-pcr_vs_plsr_predictions = {
-    "X": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
-    "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
-    "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
-    "xlabels": ["X's PCA 1", "X's PLS 1"],
-    "ylabels": ["Y's PCA 1", "Y's PLS 1"],
-    "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
-}
+    pcr_vs_plsr_predictions = {
+        "X": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
+        "xlabels": ["X's PCA 1", "X's PLS 1"],
+        "ylabels": ["Y's PCA 1", "Y's PLS 1"],
+        "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
+    }
 
-path = f"pcr_vs_plsr-predictions-seed_{seed}"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-predictions-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-# No pause in for loop.
-show_or_save(paths, globs, plot_predictions, _SHOW, False,
-                **pcr_vs_plsr_predictions)
+    # No pause in for loop.
+    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+                    **pcr_vs_plsr_predictions)
 
 
 # NOTE: different title for X and Y.

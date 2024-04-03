@@ -19,6 +19,7 @@ from util import detexify, fit_predict_try_transform, get_globs, get_paths, late
 
 _SHOW = True
 _PAUSE = True
+_SORT = "desc"
 
 NOW = datetime.now()
 TODAY = NOW.strftime("%Y-%m-%d")
@@ -243,25 +244,26 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
              **plsr_predictions_transformed)
 
 
-ords = ["1st", "2nd", "3rd"]  # TODO: use itertools for /.*th/ ords.
+# TODO: use itertools for /.*th/ ords.
+ords = ["1st", "2nd", "3rd"]
+ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
 
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
 pls_first_components = {
-    "xtitle": "PLS",
-    "xords": ["X's " + o for o in ords],
-    "yords": ["Y's " + o for o in ords],
+    "xtitles": [f"{o} Componente PLS de X" for o in ordinais],
+    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components[:, 0].reshape(-1, 1),
     "Y": y_plsr_components[:, 0].reshape(-1, 1),
-    "nrows": 2,
-    "ncols": 1,
-    "sort": "desc",
+    "ncols": 1,  # First component only.
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = "pls-first_components-sort_" + pls_first_components["sort"]
+path = f"pls-first_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -270,17 +272,17 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 
 
 pls_components = {
-    "xtitle": "PLS",
-    "xords": ["X's " + o for o in ords],
-    "yords": ["Y's " + o for o in ords],
+    "xtitles": [f"{o} Componente PLS de X" for o in ordinais],
+    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_plsr_components,
     "Y": y_plsr_components,
-    "sort": "desc",
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = "pls-components-sort_" + pls_components["sort"]
+path = f"pls-components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -311,20 +313,21 @@ x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
 y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 
 all_seeds = ["all", *(str(seed) for seed in seeds)]
+todas_sementes = ["Nenhuma", *(str(seed) for seed in seeds)]
 
 pls_all_components = {
-    "xtitle": "PLS",
-    "xords": [f"X's seed: {seed}" for seed in all_seeds],
-    "yords": [f"Y's seed: {seed}" for seed in all_seeds],
+    "xtitles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
+    "ytitles": [f"Primeiro Componente PLS de Y, Semente: {s}" for s in todas_sementes],
     "xlabels": descriptors,
     "ylabels": targets,
     "X": x_all_plsr_components,
     "Y": y_all_plsr_components,
-    "ncols": 6,
-    "sort": "desc",
+    "ncols": len(todas_sementes),
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = "pls_all-components-sort_" + pls_all_components["sort"]
+path = f"pls_all-components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -355,19 +358,19 @@ for t in ts:
 all_ts = ["all", *ts]
 # For plotting.
 all_targets = ["all", *targets]
+todos_objetivos = ["Todos", *targets]
 
 pls_targets_components = {
-    "xtitle": "PLS",
-    "xords": ["X's " + t for t in all_targets[:-3]],
-    "yords": ["X's " + t for t in all_targets[-3:]],
+    "xtitles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos[:3]],
+    "ytitles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos[-3:]],
     "xlabels": descriptors,
     "X": plsr_targets_components.iloc[:, :3],
-    "Y": plsr_targets_components.iloc[:, 3:],
-    "sort": "desc",
+    "Y": plsr_targets_components.iloc[:, -3:],
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = f"pls_targets-components-seed_{seed}-sort_" + \
-    pls_targets_components["sort"]
+path = f"pls_targets-components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -413,17 +416,16 @@ for target, components in plsr_components.items():
     components = normalize(components, axis=0)
 
     pls_target_components = {
-        "xtitle": f"PLS for {target}",
-        "xords": [f"X's seed: {seed}" for seed in all_seeds[:-3]],
-        "yords": [f"X's seed: {seed}" for seed in all_seeds[-3:]],
+        "xtitles": [f"Primeiro Componente PLS de X para {target}, Semente: {s}" for s in todas_sementes[:3]],
+        "ytitles": [f"Primeiro Componente PLS de X para {target}, Semente: {s}" for s in todas_sementes[-3:]],
         "xlabels": descriptors,
         "X": components[:, :3],
-        "Y": components[:, 3:],
-        "sort": "desc",
+        "Y": components[:, -3:],
+        "sort": _SORT,
+        "meanlabel": "média",
     }
 
-    path = f"pls_{detexify(target)}-components-sort_" + \
-        pls_target_components["sort"]
+    path = f"pls_{detexify(target)}-components-sort_{_SORT}-lang-pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -475,19 +477,17 @@ for seed in (None, *range(1241, 1246)):
 
 # NOTE: different title for X and Y.
 pca_vs_pls_first_components = {
-    "xtitle": "PCA",
-    "ytitle": "PLS",
-    "xords": ["1st"],
+    "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
+    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": targets,
     "X": y_pca_step.components_[0].reshape(-1, 1),
     "Y": y_plsr_components[:, 0].reshape(-1, 1),
-    "nrows": 2,
     "ncols": 1,
-    "sort": "desc",
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = "pca_vs_pls-first_components-sort_" + \
-    pca_vs_pls_first_components["sort"]
+path = f"pca_vs_pls-first_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -496,18 +496,16 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 
 
 pca_vs_pls_components = {
-    "xtitle": "PCA",
-    "ytitle": "PLS",
-    "xords": ["1st", "2nd", "3rd"],
+    "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
+    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": targets,
     "X": y_pca_step.components_.T,
     "Y": y_plsr_components,
-    "nrows": 2,
-    "ncols": 3,
-    "sort": "desc",
+    "sort": _SORT,
+    "meanlabel": "média",
 }
 
-path = "pca_vs_pls-components-sort_" + pca_vs_pls_components["sort"]
+path = f"pca_vs_pls-components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

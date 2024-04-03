@@ -6,16 +6,14 @@ from model import load_leme
 from util import latexify
 
 
-def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabels=None, nrows=2, ncols=3, sort=None):
+def plot_components(X, Y, xtitles, xlabels, ytitles=None, ylabels=None, meanlabel="mean", nrows=2, ncols=3, sort=None):
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(10 * ncols, 4 * nrows), layout="constrained")
     is_pandas = type(X) == pd.DataFrame
     sort_asc = None if sort is None else sort == "asc"
 
-    if ytitle is None:
-        ytitle = xtitle
-    if yords is None:
-        yords = xords
+    if ytitles is None:
+        ytitles = xtitles
     if ylabels is None:
         ylabels = xlabels
 
@@ -33,7 +31,7 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         y0 = Y.iloc[:, 0] if is_pandas else Y[:, 0]
         y_abs_argsort = np.arange(y0.shape[0])
 
-    for i, (x_ax, ordinal) in enumerate(zip(axes.flat[:ncols], xords)):
+    for i, (x_ax, xtitle) in enumerate(zip(axes.flat[:ncols], xtitles)):
         xi = X.iloc[:, i] if is_pandas else X[:, i]
 
         xi_abs_argsort = x_abs_argsort
@@ -52,7 +50,7 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         x_ax.bar(xlabels_i, xi)
         x_ax.set_ylim((-1, 1))
         x_ax.grid(True, axis="y")
-        x_ax.set(title=f"{ordinal} {xtitle} component")
+        x_ax.set(title=xtitle)
 
         # Reference: https://github.com/matplotlib/matplotlib/issues/13774#issuecomment-478250353
         plt.setp(x_ax.get_xticklabels(), rotation=45,
@@ -61,12 +59,12 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         xi_abs_mean = np.absolute(xi).mean()
         xi_abs_means = np.repeat(xi_abs_mean, n_xlabels)
 
-        x_ax.plot(x_mean_x,  xi_abs_means, color="g", label="$+$|mean|")
-        x_ax.plot(x_mean_x, -xi_abs_means, color="r", label="$-$|mean|")
+        x_ax.plot(x_mean_x,  xi_abs_means, color="g", label=f"$+$|{meanlabel}|")
+        x_ax.plot(x_mean_x, -xi_abs_means, color="r", label=f"$-$|{meanlabel}|")
         x_ax.legend()
         x_ax.set_ylim((-1, 1))
 
-    for i, (y_ax, ordinal) in enumerate(zip(axes.flat[ncols:], yords)):
+    for i, (y_ax, ytitle) in enumerate(zip(axes.flat[ncols:], ytitles)):
         yi = Y.iloc[:, i] if is_pandas else Y[:, i]
 
         yi_abs_argsort = y_abs_argsort
@@ -84,7 +82,7 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         y_ax.bar(ylabels_i, yi)
         y_ax.set_ylim((-1, 1))
         y_ax.grid(True, axis="y")
-        y_ax.set(title=f"{ordinal} {ytitle} component")
+        y_ax.set(title=ytitle)
 
         plt.setp(y_ax.get_xticklabels(), rotation=45,
                  ha="right", rotation_mode="anchor")
@@ -92,8 +90,8 @@ def plot_components(X, Y, xtitle, xords, xlabels, ytitle=None, yords=None, ylabe
         yi_abs_mean = np.absolute(yi).mean()
         yi_abs_means = np.repeat(yi_abs_mean, n_ylabels)
 
-        y_ax.plot(y_mean_x,  yi_abs_means, color="g", label="$+$|mean|")
-        y_ax.plot(y_mean_x, -yi_abs_means, color="r", label="$-$|mean|")
+        y_ax.plot(y_mean_x,  yi_abs_means, color="g", label=f"$+$|{meanlabel}|")
+        y_ax.plot(y_mean_x, -yi_abs_means, color="r", label=f"$-$|{meanlabel}|")
         y_ax.legend()
         y_ax.set_ylim((-1, 1))
 

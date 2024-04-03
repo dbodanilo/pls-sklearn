@@ -550,49 +550,24 @@ show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
              **pcr_vs_plsr_regression)
 
 
-x_test_pca_min = min(X_test_pca.iloc[:, 0].min(),
-                     X_pred_pcr_t.iloc[:, 0].min())
-x_test_pca_max = max(X_test_pca.iloc[:, 0].max(),
-                     X_pred_pcr_t.iloc[:, 0].max())
-x_limits_pca = np.linspace(x_test_pca_min, x_test_pca_max, n_test)
-
-x_test_pls_min = min(X_test_pls.iloc[:, 0].min(),
-                     X_pred_plsr_t.iloc[:, 0].min())
-x_test_pls_max = max(X_test_pls.iloc[:, 0].max(),
-                     X_pred_plsr_t.iloc[:, 0].max())
-x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
-
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
+
+pcr_vs_plsr_regression_reversed = {
+    "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+    "Y_pred": pd.concat((X_pred_pcr_t.iloc[:, 0], X_pred_plsr_t.iloc[:, 0]), axis="columns"),
+    "xlabels": [f"Actual X projected onto 1st {algo} component" for algo in algos],
+    "ylabels": [f"Predicted X projected onto 1st {algo} component" for algo in algos],
+    "titles": [f"{algo} Regression" for algo in algos],
+    "R2": np.array((R2_X_pcr_t[0], R2_X_plsr_t[0])),
+}
 
 path = f"pcr_vs_plsr-regression_reversed-seed_{seed}"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
-
-    axes[0].plot(x_limits_pca, x_limits_pca)
-    axes[0].scatter(X_test_pca[:, 0], X_pred_pcr_t[:, 0])
-    axes[0].set(xlabel="Actual X projected onto 1st PCA component",
-                ylabel="Predicted X projected onto 1st PCA component",
-                title=f"PCA Regression, $R^2 = {R2_X_pcr_t[0]:.3f}$")
-
-    axes[1].plot(x_limits_pls, x_limits_pls)
-    axes[1].scatter(X_test_pls[:, 0], X_pred_plsr_t[:, 0])
-    axes[1].set(xlabel="Actual X projected onto 1st PLS component",
-                ylabel="Predicted X projected onto 1st PLS component",
-                title=f"PLS Regression, $R^2 = {R2_X_plsr_t[0]:.3f}$")
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
+             **pcr_vs_plsr_regression_reversed)
 
 
 # === SVR ===

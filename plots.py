@@ -148,3 +148,26 @@ def plot_predictions(xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_
         ax.legend()
 
     return fig
+
+def plot_regression(Y_true, Y_pred, xlabels, ylabels, titles, R2, nrows=1, ncols=2):
+    fig, axes = plt.subplots(nrows, ncols,
+                             figsize=(5 * ncols, 4 * nrows), layout="constrained")
+    is_pandas = type(Y_true) == pd.DataFrame
+    n_samples = Y_true.shape[0]
+    n_features = Y_true.shape[1]
+
+    for i, ax in enumerate(axes.flat[:n_features]):
+        Y_true_i = Y_true.iloc[:, i] if is_pandas else Y_true[:, i]
+        Y_pred_i = Y_pred.iloc[:, i] if is_pandas else Y_pred[:, i]
+
+        y_min_i = min(Y_true_i.min(), Y_pred_i.min())
+        y_max_i = max(Y_true_i.max(), Y_pred_i.max())
+        y_limits_i = np.linspace(y_min_i, y_max_i, n_samples)
+
+        # Identity: Y_pred = Y_true
+        ax.plot(y_limits_i, y_limits_i)
+        ax.scatter(Y_true_i, Y_pred_i)
+        ax.set(xlabel=xlabels[i], ylabel=ylabels[i],
+               title=f"{titles[i]}, $R^2 = {R2[i]:.3f}$")
+
+    return fig

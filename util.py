@@ -37,14 +37,14 @@ def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs)
     # reverse model (predict sizing based on target metrics)
     rm = model(**mkargs).fit(Y_train, X_train)
 
-    X_test_t = try_transform(m, X_test)
-    Y_test_t = try_transform(rm, Y_test)
+    X_test_t = pd.DataFrame(try_transform(m, X_test))
+    Y_test_t = pd.DataFrame(try_transform(rm, Y_test))
 
-    Y_pred = m.predict(X_test)
-    X_pred = rm.predict(Y_test)
+    Y_pred = pd.DataFrame(m.predict(X_test), columns=Y_train.columns)
+    X_pred = pd.DataFrame(rm.predict(Y_test), columns=X_train.columns)
 
-    X_pred_t = try_transform(m, pd.DataFrame(X_pred, columns=X_train.columns))
-    Y_pred_t = try_transform(rm, pd.DataFrame(Y_pred, columns=Y_train.columns))
+    X_pred_t = pd.DataFrame(try_transform(m, X_pred))
+    Y_pred_t = pd.DataFrame(try_transform(rm, Y_pred))
 
     return X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t
 

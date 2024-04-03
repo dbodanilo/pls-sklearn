@@ -13,7 +13,7 @@ from sklearn.preprocessing import normalize
 
 from decomposition import ScalerPCA, ScalerPCR, ScalerSVR
 from model import load_leme, train_test_seed_split
-from plots import plot_predictions, plot_components
+from plots import plot_components, plot_predictions, plot_regression
 from util import detexify, fit_predict_try_transform, get_globs, get_paths, latexify, show_or_save
 
 
@@ -440,19 +440,16 @@ for target, components in plsr_components.items():
 # NOTE: print seed used when outputting plots and scores.
 for seed in (None, *range(1241, 1246)):
     split = train_test_seed_split(X, Y, seed=seed)
-    # split = None
+    # seed == None
     if len(split) < 4:
         split = (split[0], split[0], split[1], split[1])
     X_train, X_test, Y_train, Y_test = split
 
-    pcr_pred_ts = fit_predict_try_transform(ScalerPCR, *split, n_components=1)
-    pcr_pred_ts = (pd.DataFrame(pred_t) for pred_t in pcr_pred_ts)
-    X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = pcr_pred_ts
+    X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
+        ScalerPCR, *split, n_components=1)
 
-    plsr_pred_ts = fit_predict_try_transform(
+    X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
         PLSRegression, *split, n_components=1)
-    plsr_pred_ts = (pd.DataFrame(pred_t) for pred_t in plsr_pred_ts)
-    X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = plsr_pred_ts
 
     R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
     R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
@@ -517,64 +514,52 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 # over rPCR's.
 # NOTE: print seed used when outputting plots and scores.
 seed = 1241
-
-X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
+split = train_test_seed_split(X, Y, seed=seed)
+# seed == None
+if len(split) < 4:
+    split = (split[0], split[0], split[1], split[1])
+X_train, X_test, Y_train, Y_test = split
 
 X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
-    ScalerPCR, X_train, X_test, Y_train, Y_test)
+    ScalerPCR, *split, n_components=1)
 
 X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
-    PLSRegression, X_train, X_test, Y_train, Y_test)
+    PLSRegression, *split, n_components=1)
 
-y_test_pca_min = min(Y_test_pca[:, 0].min(), Y_pred_pcr_t[:, 0].min())
-y_test_pca_max = max(Y_test_pca[:, 0].max(), Y_pred_pcr_t[:, 0].max())
-y_limits_pca = np.linspace(y_test_pca_min, y_test_pca_max, n_test)
-
-y_test_pls_min = min(Y_test_pls[:, 0].min(), Y_pred_plsr_t[:, 0].min())
-y_test_pls_max = max(Y_test_pls[:, 0].max(), Y_pred_plsr_t[:, 0].max())
-y_limits_pls = np.linspace(y_test_pls_min, y_test_pls_max, n_test)
+algos = ("PCA", "PLS")
 
 # NOTE: display R-squared for the prediction of each
 # component.
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
+pcr_vs_plsr_regression = {
+    "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+    "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
+    "xlabels": [f"Actual Y projected onto 1st {algo} component" for algo in algos],
+    "ylabels": [f"Predicted Y projected onto 1st {algo} component" for algo in algos],
+    "titles": [f"{algo} Regression" for algo in algos],
+    "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
+}
+
 path = f"pcr_vs_plsr-regression-seed_{seed}"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-# Only generate it once.
-if not any(os.path.exists(path) for path in globs) or _SHOW:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5), layout="constrained")
-
-    axes[0].plot(y_limits_pca, y_limits_pca)
-    axes[0].scatter(Y_test_pca[:, 0], Y_pred_pcr_t[:, 0])
-    axes[0].set(xlabel="Actual Y projected onto 1st PCA component",
-                ylabel="Predicted Y projected onto 1st PCA component",
-                title=f"PCA Regression, $R^2 = {R2_Y_pcr_t[0]:.3f}$")
-
-    axes[1].plot(y_limits_pls, y_limits_pls)
-    axes[1].scatter(Y_test_pls[:, 0], Y_pred_plsr_t[:, 0])
-    axes[1].set(xlabel="Actual Y projected onto 1st PLS component",
-                ylabel="Predicted Y projected onto 1st PLS component",
-                title=f"PLS Regression, $R^2 = {R2_Y_plsr_t[0]:.3f}$")
-
-    if _SHOW:
-        fig.show()
-    else:
-        for path in paths:
-            fig.savefig(path)
-
-    if _PAUSE:
-        input("Press Enter to continue...")
+show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
+             **pcr_vs_plsr_regression)
 
 
-x_test_pca_min = min(X_test_pca[:, 0].min(), X_pred_pcr_t[:, 0].min())
-x_test_pca_max = max(X_test_pca[:, 0].max(), X_pred_pcr_t[:, 0].max())
+x_test_pca_min = min(X_test_pca.iloc[:, 0].min(),
+                     X_pred_pcr_t.iloc[:, 0].min())
+x_test_pca_max = max(X_test_pca.iloc[:, 0].max(),
+                     X_pred_pcr_t.iloc[:, 0].max())
 x_limits_pca = np.linspace(x_test_pca_min, x_test_pca_max, n_test)
 
-x_test_pls_min = min(X_test_pls[:, 0].min(), X_pred_plsr_t[:, 0].min())
-x_test_pls_max = max(X_test_pls[:, 0].max(), X_pred_plsr_t[:, 0].max())
+x_test_pls_min = min(X_test_pls.iloc[:, 0].min(),
+                     X_pred_plsr_t.iloc[:, 0].min())
+x_test_pls_max = max(X_test_pls.iloc[:, 0].max(),
+                     X_pred_plsr_t.iloc[:, 0].max())
 x_limits_pls = np.linspace(x_test_pls_min, x_test_pls_max, n_test)
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
@@ -718,8 +703,10 @@ for seed in range(1241, 1246):
                 # whether the regressor performs worse than
                 # DummyRegressor(strategy='mean').
                 # r2 = max(r2_score(Y_test, Y_pred), 0)
-                r2_m = r2_score(Y_test_t[:, :n_used], Y_pred_t[:, :n_used])
-                r2_rm = r2_score(X_test_t[:, :n_used], X_pred_t[:, :n_used])
+                r2_m = r2_score(Y_test_t.iloc[:, :n_used],
+                                Y_pred_t.iloc[:, :n_used])
+                r2_rm = r2_score(X_test_t.iloc[:, :n_used],
+                                 X_pred_t.iloc[:, :n_used])
 
                 # A numpy.ndarray for each column.
                 for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):

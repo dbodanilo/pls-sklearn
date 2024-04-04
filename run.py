@@ -290,15 +290,19 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
              **pls_components)
 
 
-X_all, Y_all = train_test_seed_split(X, Y, seed=None)
+splits = {}
 
-plsr_all = PLSRegression(n_components=n_targets).fit(X_all, Y_all)
+# NOTE: evaluate stability among runs for each target variable.
+# `seed=None` means all samples (no split).
+for seed in (None, *seeds):
+    splits[seed] = train_test_seed_split(X, Y, seed=seed)
 
-x_all_plsr_components = plsr_all.x_rotations_[:, 0].reshape(-1, 1)
-y_all_plsr_components = plsr_all.y_rotations_[:, 0].reshape(-1, 1)
 
-for seed in range(1241, 1246):
-    X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed=seed)
+x_all_plsr_components = np.empty((n_features, 0))
+y_all_plsr_components = np.empty((n_targets, 0))
+
+for split in splits.values():
+    X_train, X_test, Y_train, Y_test = split
     plsr = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
     x_first_component = plsr.x_rotations_[:, 0].reshape(-1, 1)
@@ -312,8 +316,8 @@ for seed in range(1241, 1246):
 x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
 y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 
-all_seeds = ["all", *(str(seed) for seed in seeds)]
-todas_sementes = ["Nenhuma", *(str(seed) for seed in seeds)]
+all_seeds = (None, *seeds)
+todas_sementes = ("Nenhuma", *seeds)
 
 pls_all_components = {
     "xtitles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
@@ -338,10 +342,11 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 # seed=1241: best seed for `X = predict(Y)` and second-best
 # for `Y = predict(X)` (based on r2_score).
 seed = None
+X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=seed)
 
 # TODO: evaluate stability among runs for each target variable.
-plsr_targets_regressors = pd.Series(PLSRegression(
-    n_components=n_targets).fit(X_all, Y_all), index=["all"])
+plsr_targets_regressors = pd.Series([PLSRegression(
+    n_components=n_targets).fit(X_all, Y_all)], index=["all"])
 
 plsr_targets_components = pd.DataFrame(
     plsr_targets_regressors["all"].x_rotations_[:, 0], columns=["all"], index=ds)
@@ -378,25 +383,17 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
              **pls_targets_components)
 
 
-# 0th index: `seed=None` means all samples (no split).
-splits = [(X_all, X_all, Y_all, Y_all)]
-
-# NOTE: evaluate stability among runs for each target variable.
-for seed in range(1241, 1246):
-    splits.append(train_test_seed_split(X, Y, seed=seed))
-
-
 plsr_regressors = {}
 plsr_components = {}
 
-for seed, (X_train, X_test, Y_train, Y_test) in zip(range(1240, 1246), splits):
+for seed, (X_train, X_test, Y_train, Y_test) in splits.items():
     plsr_regressors[seed] = {"all":  PLSRegression(n_components=n_targets).fit(
         X_train, Y_train)}
 
     all_first_component = plsr_regressors[seed]["all"].x_rotations_[:, 0]
 
     # Only set it in first pass.
-    if seed == 1240:
+    if seed == None:
         for target in targets:
             plsr_components[target] = all_first_component.reshape(-1, 1)
 
@@ -436,13 +433,8 @@ for target, components in plsr_components.items():
 
 # === PCR vs. PLSR ===
 
-# TODO: split it so that PLSR performs better than PCR.
-# NOTE: print seed used when outputting plots and scores.
-for seed in (None, *range(1241, 1246)):
-    split = train_test_seed_split(X, Y, seed=seed)
-    # seed == None
-    if len(split) < 4:
-        split = (split[0], split[0], split[1], split[1])
+# NOTE: split it so that PLSR performs better than PCR.
+for seed, split in splits.items():
     X_train, X_test, Y_train, Y_test = split
 
     X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
@@ -463,6 +455,7 @@ for seed in (None, *range(1241, 1246)):
         "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
     }
 
+    # NOTE: print seed used when outputting plots and scores.
     path = f"pcr_vs_plsr-predictions-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
@@ -512,42 +505,38 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
-# NOTE: print seed used when outputting plots and scores.
-seed = 1241
-split = train_test_seed_split(X, Y, seed=seed)
-# seed == None
-if len(split) < 4:
-    split = (split[0], split[0], split[1], split[1])
-X_train, X_test, Y_train, Y_test = split
+for seed, split in splits.items():
+    X_train, X_test, Y_train, Y_test = split
 
-X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
-    ScalerPCR, *split, n_components=1)
+    X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
+        ScalerPCR, *split, n_components=1)
 
-X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
-    PLSRegression, *split, n_components=1)
+    X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
+        PLSRegression, *split, n_components=1)
 
-algos = ("PCA", "PLS")
+    algos = ("PCA", "PLS")
 
-# NOTE: display R-squared for the prediction of each
-# component.
-R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
-R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+    # NOTE: display R-squared for the prediction of each
+    # component.
+    R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+    R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-pcr_vs_plsr_regression = {
-    "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
-    "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
-    "xlabels": [f"Actual Y projected onto 1st {algo} component" for algo in algos],
-    "ylabels": [f"Predicted Y projected onto 1st {algo} component" for algo in algos],
-    "titles": [f"{algo} Regression" for algo in algos],
-    "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
-}
+    pcr_vs_plsr_regression = {
+        "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
+        "xlabels": [f"Actual Y projected onto 1st {algo} component" for algo in algos],
+        "ylabels": [f"Predicted Y projected onto 1st {algo} component" for algo in algos],
+        "titles": [f"{algo} Regression" for algo in algos],
+        "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
+    }
 
-path = f"pcr_vs_plsr-regression-seed_{seed}"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-regression-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
-             **pcr_vs_plsr_regression)
+    # pause=True is not practical in a for-loop.
+    show_or_save(paths, globs, plot_regression, _SHOW, False,
+                 **pcr_vs_plsr_regression)
 
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
@@ -651,15 +640,17 @@ r_labels = ["r" + label for label in model_labels]
 
 models = [ScalerPCR, PLSRegression]  # , ScalerSVR
 
-algos = np.empty(400, dtype="U5")
-n_useds = np.empty(400, dtype=int)
-ns = np.empty(400, dtype=int)
-r2s = np.empty(400, dtype=float)
-seeds = np.empty(400, dtype=int)
-ts = np.empty(400, dtype=bool)
+N = 480
+
+algo_col = np.empty(N, dtype="U5")
+n_used_col = np.empty(N, dtype=int)
+n_col = np.empty(N, dtype=int)
+r2_col = np.empty(N, dtype=float)
+seed_col = np.empty(N, dtype=object)
+t_col = np.empty(N, dtype=bool)
 i = 0
-for seed in range(1241, 1246):
-    X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y, seed)
+for seed, split in splits.items():
+    X_train, X_test, Y_train, Y_test = split
 
     for n in range(1, n_max + 1):
         for label, model in zip(model_labels, models):
@@ -685,12 +676,12 @@ for seed in range(1241, 1246):
 
                 # A numpy.ndarray for each column.
                 for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
-                    algos[i] = algo
-                    n_useds[i] = n_used
-                    ns[i] = n
-                    r2s[i] = r2
-                    seeds[i] = seed
-                    ts[i] = True
+                    algo_col[i] = algo
+                    n_used_col[i] = n_used
+                    n_col[i] = n
+                    r2_col[i] = r2
+                    seed_col[i] = seed
+                    t_col[i] = True
                     i += 1
 
                 # Compare predictions in original feature
@@ -709,12 +700,12 @@ for seed in range(1241, 1246):
                     # `multioutput` parameter and extract
                     # mean and std over variables.
                     for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
-                        algos[i] = algo
-                        n_useds[i] = n_used
-                        ns[i] = n
-                        r2s[i] = r2
-                        seeds[i] = seed
-                        ts[i] = False
+                        algo_col[i] = algo
+                        n_used_col[i] = n_used
+                        n_col[i] = n
+                        r2_col[i] = r2
+                        seed_col[i] = seed
+                        t_col[i] = False
                         i += 1
 
 
@@ -723,12 +714,12 @@ for seed in range(1241, 1246):
 # and avoid conversion back to python list,
 # pandas.DataFrame seems not to work with numpy.array[dict]
 r2s_df = pd.DataFrame({
-    "algo": algos,
-    "n_used": n_useds,
-    "n": ns,
-    "r2": r2s,
-    "seed": seeds,
-    "t": ts
+    "algo": algo_col,
+    "n_used": n_used_col,
+    "n": n_col,
+    "r2": r2_col,
+    "seed": seed_col,
+    "t": t_col
 })
 
 path = "r2s"
@@ -763,7 +754,7 @@ for n in range(1, n_max + 1):
 
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
-for seed in range(1241, 1246):
+for seed in seeds:
     print("\nseed =", seed)
     r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
 
@@ -789,7 +780,7 @@ for n in range(1, n_max + 1):
 
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
-for seed in range(1241, 1246):
+for seed in seeds:
     print("\nseed =", seed)
     r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
 

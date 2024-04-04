@@ -16,7 +16,7 @@ def load_leme(idwl=True, split=True):
 
         return (X, Y)
     else:
-        return leme_data
+        return (leme_data, leme_data)
 
 
 # NOTE: seed=1244 was responsible for the worst r2_score for
@@ -38,7 +38,9 @@ def train_test_seed_split(X, Y, seed=1242):
     versus PCR.
     """
     if seed is None:
-        return (X.drop(columns=["N.", "Semente"]), Y.drop(columns=["N.", "Semente"]))
+        X_all = X.drop(columns=["N.", "Semente"])
+        Y_all = Y.drop(columns=["N.", "Semente"])
+        return (X_all, X_all, Y_all, Y_all)
 
     X_train = X[X["Semente"] != seed]
     Y_train = Y[Y["Semente"] != seed]

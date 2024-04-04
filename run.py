@@ -555,7 +555,7 @@ for seed, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
-                **pcr_vs_plsr_regression_reversed)
+                 **pcr_vs_plsr_regression_reversed)
 
 
 # === SVR ===

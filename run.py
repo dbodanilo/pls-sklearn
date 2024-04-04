@@ -503,6 +503,8 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
              **pca_vs_pls_components)
 
 
+algos = ("PCA", "PLS")
+
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
 for seed, split in splits.items():
@@ -513,8 +515,6 @@ for seed, split in splits.items():
 
     X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
         PLSRegression, *split, n_components=1)
-
-    algos = ("PCA", "PLS")
 
     # NOTE: display R-squared for the prediction of each
     # component.
@@ -538,25 +538,24 @@ for seed, split in splits.items():
     show_or_save(paths, globs, plot_regression, _SHOW, False,
                  **pcr_vs_plsr_regression)
 
+    R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
+    R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
-R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
-R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
+    pcr_vs_plsr_regression_reversed = {
+        "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((X_pred_pcr_t.iloc[:, 0], X_pred_plsr_t.iloc[:, 0]), axis="columns"),
+        "xlabels": [f"Actual X projected onto 1st {algo} component" for algo in algos],
+        "ylabels": [f"Predicted X projected onto 1st {algo} component" for algo in algos],
+        "titles": [f"{algo} Regression" for algo in algos],
+        "R2": np.array((R2_X_pcr_t[0], R2_X_plsr_t[0])),
+    }
 
-pcr_vs_plsr_regression_reversed = {
-    "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
-    "Y_pred": pd.concat((X_pred_pcr_t.iloc[:, 0], X_pred_plsr_t.iloc[:, 0]), axis="columns"),
-    "xlabels": [f"Actual X projected onto 1st {algo} component" for algo in algos],
-    "ylabels": [f"Predicted X projected onto 1st {algo} component" for algo in algos],
-    "titles": [f"{algo} Regression" for algo in algos],
-    "R2": np.array((R2_X_pcr_t[0], R2_X_plsr_t[0])),
-}
+    path = f"pcr_vs_plsr-regression_reversed-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-path = f"pcr_vs_plsr-regression_reversed-seed_{seed}"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
-
-show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
-             **pcr_vs_plsr_regression_reversed)
+    show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
+                **pcr_vs_plsr_regression_reversed)
 
 
 # === SVR ===

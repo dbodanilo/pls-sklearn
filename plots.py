@@ -101,7 +101,7 @@ def plot_components(X, Y, xtitles, xlabels, ytitles=None, ylabels=None, meanlabe
 def plot_correlations():
     """Reference: https://stackoverflow.com/questions/29432629/plot-correlation-matrix-using-pandas"""
 
-    leme_data = load_leme(split=False)
+    leme_data, _ = load_leme(split=False)
     leme_corr = leme_data.corr(method="spearman").iloc[7:, 2:7] ** 2
 
     xlabels = latexify(leme_data.iloc[:, 7:].columns)

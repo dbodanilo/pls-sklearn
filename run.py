@@ -424,22 +424,22 @@ all_ts = ["all", *ts]
 all_targets = ["all", *targets]
 todos_objetivos = ["Todos", *targets]
 
-pls_targets_components = {
-    "xtitles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos[:3]],
-    "ytitles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos[-3:]],
+pls_targets_x_components = {
+    "X": plsr_targets_components,
+    "titles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos],
     "xlabels": descriptors,
-    "X": plsr_targets_components.iloc[:, :3],
-    "Y": plsr_targets_components.iloc[:, -3:],
+    "ylabel": "Peso",
+    "ncols": plsr_targets_components.shape[1],
     "sort": _SORT,
     "meanlabel": "média",
 }
 
-path = f"pls_targets-components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_targets-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_targets_components)
+             **pls_targets_x_components)
 
 
 plsr_regressors = {}

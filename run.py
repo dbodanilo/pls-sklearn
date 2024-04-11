@@ -261,27 +261,43 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
 ords = ["1st", "2nd", "3rd"]
 ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
 
+# TODO: use correlation, not normalization.
 x_plsr_components = normalize(plsr.x_rotations_, axis=0)
 y_plsr_components = normalize(plsr.y_rotations_, axis=0)
 
-pls_first_components = {
-    "xtitles": [f"{o} Componente PLS de X" for o in ordinais],
-    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
-    "xlabels": descriptors,
-    "ylabels": targets,
-    "X": x_plsr_components[:, 0].reshape(-1, 1),
-    "Y": y_plsr_components[:, 0].reshape(-1, 1),
-    "ncols": 1,  # First component only.
-    "sort": _SORT,
-    "meanlabel": "média",
-}
+for i, o in enumerate(ordinais):
+    pls_x_component_i = {
+        "X": x_plsr_components[:, i].reshape(-1, 1),
+        "titles": [f"{o} Componente PLS de X"],
+        "xlabels": descriptors,
+        "ylabel": "Peso",  # TODO: usar correlação.
+        "sort": _SORT,
+        "meanlabel": "média",
+    }
 
-path = f"pls-first_components-sort_{_SORT}-lang_pt"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    path = f"pls-x_component_{i}-sort_{_SORT}-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_first_components)
+    # NOTE: pausing in a loop isn't practical.
+    show_or_save(paths, globs, plot_components, _SHOW, False,
+                 **pls_x_component_i)
+
+    pls_y_component_i = {
+        "X": y_plsr_components[:, i].reshape(-1, 1),
+        "titles": [f"{o} Componente PLS de Y"],
+        "xlabels": targets,
+        "ylabel": "Peso",
+        "sort": _SORT,
+        "meanlabel": "média",
+    }
+
+    path = f"pls-first_y_component_{i}-sort_{_SORT}-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
+
+    show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+                 **pls_y_component_i)
 
 
 pls_components = {
@@ -438,7 +454,6 @@ for target, components in plsr_components.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    # NOTE: pausing in a loop isn't practical.
     show_or_save(paths, globs, plot_components, _SHOW, False,
                  **pls_target_components)
 

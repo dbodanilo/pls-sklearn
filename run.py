@@ -9,12 +9,22 @@ from datetime import datetime
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import FunctionTransformer, normalize
 
 from decomposition import ScalerPCA, ScalerPCR
 from model import load_leme, train_test_seed_split
 from plots import plot_components, plot_predictions, plot_regression
-from util import detexify, fit_predict_try_transform, get_globs, get_paths, latexify, show_or_save
+from util import (
+    detexify,
+    fit_predict,
+    fit_predict_try_transform,
+    get_globs,
+    get_paths,
+    latexify,
+    show_or_save,
+    try_attr,
+    try_transform
+)
 
 
 _SHOW = True
@@ -35,21 +45,24 @@ descriptors = latexify(ds)
 targets = latexify(ts)
 seeds = X["Semente"].value_counts().index
 
+X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
+
+n_samples = X_all.shape[0]
+n_features = X_all.shape[1]
+n_targets = Y_all.shape[1]
+
 X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
 
-n_samples = X_train.shape[0]
-n_features = X_train.shape[1]
-n_targets = Y_train.shape[1]
-
+n_train = X_all.shape[0]
 n_test = X_test.shape[0]
 
 
 # === PCA ===
 
-x_pca = ScalerPCA(n_components=n_features).fit(X_train)
+x_pca = ScalerPCA(n_components=n_features).fit(X_all)
 x_pca_step: PCA = x_pca.named_steps["pca"]
 
-y_pca = ScalerPCA(n_components=n_targets).fit(Y_train)
+y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
 y_pca_step: PCA = y_pca.named_steps["pca"]
 
 print("PCA\n===")
@@ -77,13 +90,13 @@ for n in range(n_targets + 1, n_features + 1):
 
 # n > n_targets will only throw an error if using
 # PLSCanonical, not PLSRegression.
-# for PLSCanonical: min(n_samples, n_features, n_targets)
-# for PLSRegression: min(n_samples, n_features)
-n_max = min(n_samples, n_features, n_targets)
+# for PLSCanonical: min(n_train, n_features, n_targets)
+# for PLSRegression: min(n_train, n_features)
+n_max = min(n_train, n_features, n_targets)
 
 pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
 
-X_test_pca = pd.DataFrame(x_pca.transform(X_test))
+X_test_pca = pd.DataFrame(try_transform(pcr, X_test))
 
 Y_pred_pcr = pd.DataFrame(pcr.predict(X_test), columns=Y_train.columns)
 
@@ -110,10 +123,10 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
 
 r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
 
-Y_test_pca = pd.DataFrame(y_pca.transform(Y_test))
+Y_test_pca = pd.DataFrame(try_transform(r_pcr, Y_test))
 
 X_pred_pcr = pd.DataFrame(r_pcr.predict(Y_test), columns=X_train.columns)
-X_pred_pcr_t = pd.DataFrame(x_pca.transform(X_pred_pcr))
+X_pred_pcr_t = pd.DataFrame(try_transform(pcr, X_pred_pcr))
 
 R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
@@ -136,7 +149,7 @@ show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
              **pcr_predictions_reversed_transformed)
 
 
-Y_pred_pcr_t = pd.DataFrame(y_pca.transform(Y_pred_pcr))
+Y_pred_pcr_t = pd.DataFrame(try_transform(r_pcr, Y_pred_pcr))
 
 R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 
@@ -342,7 +355,6 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 # seed=1241: best seed for `X = predict(Y)` and second-best
 # for `Y = predict(X)` (based on r2_score).
 seed = None
-X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=seed)
 
 # TODO: evaluate stability among runs for each target variable.
 plsr_targets_regressors = pd.Series([PLSRegression(
@@ -465,12 +477,14 @@ for seed, split in splits.items():
                  **pcr_vs_plsr_predictions)
 
 
+y_pca_components = try_attr(r_pcr, "components_")
+
 # NOTE: different title for X and Y.
 pca_vs_pls_first_components = {
     "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
     "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": targets,
-    "X": y_pca_step.components_[0].reshape(-1, 1),
+    "X": y_pca_components[0].reshape(-1, 1),
     "Y": y_plsr_components[:, 0].reshape(-1, 1),
     "ncols": 1,
     "sort": _SORT,
@@ -489,7 +503,7 @@ pca_vs_pls_components = {
     "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
     "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": targets,
-    "X": y_pca_step.components_.T,
+    "X": y_pca_components.T,
     "Y": y_plsr_components,
     "sort": _SORT,
     "meanlabel": "média",
@@ -566,12 +580,11 @@ models = [ScalerPCR, PLSRegression]  # , ScalerSVR
 
 N = 480
 
-algo_col = np.empty(N, dtype="U5")
-n_used_col = np.empty(N, dtype=int)
+algo_col = np.empty(N, dtype=object)
 n_col = np.empty(N, dtype=int)
 r2_col = np.empty(N, dtype=float)
 seed_col = np.empty(N, dtype=object)
-t_col = np.empty(N, dtype=bool)
+t_col = np.empty(N, dtype=object)
 i = 0
 for seed, split in splits.items():
     X_train, X_test, Y_train, Y_test = split
@@ -580,10 +593,30 @@ for seed, split in splits.items():
         for label, model in zip(model_labels, models):
             r_label = "r" + label
 
-            X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t = fit_predict_try_transform(
+            m, rm, X_pred, Y_pred = fit_predict(
                 model, X_train, X_test, Y_train, Y_test, n_components=n)
 
-            for n_used in range(1, n + 1):
+            # NOTE: Compare predictions in original feature
+            # space, this confirms that calculating the
+            # score on the transformed feature space
+            # makes it easier for lower `n` to achieve
+            # higher `r2_score`, which makes it harder
+            # to observe the expected increase in
+            # `r2_score` as `n` increases.
+            IdTransformer = FunctionTransformer(lambda x: x)
+            for t, transformer in ((str(None), IdTransformer), ("PCA", ScalerPCA), ("PLS", PLSRegression)):
+                tm = transformer
+                rtm = transformer
+                if t != "None":
+                    tm = transformer(n_components=n).fit(X_train, Y_train)
+                    rtm = transformer(n_components=n).fit(Y_train, X_train)
+
+                X_test_t = pd.DataFrame(try_transform(tm, X_test))
+                X_pred_t = pd.DataFrame(try_transform(tm, X_pred))
+
+                Y_test_t = pd.DataFrame(try_transform(rtm, Y_test))
+                Y_pred_t = pd.DataFrame(try_transform(rtm, Y_pred))
+
                 # TODO: review imposing a lower bound
                 # (-1 or 0) to avoid skewing the mean, as
                 # the r2's upper bound is positive 1, but
@@ -593,45 +626,25 @@ for seed, split in splits.items():
                 # whether the regressor performs worse than
                 # DummyRegressor(strategy='mean').
                 # r2 = max(r2_score(Y_test, Y_pred), 0)
-                r2_m = r2_score(Y_test_t.iloc[:, :n_used],
-                                Y_pred_t.iloc[:, :n_used])
-                r2_rm = r2_score(X_test_t.iloc[:, :n_used],
-                                 X_pred_t.iloc[:, :n_used])
+                r2_m = r2_score(Y_test_t.iloc[:, :n],
+                                Y_pred_t.iloc[:, :n])
+                r2_rm = r2_score(X_test_t.iloc[:, :n],
+                                 X_pred_t.iloc[:, :n])
 
-                # A numpy.ndarray for each column.
-                for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
+                for algo, r2 in ((label, r2_m), (r_label, r2_rm)):
+                    # A numpy.ndarray for each column.
                     algo_col[i] = algo
-                    n_used_col[i] = n_used
                     n_col[i] = n
-                    r2_col[i] = r2
-                    seed_col[i] = seed
-                    t_col[i] = True
-                    i += 1
-
-                # Compare predictions in original feature
-                # space, this confirms that calculating the
-                # score on the transformed feature space
-                # makes it easier for lower `n` to achieve
-                # higher `r2_score`, which makes it harder
-                # to observe the expected increase in
-                # `r2_score` as `n` increases.
-                if n_used == n:
-                    r2_m = r2_score(Y_test, Y_pred)
-                    r2_rm = r2_score(X_test, X_pred)
 
                     # TODO: explicitly aggregate r2_score
                     # over each variable, i.e., use its
                     # `multioutput` parameter and extract
                     # mean and std over variables.
-                    for algo, r2 in zip([label, r_label], [r2_m, r2_rm]):
-                        algo_col[i] = algo
-                        n_used_col[i] = n_used
-                        n_col[i] = n
-                        r2_col[i] = r2
-                        seed_col[i] = seed
-                        t_col[i] = False
-                        i += 1
+                    r2_col[i] = r2
 
+                    seed_col[i] = str(seed)
+                    t_col[i] = t
+                    i += 1
 
 # NOTE: avoid aggregation outside pandas!
 # e.g., mean values over all seeds;
@@ -639,7 +652,6 @@ for seed, split in splits.items():
 # pandas.DataFrame seems not to work with numpy.array[dict]
 r2s_df = pd.DataFrame({
     "algo": algo_col,
-    "n_used": n_used_col,
     "n": n_col,
     "r2": r2_col,
     "seed": seed_col,
@@ -656,14 +668,15 @@ if not any(os.path.exists(path) for path in globs):
     # equivalent runs.
     r2s_df.to_csv(paths[0], sep="\t", float_format="{:.5f}".format)
 
-print("\nPCA vs. PLS vs. SVR", end="")
-print("\n===================")
+
+print("\nPCA vs. PLS", end="")
+print("\n===========")
 print("(mean, std) over all five seeds")
 print("-------------------------------")
 for n in range(1, n_max + 1):
     # Print results on original feature space only.
-    print("\nn == n_used =", n)
-    r2s_df_n = r2s_df[(r2s_df["n"] == n) & (r2s_df["n_used"] == n)]
+    print("\nn =", n)
+    r2s_df_n = r2s_df[(r2s_df["n"] == n)]
 
     for label in model_labels:
         r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
@@ -676,11 +689,12 @@ for n in range(1, n_max + 1):
         print(label, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_n_algo.std():.3f})")
 
+
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
 for seed in seeds:
     print("\nseed =", seed)
-    r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
+    r2s_df_seed = r2s_df[r2s_df["seed"] == str(seed)]
 
     for label in model_labels:
         r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]
@@ -688,13 +702,14 @@ for seed in seeds:
         print(label, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_seed_algo.std():.3f})")
 
-print("\nPCA vs. PLS vs. SVR (reverse, X = model.predict(Y))", end="")
-print("\n===================================================")
+
+print("\nPCA vs. PLS (reverse, X = model.predict(Y))", end="")
+print("\n===========================================")
 print("(mean, std) over all five seeds")
 print("-------------------------------")
 for n in range(1, n_max + 1):
-    print("\nn == n_used =", n)
-    r2s_df_n = r2s_df[(r2s_df["n"] == n) & (r2s_df["n_used"] == n)]
+    print("\nn =", n)
+    r2s_df_n = r2s_df[(r2s_df["n"] == n)]
 
     for label in r_labels:
         r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
@@ -702,11 +717,12 @@ for n in range(1, n_max + 1):
         print(label, "R-squared:", f"({mean:.3f}, ", end="")
         print(f"{r2s_df_n_algo.std():.3f})")
 
+
 print("\n(mean, std) over all five ns", end="")
 print("\n----------------------------")
 for seed in seeds:
     print("\nseed =", seed)
-    r2s_df_seed = r2s_df[r2s_df["seed"] == seed]
+    r2s_df_seed = r2s_df[r2s_df["seed"] == str(seed)]
 
     for label in r_labels:
         r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]

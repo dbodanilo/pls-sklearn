@@ -31,17 +31,23 @@ def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):
     return ["".join([prefix + path, e]) for e in exts], prefix, exts
 
 
-def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs):
+def fit_predict(model, X_train, X_test, Y_train, Y_test, **mkargs):
     m = model(**mkargs).fit(X_train, Y_train)
+    Y_pred = pd.DataFrame(m.predict(X_test), columns=Y_train.columns)
 
     # reverse model (predict sizing based on target metrics)
     rm = model(**mkargs).fit(Y_train, X_train)
+    X_pred = pd.DataFrame(rm.predict(Y_test), columns=X_train.columns)
+
+    return m, rm, X_pred, Y_pred
+
+
+def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs):
+    m, rm, X_pred, Y_pred = fit_predict(
+        model, X_train, X_test, Y_train, Y_test, **mkargs)
 
     X_test_t = pd.DataFrame(try_transform(m, X_test))
     Y_test_t = pd.DataFrame(try_transform(rm, Y_test))
-
-    Y_pred = pd.DataFrame(m.predict(X_test), columns=Y_train.columns)
-    X_pred = pd.DataFrame(rm.predict(Y_test), columns=X_train.columns)
 
     X_pred_t = pd.DataFrame(try_transform(m, X_pred))
     Y_pred_t = pd.DataFrame(try_transform(rm, Y_pred))
@@ -68,11 +74,24 @@ def show_or_save(paths, globs, plot, show=False, pause=False, **kwargs):
             input("Press Enter to continue...")
 
 
+def try_attr(model, a):
+    if hasattr(model, a):
+        return model.a
+
+    if hasattr(model, "steps"):
+        for _, step in model.steps:
+            if hasattr(step, a):
+                return getattr(step, a)
+
+    name = type(model).__name__
+    raise AttributeError(f"{name} object has no attribute '{a}'")
+
+
 def try_transform(model, X):
     if hasattr(model, "transform"):
         return model.transform(X)
 
-    elif hasattr(model, "steps"):
+    if hasattr(model, "steps"):
         X_t = X
         for _, step in model.steps:
             # TODO: check if `break` or `continue` would be
@@ -86,4 +105,4 @@ def try_transform(model, X):
         return X_t
 
     name = type(model).__name__
-    raise AttributeError(f"{name} has no 'transform' method")
+    raise AttributeError(f"{name} object has no method 'transform'")

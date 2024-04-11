@@ -364,24 +364,39 @@ y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 all_seeds = [str(s) for s in (None, *seeds)]
 todas_sementes = ("Nenhuma", *seeds)
 
-pls_all_components = {
-    "xtitles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
-    "ytitles": [f"Primeiro Componente PLS de Y, Semente: {s}" for s in todas_sementes],
-    "xlabels": descriptors,
-    "ylabels": targets,
+pls_seeds_first_x_components = {
     "X": x_all_plsr_components,
-    "Y": y_all_plsr_components,
-    "ncols": len(todas_sementes),
+    "titles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
+    "xlabels": descriptors,
+    "ylabel": "Peso",
+    "ncols": x_all_plsr_components.shape[1],
     "sort": _SORT,
     "meanlabel": "média",
 }
 
-path = f"pls_all-components-sort_{_SORT}-lang_pt"
+path = f"pls_seeds-first_x_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_all_components)
+             **pls_seeds_first_x_components)
+
+pls_seeds_first_y_components = {
+    "X": y_all_plsr_components,
+    "titles": [f"Primeiro Componente PLS de Y, Semente: {s}" for s in todas_sementes],
+    "xlabels": targets,
+    "ylabel": "Peso",
+    "ncols": y_all_plsr_components.shape[1],
+    "sort": _SORT,
+    "meanlabel": "média",
+}
+
+path = f"pls_seeds-first_y_components-sort_{_SORT}-lang_pt"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_seeds_first_y_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best

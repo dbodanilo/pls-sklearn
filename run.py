@@ -300,23 +300,39 @@ for i, o in enumerate(ordinais):
                  **pls_y_component_i)
 
 
-pls_components = {
-    "xtitles": [f"{o} Componente PLS de X" for o in ordinais],
-    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
-    "xlabels": descriptors,
-    "ylabels": targets,
+pls_x_components = {
     "X": x_plsr_components,
-    "Y": y_plsr_components,
+    "titles": [f"{o} Componente PLS de X" for o in ordinais],
+    "xlabels": descriptors,
+    "ylabel": "Peso",
+    "ncols": x_plsr_components.shape[1],
     "sort": _SORT,
     "meanlabel": "média",
 }
 
-path = f"pls-components-sort_{_SORT}-lang_pt"
+path = f"pls-x_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_components)
+             **pls_x_components)
+
+pls_y_components = {
+    "X": y_plsr_components,
+    "titles": [f"{o} Componente PLS de Y" for o in ordinais],
+    "xlabels": targets,
+    "ylabel": "Peso",
+    "ncols": y_plsr_components.shape[1],
+    "sort": _SORT,
+    "meanlabel": "média",
+}
+
+path = f"pls-y_components-sort_{_SORT}-lang_pt"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pls_y_components)
 
 
 splits = {}

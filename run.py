@@ -329,7 +329,7 @@ for split in splits.values():
 x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
 y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 
-all_seeds = (None, *seeds)
+all_seeds = [str(s) for s in (None, *seeds)]
 todas_sementes = ("Nenhuma", *seeds)
 
 pls_all_components = {
@@ -605,6 +605,7 @@ for seed, split in splits.items():
             # `r2_score` as `n` increases.
             IdTransformer = FunctionTransformer(lambda x: x)
             for t, transformer in ((str(None), IdTransformer), ("PCA", ScalerPCA), ("PLS", PLSRegression)):
+                # TODO: pass IdTransformer as class, not object.
                 tm = transformer
                 rtm = transformer
                 if t != "None":
@@ -669,63 +670,60 @@ if not any(os.path.exists(path) for path in globs):
     r2s_df.to_csv(paths[0], sep="\t", float_format="{:.5f}".format)
 
 
+def print_r2s(df, model_labels, ns=None, seeds=None):
+    filters = ns
+    f_label = "n"
+
+    is_n = ns is not None
+
+    msg = f"\n(mean, std) over all "
+    if is_n:
+        # if filtered by ns, we are aggregating over seeds.
+        msg += "seeds"
+    else:
+        filters = seeds
+        f_label = "seed"
+        msg += "ns"
+
+    print(msg)
+    # -1 for the '\n'.
+    print("-" * (len(msg) - 1))
+
+    for f in filters:
+        print(f"\n{f_label} =", f)
+        # NOTE: filter t == str(None), ignore transformed samples;
+        # print results on original feature space only.
+        df_filtered = df[(df[f_label] == f) & (df["t"] == str(None))]
+        if is_n:
+            # don't aggregate over seed=None.
+            df_filtered = df_filtered[df_filtered["seed"] != str(None)]
+
+        for m_label in model_labels:
+            df_f_m = df_filtered[df_filtered["algo"] == m_label]["r2"]
+            # TODO: remove outliers based on distance from mean,
+            # not just the min and max samples.
+            # r2_min = r2s_df_n_algo["r2"].min()
+            # r2_max = r2s_df_n_algo["r2"].max()
+            # mean = (r2s_df_n_algo["r2"].sum() - (r2_min + r2_max)) / 3
+            mean, std = df_f_m.mean(), df_f_m.std()
+            print(m_label, "R-squared:", f"({mean:.3f}, {std:.3f})")
+
+
+# for n in range(1, n_max + 1):
+ns = list(range(1, n_max + 1))
+
+# vs. SVR
 print("\nPCA vs. PLS", end="")
-print("\n===========")
-print("(mean, std) over all five seeds")
-print("-------------------------------")
-for n in range(1, n_max + 1):
-    # Print results on original feature space only.
-    print("\nn =", n)
-    r2s_df_n = r2s_df[(r2s_df["n"] == n)]
+print("\n===========", end="")
 
-    for label in model_labels:
-        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
-        # TODO: remove outliers based on distance from mean,
-        # not just the min and max samples.
-        # r2_min = r2s_df_n_algo["r2"].min()
-        # r2_max = r2s_df_n_algo["r2"].max()
-        # mean = (r2s_df_n_algo["r2"].sum() - (r2_min + r2_max)) / 3
-        mean = r2s_df_n_algo.mean()
-        print(label, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_n_algo.std():.3f})")
+print_r2s(r2s_df, model_labels, ns=ns)
 
-
-print("\n(mean, std) over all five ns", end="")
-print("\n----------------------------")
-for seed in seeds:
-    print("\nseed =", seed)
-    r2s_df_seed = r2s_df[r2s_df["seed"] == str(seed)]
-
-    for label in model_labels:
-        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]
-        mean = r2s_df_seed_algo.mean()
-        print(label, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_seed_algo.std():.3f})")
+# NOTE: `all_seeds` includes str(None) as a seed.
+print_r2s(r2s_df, model_labels, seeds=all_seeds)
 
 
 print("\nPCA vs. PLS (reverse, X = model.predict(Y))", end="")
-print("\n===========================================")
-print("(mean, std) over all five seeds")
-print("-------------------------------")
-for n in range(1, n_max + 1):
-    print("\nn =", n)
-    r2s_df_n = r2s_df[(r2s_df["n"] == n)]
+print("\n===========================================", end="")
+print_r2s(r2s_df, r_labels, ns=ns)
 
-    for label in r_labels:
-        r2s_df_n_algo = r2s_df_n[r2s_df_n["algo"] == label]["r2"]
-        mean = r2s_df_n_algo.mean()
-        print(label, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_n_algo.std():.3f})")
-
-
-print("\n(mean, std) over all five ns", end="")
-print("\n----------------------------")
-for seed in seeds:
-    print("\nseed =", seed)
-    r2s_df_seed = r2s_df[r2s_df["seed"] == str(seed)]
-
-    for label in r_labels:
-        r2s_df_seed_algo = r2s_df_seed[r2s_df_seed["algo"] == label]["r2"]
-        mean = r2s_df_seed_algo.mean()
-        print(label, "R-squared:", f"({mean:.3f}, ", end="")
-        print(f"{r2s_df_seed_algo.std():.3f})")
+print_r2s(r2s_df, r_labels, seeds=all_seeds)

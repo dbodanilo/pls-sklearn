@@ -38,6 +38,7 @@ X, Y = load_leme()
 
 # For indexing (original format).
 ds = X.columns.drop(["N.", "Semente"])
+# Last three targets are the most important (Av0, fT, Pwr).
 ts = Y.columns.drop(["N.", "Semente"])
 
 # For plotting (ensure LaTeX formatting).
@@ -45,16 +46,48 @@ descriptors = latexify(ds)
 targets = latexify(ts)
 seeds = X["Semente"].value_counts().index
 
+# train_test_seed_split() parameters.
+all_seeds = (None, *seeds)
+# For indexing and plotting.
+todas_sementes = ("Nenhuma", *(str(s) for s in seeds))
+
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
 
 n_samples = X_all.shape[0]
 n_features = X_all.shape[1]
 n_targets = Y_all.shape[1]
 
-X_train, X_test, Y_train, Y_test = train_test_seed_split(X, Y)
+seed = 1245
+X_train, X_test, _, _ = train_test_seed_split(X, Y, seed=seed)
 
-n_train = X_all.shape[0]
+n_train = X_train.shape[0]
 n_test = X_test.shape[0]
+
+# n > n_targets will only throw an error if using
+# PLSCanonical, not PLSRegression.
+# for PLSCanonical: min(n_train, n_features, n_targets)
+# for PLSRegression: min(n_train, n_features)
+n_max = min(n_train, n_features, n_targets)
+
+splits = {}
+
+pcr = {}
+r_pcr = {}
+
+plsr = {}
+r_plsr = {}
+
+# NOTE: evaluate stability among runs for each target variable.
+# `seed=None` means all samples (no split).
+for seed, semente in zip((None, *seeds), todas_sementes):
+    splits[semente] = train_test_seed_split(X, Y, seed=seed)
+    X_train, _, Y_train, _ = splits[semente]
+
+    pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
+    r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+
+    plsr[semente] = PLSRegression(n_components=n_max).fit(X_train, Y_train)
+    r_plsr[semente] = PLSRegression(n_components=n_max).fit(Y_train, X_train)
 
 
 # === PCA ===
@@ -88,87 +121,79 @@ for n in range(n_targets + 1, n_features + 1):
 
 # === PCR ===
 
-# n > n_targets will only throw an error if using
-# PLSCanonical, not PLSRegression.
-# for PLSCanonical: min(n_train, n_features, n_targets)
-# for PLSRegression: min(n_train, n_features)
-n_max = min(n_train, n_features, n_targets)
+for semente, split in splits.items():
+    seed = str(None) if semente == "Nenhuma" else semente
 
-pcr = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
+    _, X_test, _, Y_test = split
 
-X_test_pca = pd.DataFrame(try_transform(pcr, X_test))
+    X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
+    Y_pred_pcr = pd.DataFrame(pcr[semente].predict(
+        X_test), columns=Y_train.columns)
 
-Y_pred_pcr = pd.DataFrame(pcr.predict(X_test), columns=Y_train.columns)
+    pcr_predictions = {
+        "xlabels": [f"X's PCA {i}, Semente: {semente}" for i in range(1, n_max + 1)],
+        "ylabels": targets,
+        "X": X_test_pca,
+        "Y_true": Y_test,
+        "Y_pred": Y_pred_pcr,
+        "R2": r2_score(Y_test, Y_pred_pcr, multioutput="raw_values"),
+        "iter_x": False,
+        "ncols": 3,
+        "nrows": 2,
+    }
 
-# Last three targets are the most important (Av0, fT, Pwr).
-pcr_predictions = {
-    "xlabels": [f"X's PCA {i}" for i in range(1, n_max + 1)],
-    "ylabels": targets,
-    "X": X_test_pca,
-    "Y_true": Y_test,
-    "Y_pred": Y_pred_pcr,
-    "R2": r2_score(Y_test, Y_pred_pcr, multioutput="raw_values"),
-    "iter_x": False,
-    "ncols": 3,
-    "nrows": 2,
-}
+    path = f"pcr-predictions-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-path = "pcr-predictions"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
-
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **pcr_predictions)
+    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+                 **pcr_predictions)
 
 
-r_pcr = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+    Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
+    Y_pred_pcr_t = pd.DataFrame(try_transform(r_pcr[semente], Y_pred_pcr))
 
-Y_test_pca = pd.DataFrame(try_transform(r_pcr, Y_test))
+    R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
 
-X_pred_pcr = pd.DataFrame(r_pcr.predict(Y_test), columns=X_train.columns)
-X_pred_pcr_t = pd.DataFrame(try_transform(pcr, X_pred_pcr))
+    pcr_predictions_transformed = {
+        "X": X_test_pca,
+        "Y_true": Y_test_pca,
+        "Y_pred": Y_pred_pcr_t,
+        "xlabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
+        "ylabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
+        "R2": R2_Y_pcr_t,
+        "ncols": 3,
+    }
 
-R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
+    path = f"pcr-predictions_transformed-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-pcr_predictions_reversed_transformed = {
-    "X": Y_test_pca,
-    "Y_true": X_test_pca,
-    "Y_pred": X_pred_pcr_t,
-    "xlabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
-    "ylabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
-    "iter_x": False,
-    "R2": R2_X_pcr_t,
-    "ncols": 3,
-}
+    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+                **pcr_predictions_transformed)
 
-path = "pcr-predictions_reversed_transformed"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    X_pred_pcr = pd.DataFrame(r_pcr[semente].predict(Y_test), columns=X_train.columns)
+    X_pred_pcr_t = pd.DataFrame(try_transform(pcr[semente], X_pred_pcr))
 
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **pcr_predictions_reversed_transformed)
+    R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
 
+    pcr_predictions_reversed_transformed = {
+        "X": Y_test_pca,
+        "Y_true": X_test_pca,
+        "Y_pred": X_pred_pcr_t,
+        "xlabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
+        "ylabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
+        "iter_x": False,
+        "R2": R2_X_pcr_t,
+        "ncols": 3,
+    }
 
-Y_pred_pcr_t = pd.DataFrame(try_transform(r_pcr, Y_pred_pcr))
+    path = f"pcr-predictions_reversed_transformed-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
-
-pcr_predictions_transformed = {
-    "X": X_test_pca,
-    "Y_true": Y_test_pca,
-    "Y_pred": Y_pred_pcr_t,
-    "xlabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
-    "ylabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
-    "R2": R2_Y_pcr_t,
-    "ncols": 3,
-}
-
-path = "pcr-predictions_transformed"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
-
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **pcr_predictions_transformed)
+    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+                **pcr_predictions_reversed_transformed)
 
 
 # === PLSR ===

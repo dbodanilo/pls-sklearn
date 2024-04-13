@@ -12,7 +12,9 @@ def detexify(path):
 
 
 def get_globs(path, prefix, exts):
-    return set(g for ext in exts for g in glob(f"{prefix}*{path}{ext}"))
+    # [0-9] ensures paths with the same suffix are not considered equal.
+    # Example: `./*/*plsr-predictions.png` and `./*/*pcr_vs_plsr-predictions.png`.
+    return set(g for ext in exts for g in glob(f"{prefix}*[0-9]_{path}{ext}"))
 
 
 def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):

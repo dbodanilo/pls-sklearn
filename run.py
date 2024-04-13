@@ -285,9 +285,11 @@ for semente, split in splits.items():
 ords = ["1st", "2nd", "3rd"]
 ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
 
+seed, semente = (str(None), "Nenhuma")
+
 # TODO: use correlation, not normalization.
-x_plsr_components = normalize(plsr.x_rotations_, axis=0)
-y_plsr_components = normalize(plsr.y_rotations_, axis=0)
+x_plsr_components = normalize(plsr[semente].x_rotations_, axis=0)
+y_plsr_components = normalize(plsr[semente].y_rotations_, axis=0)
 
 for i, o in enumerate(ordinais):
     pls_x_component_i = {
@@ -316,7 +318,7 @@ for i, o in enumerate(ordinais):
         "meanlabel": "média",
     }
 
-    path = f"pls-y_component_{i}-sort_{_SORT}-lang_pt"
+    path = f"pls-y_component_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 

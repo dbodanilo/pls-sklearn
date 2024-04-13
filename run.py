@@ -419,7 +419,7 @@ for t in ts:
     plsr_targets_components[t] = plsr_targets_regressors[t].x_rotations_[:, 0]
 
 # For indexing.
-all_ts = ["all", *ts]
+all_ts = [None, *ts]
 # For plotting.
 all_targets = ["all", *targets]
 todos_objetivos = ["Todos", *targets]
@@ -446,18 +446,10 @@ plsr_regressors = {}
 plsr_components = {}
 
 for seed, (X_train, X_test, Y_train, Y_test) in splits.items():
-    plsr_regressors[seed] = {"all":  PLSRegression(n_components=n_targets).fit(
-        X_train, Y_train)}
+    plsr_regressors[seed] = {}
 
-    all_first_component = plsr_regressors[seed]["all"].x_rotations_[:, 0]
-
-    # Only set it in first pass.
-    if seed == None:
-        for target in targets:
-            plsr_components[target] = all_first_component.reshape(-1, 1)
-
-    for t, target in zip(ts, targets):
-        Y_train_target = Y_train[t]
+    for t, target in zip(ts, todos_objetivos):
+        Y_train_target = Y_train[t] if t is not None else Y_train
 
         plsr_regressors[seed][t] = PLSRegression(n_components=n_targets).fit(
             X_train, Y_train_target)
@@ -465,28 +457,32 @@ for seed, (X_train, X_test, Y_train, Y_test) in splits.items():
         target_first_component = plsr_regressors[seed][t].\
             x_rotations_[:, 0].reshape(-1, 1)
 
-        plsr_components[target] = np.append(
-            plsr_components[target], target_first_component, axis=1)
+        # Only set it in first pass.
+        if seed == None:
+            plsr_components[target] = target_first_component
+        else:
+            plsr_components[target] = np.append(
+                plsr_components[target], target_first_component, axis=1)
 
 for target, components in plsr_components.items():
     components = normalize(components, axis=0)
 
-    pls_target_components = {
-        "xtitles": [f"Primeiro Componente PLS de X para {target}, Semente: {s}" for s in todas_sementes[:3]],
-        "ytitles": [f"Primeiro Componente PLS de X para {target}, Semente: {s}" for s in todas_sementes[-3:]],
+    pls_target_seeds_x_components = {
+        "X": components,
+        "titles": [f"Primeiro Componente PLS de X para Objetivo: {target}, Semente: {s}" for s in todas_sementes],
         "xlabels": descriptors,
-        "X": components[:, :3],
-        "Y": components[:, -3:],
+        "ylabel": "Peso",
+        "ncols": components.shape[1],
         "sort": _SORT,
         "meanlabel": "média",
     }
 
-    path = f"pls_{detexify(target)}-components-sort_{_SORT}-lang-pt"
+    path = f"pls_{detexify(target)}_seeds-x_components-sort_{_SORT}-lang-pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_components, _SHOW, False,
-                 **pls_target_components)
+    show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+                 **pls_target_seeds_x_components)
 
 
 # === PCR vs. PLSR ===

@@ -535,44 +535,42 @@ for semente, split in splits.items():
                  **pcr_vs_plsr_predictions)
 
 
-y_pca_components = try_attr(r_pcr, "components_")
+semente, seed = ("Nenhuma", str(None))
+y_pca_components = try_attr(r_pcr[semente], "components_")
 
 # NOTE: different title for X and Y.
-pca_vs_pls_first_components = {
-    "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
-    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
-    "xlabels": targets,
+pca_first_y_component = {
     "X": y_pca_components[0].reshape(-1, 1),
-    "Y": y_plsr_components[:, 0].reshape(-1, 1),
-    "ncols": 1,
-    "sort": _SORT,
-    "meanlabel": "média",
-}
-
-path = f"pca_vs_pls-first_components-sort_{_SORT}-lang_pt"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
-
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pca_vs_pls_first_components)
-
-
-pca_vs_pls_components = {
-    "xtitles": [f"{o} Componente PCA de Y" for o in ordinais],
-    "ytitles": [f"{o} Componente PLS de Y" for o in ordinais],
+    "titles": [f"{o} Componente PCA de Y" for o in ordinais],
     "xlabels": targets,
-    "X": y_pca_components.T,
-    "Y": y_plsr_components,
+    "ylabel": "Peso",
     "sort": _SORT,
     "meanlabel": "média",
 }
 
-path = f"pca_vs_pls-components-sort_{_SORT}-lang_pt"
+path = f"pca-first_y_component-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pca_vs_pls_components)
+             **pca_first_y_component)
+
+pca_y_components = {
+    "X": y_pca_components.T,
+    "titles": [f"{o} Componente PCA de Y" for o in ordinais],
+    "xlabels": targets,
+    "ylabel": "Peso",
+    "ncols": y_pca_components.shape[0],
+    "sort": _SORT,
+    "meanlabel": "média",
+}
+
+path = f"pca-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+             **pca_y_components)
 
 
 algos = ("PCA", "PLS")

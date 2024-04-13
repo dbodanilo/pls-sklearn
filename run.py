@@ -198,88 +198,87 @@ for semente, split in splits.items():
 
 # === PLSR ===
 
-plsr = PLSRegression(n_components=n_max).fit(X_train, Y_train)
+for semente, split in splits.items():
+    seed = str(None) if semente == "Nenhuma" else semente
 
-X_test_pls, Y_test_pls = (pd.DataFrame(test_t)
-                          for test_t in plsr.transform(X_test, Y_test))
+    _, X_test, _, Y_test = split
 
-Y_pred_plsr = pd.DataFrame(plsr.predict(X_test), columns=Y_train.columns)
+    X_test_pls, Y_test_pls = (pd.DataFrame(test_t)
+                            for test_t in plsr[semente].transform(X_test, Y_test))
 
-R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
+    Y_pred_plsr = pd.DataFrame(plsr[semente].predict(X_test), columns=Y_train.columns)
 
-plsr_predictions = {
-    "X": X_test_pls,
-    "Y_true": Y_test,
-    "Y_pred": Y_pred_plsr,
-    "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
-    "ylabels": targets,
-    "R2": R2_Y_plsr,
-    "iter_x": False,
-    "ncols": 3,
-    "nrows": 2,
-}
+    R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
-path = "plsr-predictions"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    plsr_predictions = {
+        "X": X_test_pls,
+        "Y_true": Y_test,
+        "Y_pred": Y_pred_plsr,
+        "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
+        "ylabels": targets,
+        "R2": R2_Y_plsr,
+        "iter_x": False,
+        "ncols": 3,
+        "nrows": 2,
+    }
 
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **plsr_predictions)
+    path = f"plsr-predictions-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
+    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+                **plsr_predictions)
 
-r_plsr = PLSRegression(n_components=n_max).fit(Y_train, X_train)
+    _, Y_pred_plsr_t = (pd.DataFrame(test_t)
+                        for test_t in plsr[semente].transform(X_test, Y_pred_plsr))
 
-Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
-                          for test_t in r_plsr.transform(Y_test, X_test))
+    R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
-X_pred_plsr = pd.DataFrame(r_plsr.predict(Y_test), columns=X_train.columns)
+    plsr_predictions_transformed = {
+        "X": X_test_pls,
+        "Y_true": Y_test_pls,
+        "Y_pred": Y_pred_plsr_t,
+        "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
+        "ylabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
+        "R2": R2_Y_plsr_t,
+        "ncols": 3,
+        "nrows": 2,
+    }
 
-_, X_pred_plsr_t = (pd.DataFrame(test_t)
-                    for test_t in r_plsr.transform(Y_test, X_pred_plsr))
+    path = f"plsr-predictions_transformed-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
+    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+                **plsr_predictions_transformed)
 
-plsr_predictions_reversed_transformed = {
-    "X": Y_test_pls,
-    "Y_true": X_test_pls,
-    "Y_pred": X_pred_plsr_t,
-    "xlabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
-    "ylabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
-    "R2": R2_X_plsr_t,
-    "ncols": 3,
-    "nrows": 2,
-}
+    Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
+                            for test_t in r_plsr[semente].transform(Y_test, X_test))
 
-path = "plsr-predictions_reversed_transformed"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    X_pred_plsr = pd.DataFrame(r_plsr[semente].predict(Y_test), columns=X_train.columns)
 
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **plsr_predictions_reversed_transformed)
+    _, X_pred_plsr_t = (pd.DataFrame(test_t)
+                        for test_t in r_plsr[semente].transform(Y_test, X_pred_plsr))
 
+    R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
 
-_, Y_pred_plsr_t = (pd.DataFrame(test_t)
-                    for test_t in plsr.transform(X_test, Y_pred_plsr))
+    plsr_predictions_reversed_transformed = {
+        "X": Y_test_pls,
+        "Y_true": X_test_pls,
+        "Y_pred": X_pred_plsr_t,
+        "xlabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
+        "ylabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
+        "R2": R2_X_plsr_t,
+        "ncols": 3,
+        "nrows": 2,
+    }
 
-R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+    path = f"plsr-predictions_reversed_transformed-seed_{seed}"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-plsr_predictions_transformed = {
-    "X": X_test_pls,
-    "Y_true": Y_test_pls,
-    "Y_pred": Y_pred_plsr_t,
-    "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
-    "ylabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
-    "R2": R2_Y_plsr_t,
-    "ncols": 3,
-    "nrows": 2,
-}
-
-path = "plsr-predictions_transformed"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
-
-show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-             **plsr_predictions_transformed)
+    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+                **plsr_predictions_reversed_transformed)
 
 
 # TODO: use itertools for /.*th/ ords.

@@ -415,7 +415,7 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
 # for `Y = predict(X)` (based on r2_score).
-seed = None
+seed = str(None)
 
 # TODO: evaluate stability among runs for each target variable.
 plsr_targets_regressors = pd.Series([PLSRegression(

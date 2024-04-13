@@ -146,7 +146,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+    show_or_save(paths, globs, plot_predictions, _SHOW, False,
                  **pcr_predictions)
 
 
@@ -169,7 +169,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+    show_or_save(paths, globs, plot_predictions, _SHOW, False,
                 **pcr_predictions_transformed)
 
     X_pred_pcr = pd.DataFrame(r_pcr[semente].predict(Y_test), columns=X_train.columns)
@@ -322,7 +322,7 @@ for i, o in enumerate(ordinais):
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+    show_or_save(paths, globs, plot_components, _SHOW, False,
                  **pls_y_component_i)
 
 
@@ -495,14 +495,16 @@ for target, components in plsr_components.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+    show_or_save(paths, globs, plot_components, _SHOW, False,
                  **pls_target_seeds_first_x_components)
 
 
 # === PCR vs. PLSR ===
 
 # NOTE: split it so that PLSR performs better than PCR.
-for seed, split in splits.items():
+for semente, split in splits.items():
+    seed = None if semente == "Nenhuma" else semente
+
     X_train, X_test, Y_train, Y_test = split
 
     X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
@@ -577,7 +579,9 @@ algos = ("PCA", "PLS")
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
-for seed, split in splits.items():
+for semente, split in splits.items():
+    seed = str(None) if semente == "Nenhuma" else semente
+
     X_train, X_test, Y_train, Y_test = split
 
     X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
@@ -642,7 +646,9 @@ r2_col = np.empty(N, dtype=float)
 seed_col = np.empty(N, dtype=object)
 t_col = np.empty(N, dtype=object)
 i = 0
-for seed, split in splits.items():
+for semente, split in splits.items():
+    seed = str(None) if semente == "Nenhuma" else semente
+
     X_train, X_test, Y_train, Y_test = split
 
     for n in range(1, n_max + 1):
@@ -699,7 +705,7 @@ for seed, split in splits.items():
                     # mean and std over variables.
                     r2_col[i] = r2
 
-                    seed_col[i] = str(seed)
+                    seed_col[i] = seed
                     t_col[i] = t
                     i += 1
 
@@ -737,7 +743,7 @@ def print_r2s(df, model_labels, ns=None, seeds=None):
         # if filtered by ns, we are aggregating over seeds.
         msg += "seeds"
     else:
-        filters = seeds
+        filters = (str(s) for s in seeds)
         f_label = "seed"
         msg += "ns"
 

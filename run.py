@@ -361,23 +361,14 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
              **pls_y_components)
 
 
-splits = {}
-
-# NOTE: evaluate stability among runs for each target variable.
-# `seed=None` means all samples (no split).
-for seed in (None, *seeds):
-    splits[seed] = train_test_seed_split(X, Y, seed=seed)
-
-
 x_all_plsr_components = np.empty((n_features, 0))
 y_all_plsr_components = np.empty((n_targets, 0))
 
-for split in splits.values():
+for semente, split in splits.items():
     X_train, X_test, Y_train, Y_test = split
-    plsr = PLSRegression(n_components=n_targets).fit(X_train, Y_train)
 
-    x_first_component = plsr.x_rotations_[:, 0].reshape(-1, 1)
-    y_first_component = plsr.y_rotations_[:, 0].reshape(-1, 1)
+    x_first_component = plsr[semente].x_rotations_[:, 0].reshape(-1, 1)
+    y_first_component = plsr[semente].y_rotations_[:, 0].reshape(-1, 1)
 
     x_all_plsr_components = np.append(x_all_plsr_components,
                                       x_first_component, axis=1)
@@ -386,9 +377,6 @@ for split in splits.values():
 
 x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
 y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
-
-all_seeds = [str(s) for s in (None, *seeds)]
-todas_sementes = ("Nenhuma", *seeds)
 
 pls_seeds_first_x_components = {
     "X": x_all_plsr_components,

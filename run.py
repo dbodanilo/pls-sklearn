@@ -459,20 +459,20 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 plsr_regressors = {}
 plsr_components = {}
 
-for seed, (X_train, X_test, Y_train, Y_test) in splits.items():
-    plsr_regressors[seed] = {}
+for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
+    plsr_regressors[semente] = {}
 
     for t, target in zip(ts, todos_objetivos):
         Y_train_target = Y_train[t] if t is not None else Y_train
 
-        plsr_regressors[seed][t] = PLSRegression(n_components=n_targets).fit(
+        plsr_regressors[semente][t] = PLSRegression(n_components=n_targets).fit(
             X_train, Y_train_target)
 
-        target_first_component = plsr_regressors[seed][t].\
+        target_first_component = plsr_regressors[semente][t].\
             x_rotations_[:, 0].reshape(-1, 1)
 
         # Only set it in first pass.
-        if seed == None:
+        if semente == "Nenhuma":
             plsr_components[target] = target_first_component
         else:
             plsr_components[target] = np.append(

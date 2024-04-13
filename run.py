@@ -292,7 +292,7 @@ for i, o in enumerate(ordinais):
         "meanlabel": "média",
     }
 
-    path = f"pls-first_y_component_{i}-sort_{_SORT}-lang_pt"
+    path = f"pls-y_component_{i}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -467,7 +467,7 @@ for seed, (X_train, X_test, Y_train, Y_test) in splits.items():
 for target, components in plsr_components.items():
     components = normalize(components, axis=0)
 
-    pls_target_seeds_x_components = {
+    pls_target_seeds_first_x_components = {
         "X": components,
         "titles": [f"Primeiro Componente PLS de X para Objetivo: {target}, Semente: {s}" for s in todas_sementes],
         "xlabels": descriptors,
@@ -477,12 +477,12 @@ for target, components in plsr_components.items():
         "meanlabel": "média",
     }
 
-    path = f"pls_{detexify(target)}_seeds-x_components-sort_{_SORT}-lang-pt"
+    path = f"pls_{detexify(target)}_seeds-first_x_components-sort_{_SORT}-lang-pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-                 **pls_target_seeds_x_components)
+                 **pls_target_seeds_first_x_components)
 
 
 # === PCR vs. PLSR ===

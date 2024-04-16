@@ -36,14 +36,6 @@ TODAY = NOW.strftime("%Y-%m-%d")
 
 X, Y = load_leme()
 
-# For indexing (original format).
-ds = X.columns.drop(["N.", "Semente"])
-# Last three targets are the most important (Av0, fT, Pwr).
-ts = Y.columns.drop(["N.", "Semente"])
-
-# For plotting (ensure LaTeX formatting).
-descriptors = latexify(ds)
-targets = latexify(ts)
 seeds = X["Semente"].value_counts().index
 
 # train_test_seed_split() parameters.
@@ -52,6 +44,15 @@ all_seeds = (None, *seeds)
 todas_sementes = ("Nenhuma", *(str(s) for s in seeds))
 
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
+
+# For indexing (original format).
+ds = X_all.columns
+# Last three targets are the most important (Av0, fT, Pwr).
+ts = Y_all.columns
+
+# For plotting (ensure LaTeX formatting).
+descriptors = latexify(ds)
+targets = latexify(ts)
 
 n_samples = X_all.shape[0]
 n_features = X_all.shape[1]
@@ -149,7 +150,6 @@ for semente, split in splits.items():
     show_or_save(paths, globs, plot_predictions, _SHOW, False,
                  **pcr_predictions)
 
-
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
     Y_pred_pcr_t = pd.DataFrame(try_transform(r_pcr[semente], Y_pred_pcr))
 
@@ -170,9 +170,10 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_predictions, _SHOW, False,
-                **pcr_predictions_transformed)
+                 **pcr_predictions_transformed)
 
-    X_pred_pcr = pd.DataFrame(r_pcr[semente].predict(Y_test), columns=X_train.columns)
+    X_pred_pcr = pd.DataFrame(
+        r_pcr[semente].predict(Y_test), columns=X_train.columns)
     X_pred_pcr_t = pd.DataFrame(try_transform(pcr[semente], X_pred_pcr))
 
     R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
@@ -193,7 +194,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-                **pcr_predictions_reversed_transformed)
+                 **pcr_predictions_reversed_transformed)
 
 
 # === PLSR ===
@@ -204,9 +205,10 @@ for semente, split in splits.items():
     _, X_test, _, Y_test = split
 
     X_test_pls, Y_test_pls = (pd.DataFrame(test_t)
-                            for test_t in plsr[semente].transform(X_test, Y_test))
+                              for test_t in plsr[semente].transform(X_test, Y_test))
 
-    Y_pred_plsr = pd.DataFrame(plsr[semente].predict(X_test), columns=Y_train.columns)
+    Y_pred_plsr = pd.DataFrame(
+        plsr[semente].predict(X_test), columns=Y_train.columns)
 
     R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
@@ -227,7 +229,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_predictions, _SHOW, False,
-                **plsr_predictions)
+                 **plsr_predictions)
 
     _, Y_pred_plsr_t = (pd.DataFrame(test_t)
                         for test_t in plsr[semente].transform(X_test, Y_pred_plsr))
@@ -250,12 +252,13 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_predictions, _SHOW, False,
-                **plsr_predictions_transformed)
+                 **plsr_predictions_transformed)
 
     Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
-                            for test_t in r_plsr[semente].transform(Y_test, X_test))
+                              for test_t in r_plsr[semente].transform(Y_test, X_test))
 
-    X_pred_plsr = pd.DataFrame(r_plsr[semente].predict(Y_test), columns=X_train.columns)
+    X_pred_plsr = pd.DataFrame(
+        r_plsr[semente].predict(Y_test), columns=X_train.columns)
 
     _, X_pred_plsr_t = (pd.DataFrame(test_t)
                         for test_t in r_plsr[semente].transform(Y_test, X_pred_plsr))
@@ -278,7 +281,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
-                **plsr_predictions_reversed_transformed)
+                 **plsr_predictions_reversed_transformed)
 
 
 # TODO: use itertools for /.*th/ ords.
@@ -301,7 +304,7 @@ for i, o in enumerate(ordinais):
         "meanlabel": "média",
     }
 
-    path = f"pls-x_component_{i}-sort_{_SORT}-lang_pt"
+    path = f"pls-x_component_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -336,7 +339,7 @@ pls_x_components = {
     "meanlabel": "média",
 }
 
-path = f"pls-x_components-sort_{_SORT}-lang_pt"
+path = f"pls-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -353,7 +356,7 @@ pls_y_components = {
     "meanlabel": "média",
 }
 
-path = f"pls-y_components-sort_{_SORT}-lang_pt"
+path = f"pls-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

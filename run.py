@@ -10,6 +10,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import FunctionTransformer, normalize
+from sklearn.tree import DecisionTreeRegressor
 
 from decomposition import ScalerPCA, ScalerPCR
 from model import load_leme, train_test_seed_split
@@ -634,12 +635,12 @@ for semente, split in splits.items():
 
 
 # DOING: train only multi-output regressors.
-model_labels = ["PCR", "PLSR"]  # , "SVR"
+model_labels = ["PCR", "PLSR", "DTR"]  # , "SVR"
 r_labels = ["r" + label for label in model_labels]
 
-models = [ScalerPCR, PLSRegression]  # , ScalerSVR
+models = [ScalerPCR, PLSRegression, DecisionTreeRegressor]  # , ScalerSVR
 
-N = 480
+N = 540
 
 algo_col = np.empty(N, dtype=object)
 n_col = np.empty(N, dtype=int)
@@ -656,8 +657,20 @@ for semente, split in splits.items():
         for label, model in zip(model_labels, models):
             r_label = "r" + label
 
+            m_kwargs = {
+                "n_components": n
+            }
+
+            if label == "DTR":
+                tree_seed = 0 if seed == str(None) else int(seed)
+                m_kwargs = {
+                    "min_samples_split": 200,
+                    # TODO: review equivalent parameter to PCA/PLS's n_components.
+                    "random_state": 10 * tree_seed + n,
+                }
+
             m, rm, X_pred, Y_pred = fit_predict(
-                model, X_train, X_test, Y_train, Y_test, n_components=n)
+                model, X_train, X_test, Y_train, Y_test, **m_kwargs)
 
             # NOTE: Compare predictions in original feature
             # space, this confirms that calculating the
@@ -671,7 +684,7 @@ for semente, split in splits.items():
                 # TODO: pass IdTransformer as class, not object.
                 tm = transformer
                 rtm = transformer
-                if t != "None":
+                if t != str(None):
                     tm = transformer(n_components=n).fit(X_train, Y_train)
                     rtm = transformer(n_components=n).fit(Y_train, X_train)
 
@@ -690,10 +703,8 @@ for semente, split in splits.items():
                 # whether the regressor performs worse than
                 # DummyRegressor(strategy='mean').
                 # r2 = max(r2_score(Y_test, Y_pred), 0)
-                r2_m = r2_score(Y_test_t.iloc[:, :n],
-                                Y_pred_t.iloc[:, :n])
-                r2_rm = r2_score(X_test_t.iloc[:, :n],
-                                 X_pred_t.iloc[:, :n])
+                r2_m = r2_score(Y_test_t, Y_pred_t)
+                r2_rm = r2_score(X_test_t, X_pred_t)
 
                 for algo, r2 in ((label, r2_m), (r_label, r2_rm)):
                     # A numpy.ndarray for each column.
@@ -733,7 +744,8 @@ if not any(os.path.exists(path) for path in globs):
     r2s_df.to_csv(paths[0], sep="\t", float_format="{:.5f}".format)
 
 
-def print_r2s(df, model_labels, ns=None, seeds=None):
+def print_r2s(df, model_labels, ns=None, seeds=None, t=None):
+    t = str(t)
     filters = ns
     f_label = "n"
 
@@ -748,6 +760,8 @@ def print_r2s(df, model_labels, ns=None, seeds=None):
         f_label = "seed"
         msg += "ns"
 
+    msg += f", transformation: {t}"
+
     print(msg)
     # -1 for the '\n'.
     print("-" * (len(msg) - 1))
@@ -756,7 +770,7 @@ def print_r2s(df, model_labels, ns=None, seeds=None):
         print(f"\n{f_label} =", f)
         # NOTE: filter t == str(None), ignore transformed samples;
         # print results on original feature space only.
-        df_filtered = df[(df[f_label] == f) & (df["t"] == str(None))]
+        df_filtered = df[(df[f_label] == f) & (df["t"] == t)]
         if is_n:
             # don't aggregate over seed=None.
             df_filtered = df_filtered[df_filtered["seed"] != str(None)]
@@ -779,14 +793,17 @@ ns = list(range(1, n_max + 1))
 print("\nPCA vs. PLS", end="")
 print("\n===========", end="")
 
-print_r2s(r2s_df, model_labels, ns=ns)
+for t in (str(None), "PCA", "PLS"):
+    print_r2s(r2s_df, model_labels, ns=ns, t=t)
 
-# NOTE: `all_seeds` includes str(None) as a seed.
-print_r2s(r2s_df, model_labels, seeds=all_seeds)
+    # NOTE: `all_seeds` includes str(None) as a seed.
+    print_r2s(r2s_df, model_labels, seeds=all_seeds, t=t)
 
 
 print("\nPCA vs. PLS (reverse, X = model.predict(Y))", end="")
 print("\n===========================================", end="")
-print_r2s(r2s_df, r_labels, ns=ns)
 
-print_r2s(r2s_df, r_labels, seeds=all_seeds)
+for t in (str(None), "PCA", "PLS"):
+    print_r2s(r2s_df, r_labels, ns=ns, t=t)
+
+    print_r2s(r2s_df, r_labels, seeds=all_seeds, t=t)

@@ -660,7 +660,6 @@ for semente, split in splits.items():
             m_kwargs = {
                 "n_components": n
             }
-
             if label == "DTR":
                 tree_seed = 0 if seed == str(None) else int(seed)
                 m_kwargs = {
@@ -679,14 +678,17 @@ for semente, split in splits.items():
             # higher `r2_score`, which makes it harder
             # to observe the expected increase in
             # `r2_score` as `n` increases.
-            IdTransformer = FunctionTransformer(lambda x: x)
-            for t, transformer in ((str(None), IdTransformer), ("PCA", ScalerPCA), ("PLS", PLSRegression)):
-                # TODO: pass IdTransformer as class, not object.
-                tm = transformer
-                rtm = transformer
-                if t != str(None):
-                    tm = transformer(n_components=n).fit(X_train, Y_train)
-                    rtm = transformer(n_components=n).fit(Y_train, X_train)
+            for t, transformer in ((str(None), FunctionTransformer), ("PCA", ScalerPCA), ("PLS", PLSRegression)):
+                t_kwargs = {
+                    "n_components": n_max
+                }
+                # NOTE: pass FunctionTransformer as class, not object.
+                if t == str(None):
+                    t_kwargs = {
+                        "func": lambda x: x
+                    }
+                tm = transformer(**t_kwargs).fit(X_train, Y_train)
+                rtm = transformer(**t_kwargs).fit(Y_train, X_train)
 
                 X_test_t = pd.DataFrame(try_transform(tm, X_test))
                 X_pred_t = pd.DataFrame(try_transform(tm, X_pred))

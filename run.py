@@ -126,6 +126,14 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     path = f"pca-y_components-seed_{str(seed)}"
     save_to_csv(y_pca_components, path)
 
+    pca_explained_variance_ratio = pd.DataFrame(
+        {"X": x_pca_step.explained_variance_ratio_,
+         "Y": y_pca_step.explained_variance_ratio_},
+        index=pca_component_names[:n_max])
+
+    path = f"pca-explained_variance_ratio-seed_{str(seed)}"
+    save_to_csv(pca_explained_variance_ratio, path)
+
     plsr_seed = PLSRegression(n_components=n_max).fit(X_train, Y_train)
     plsr[semente] = plsr_seed
 
@@ -188,6 +196,21 @@ y_pca_components = pd.DataFrame(
 
 path = "pca_all-y_components"
 save_to_csv(y_pca_components, path)
+
+# right-pad Y ratios in order to place X and Y on the same DataFrame.
+y_pca_explained_variance_ratio = np.pad(
+    y_pca_step.explained_variance_ratio_,
+    (0, n_features - n_targets),
+    mode="constant",
+    constant_values=np.nan)
+
+pca_explained_variance_ratio = pd.DataFrame(
+    {"X": x_pca_step.explained_variance_ratio_,
+     "Y": y_pca_explained_variance_ratio},
+    index=pca_component_names[:x_pca_step.n_components_])
+
+path = "pca_all-explained_variance_ratio"
+save_to_csv(pca_explained_variance_ratio, path)
 
 print("PCA\n===")
 print("X and Y\n-------")

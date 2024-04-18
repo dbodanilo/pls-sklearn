@@ -86,6 +86,9 @@ r_pcr = {}
 plsr = {}
 r_plsr = {}
 
+pca_component_names = [f"PCA {i}" for i in range(1, n_features + 1)]
+pls_component_names = [f"PLS {i}" for i in range(1, n_features + 1)]
+
 # NOTE: evaluate stability among runs for each target variable.
 # `seed=None` means all samples (no split).
 for seed, semente in zip((None, *seeds), todas_sementes):
@@ -101,10 +104,67 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     X_train, _, Y_train, _ = splits[semente]
 
     pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
-    r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+    x_pca_step: PCA = pcr[semente].named_steps["pca"]
 
-    plsr[semente] = PLSRegression(n_components=n_max).fit(X_train, Y_train)
-    r_plsr[semente] = PLSRegression(n_components=n_max).fit(Y_train, X_train)
+    # transform(X) = X * V = X * transpose(Vt), components_ = Vt.
+    x_pca_components = pd.DataFrame(
+        x_pca_step.components_,
+        columns=X_train.columns,
+        index=pca_component_names[:n_max])
+
+    path = f"pca-x_components-seed_{str(seed)}"
+    save_to_csv(x_pca_components, path)
+
+    r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+    y_pca_step: PCA = r_pcr[semente].named_steps["pca"]
+
+    y_pca_components = pd.DataFrame(
+        y_pca_step.components_,
+        columns=Y_train.columns,
+        index=pca_component_names[:n_max])
+
+    path = f"pca-y_components-seed_{str(seed)}"
+    save_to_csv(y_pca_components, path)
+
+    plsr_seed = PLSRegression(n_components=n_max).fit(X_train, Y_train)
+    plsr[semente] = plsr_seed
+
+    # transform(X) = X * x_rotations_
+    x_pls_components = pd.DataFrame(
+        plsr_seed.x_rotations_,
+        columns=pls_component_names[:n_max],
+        index=X_train.columns)
+
+    path = f"pls-x_components-seed_{str(seed)}"
+    save_to_csv(x_pls_components, path)
+
+    y_pls_components = pd.DataFrame(
+        plsr_seed.y_rotations_,
+        columns=pls_component_names[:n_max],
+        index=Y_train.columns)
+
+    path = f"pls-y_components-seed_{str(seed)}"
+    save_to_csv(y_pls_components, path)
+
+    r_plsr_seed = PLSRegression(n_components=n_max).fit(Y_train, X_train)
+    r_plsr[semente] = r_plsr_seed
+
+    # fit(Y, X) -> y_rotations_ transforms our X.
+    x_rpls_components = pd.DataFrame(
+        r_plsr_seed.y_rotations_,
+        columns=pls_component_names[:n_max],
+        index=X_train.columns)
+
+    path = f"pls-x_components_reversed-seed_{str(seed)}"
+    save_to_csv(x_rpls_components, path)
+
+    y_rpls_components = pd.DataFrame(
+        r_plsr_seed.x_rotations_,
+        columns=pls_component_names[:n_max],
+        index=Y_train.columns)
+
+    path = f"pls-y_components_reversed-seed_{str(seed)}"
+    save_to_csv(y_rpls_components, path)
 
 
 # === PCA ===
@@ -112,8 +172,22 @@ for seed, semente in zip((None, *seeds), todas_sementes):
 x_pca = ScalerPCA(n_components=n_features).fit(X_all)
 x_pca_step: PCA = x_pca.named_steps["pca"]
 
+x_pca_components = pd.DataFrame(
+    x_pca_step.components_, columns=X_all.columns,
+    index=pca_component_names[:x_pca_step.n_components_])
+
+path = "pca_all-x_components"
+save_to_csv(x_pca_components, path)
+
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
 y_pca_step: PCA = y_pca.named_steps["pca"]
+
+y_pca_components = pd.DataFrame(
+    y_pca_step.components_, columns=Y_all.columns,
+    index=pca_component_names[:y_pca_step.n_components_])
+
+path = "pca_all-y_components"
+save_to_csv(y_pca_components, path)
 
 print("PCA\n===")
 print("X and Y\n-------")

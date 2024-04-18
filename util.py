@@ -61,7 +61,19 @@ def latexify(strs):
     return np.fromiter((f"${s}$" if s.find("_") > 0 else s for s in strs), dtype="<U21")
 
 
-def show_or_save(paths, globs, plot, show=False, pause=False, **kwargs):
+# format "{:.4f}" was the highest one not to vary on
+# equivalent runs.
+def save_to_csv(X, path, exts=[".csv"], sep="\t", float_format="{:.4f}".format, **kwargs):
+    paths, prefix, exts = get_paths(path, exts=exts)
+    globs = get_globs(path, prefix, exts)
+
+    path = paths[0]
+
+    # Only generate it once.
+    if not any(os.path.exists(glob) for glob in globs):
+        X.to_csv(path, sep=sep, float_format=float_format, **kwargs)
+
+
     # Only generate it once.
     if not any(os.path.exists(path) for path in globs) or show:
         fig = plot(**kwargs)

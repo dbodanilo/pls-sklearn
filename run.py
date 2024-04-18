@@ -22,6 +22,7 @@ from util import (
     get_globs,
     get_paths,
     latexify,
+    save_to_csv,
     show_or_save,
     try_attr,
     try_transform
@@ -45,6 +46,12 @@ all_seeds = (None, *seeds)
 todas_sementes = ("Nenhuma", *(str(s) for s in seeds))
 
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
+
+path = "x_all"
+save_to_csv(X_all, path)
+
+path = "y_all"
+save_to_csv(Y_all, path)
 
 # For indexing (original format).
 ds = X_all.columns
@@ -83,6 +90,14 @@ r_plsr = {}
 # `seed=None` means all samples (no split).
 for seed, semente in zip((None, *seeds), todas_sementes):
     splits[semente] = train_test_seed_split(X, Y, seed=seed)
+
+    for label, frame in zip(("x_train", "x_test", "y_train", "y_test"), splits[semente]):
+        path = f"{label}-seed_{str(seed)}"
+        if seed is None:
+            path = "x_all" if label.startswith("x") else "y_all"
+
+        save_to_csv(frame, path)
+
     X_train, _, Y_train, _ = splits[semente]
 
     pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
@@ -736,14 +751,7 @@ r2s_df = pd.DataFrame({
 })
 
 path = "r2s"
-paths, prefix, exts = get_paths(path, exts=[".csv"])
-globs = get_globs(path, prefix, exts)
-
-# Only save it once a day.
-if not any(os.path.exists(path) for path in globs):
-    # format "{:.5f}" was the highest one not to vary on
-    # equivalent runs.
-    r2s_df.to_csv(paths[0], sep="\t", float_format="{:.5f}".format)
+save_to_csv(r2s_df, path)
 
 
 def print_r2s(df, model_labels, ns=None, seeds=None, t=None):
@@ -792,8 +800,8 @@ def print_r2s(df, model_labels, ns=None, seeds=None, t=None):
 ns = list(range(1, n_max + 1))
 
 # vs. SVR
-print("\nPCA vs. PLS", end="")
-print("\n===========", end="")
+print("\nPCA vs. PLS vs. DTR", end="")
+print("\n===================", end="")
 
 for t in (str(None), "PCA", "PLS"):
     print_r2s(r2s_df, model_labels, ns=ns, t=t)
@@ -802,8 +810,8 @@ for t in (str(None), "PCA", "PLS"):
     print_r2s(r2s_df, model_labels, seeds=all_seeds, t=t)
 
 
-print("\nPCA vs. PLS (reverse, X = model.predict(Y))", end="")
-print("\n===========================================", end="")
+print("\nPCA vs. PLS vs. DTR (reverse: X = model.predict(Y))", end="")
+print("\n===================================================", end="")
 
 for t in (str(None), "PCA", "PLS"):
     print_r2s(r2s_df, r_labels, ns=ns, t=t)

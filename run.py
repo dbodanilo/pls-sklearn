@@ -709,16 +709,17 @@ for semente, split in splits.items():
     R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
     R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
+    # TODO: split regression plot into two (PCA/ DTR and PLS)
     pcr_vs_plsr_regression = {
         "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
         "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
-        "xlabels": [f"Actual Y projected onto 1st {algo} component" for algo in algos],
-        "ylabels": [f"Predicted Y projected onto 1st {algo} component" for algo in algos],
-        "titles": [f"{algo} Regression" for algo in algos],
+        "xlabels": [f"Primeiro componente {algo} do Y real" for algo in algos],
+        "ylabels": [f"Primeiro componente {algo} do Y predito" for algo in algos],
+        "titles": [f"Regressão com {algo}" for algo in algos],
         "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
     }
 
-    path = f"pcr_vs_plsr-regression-seed_{seed}"
+    path = f"pcr_vs_plsr-regression-seed_{seed}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -732,13 +733,13 @@ for semente, split in splits.items():
     pcr_vs_plsr_regression_reversed = {
         "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
         "Y_pred": pd.concat((X_pred_pcr_t.iloc[:, 0], X_pred_plsr_t.iloc[:, 0]), axis="columns"),
-        "xlabels": [f"Actual X projected onto 1st {algo} component" for algo in algos],
-        "ylabels": [f"Predicted X projected onto 1st {algo} component" for algo in algos],
-        "titles": [f"{algo} Regression" for algo in algos],
+        "xlabels": [f"Primeiro componente {algo} do X real" for algo in algos],
+        "ylabels": [f"Primeiro componente {algo} do X predito" for algo in algos],
+        "titles": [f"Regressão com {algo}" for algo in algos],
         "R2": np.array((R2_X_pcr_t[0], R2_X_plsr_t[0])),
     }
 
-    path = f"pcr_vs_plsr-regression_reversed-seed_{seed}"
+    path = f"pcr_vs_plsr-regression_reversed-seed_{seed}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 

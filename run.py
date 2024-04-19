@@ -143,7 +143,12 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=X_train.columns)
 
-    path = f"pls-x_components-seed_{str(seed)}"
+    # "all" means all targets, only applies to:
+    # PLS: because it's supervised, while PCA is not;
+    # X: because Y are the targets themselves;
+    # non-reversed: because it doesn't make much sense to
+    # try to predict 20 variables (X) from a single scalar (y).
+    path = f"pls_all-x_components-seed_{str(seed)}"
     save_to_csv(x_pls_components, path)
 
     y_pls_components = pd.DataFrame(
@@ -184,7 +189,7 @@ x_pca_components = pd.DataFrame(
     x_pca_step.components_, columns=X_all.columns,
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = "pca_all-x_components"
+path = "pca-x_components-seed_None"
 save_to_csv(x_pca_components, path)
 
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
@@ -194,7 +199,7 @@ y_pca_components = pd.DataFrame(
     y_pca_step.components_, columns=Y_all.columns,
     index=pca_component_names[:y_pca_step.n_components_])
 
-path = "pca_all-y_components"
+path = "pca-y_components-seed_None"
 save_to_csv(y_pca_components, path)
 
 # right-pad Y ratios in order to place X and Y on the same DataFrame.
@@ -209,7 +214,7 @@ pca_explained_variance_ratio = pd.DataFrame(
      "Y": y_pca_explained_variance_ratio},
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = "pca_all-explained_variance_ratio"
+path = "pca-explained_variance_ratio-seed_None"
 save_to_csv(pca_explained_variance_ratio, path)
 
 print("PCA\n===")
@@ -442,7 +447,7 @@ for i, o in enumerate(ordinais):
                  **pls_y_component_i)
 
 
-pls_x_components = {
+pls_all_x_components = {
     "X": x_plsr_components,
     "titles": [f"{o} Componente PLS de X" for o in ordinais],
     "xlabels": descriptors,
@@ -452,12 +457,12 @@ pls_x_components = {
     "meanlabel": "média",
 }
 
-path = f"pls-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_all-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_x_components)
+             **pls_all_x_components)
 
 pls_y_components = {
     "X": y_plsr_components,
@@ -494,7 +499,7 @@ for semente, split in splits.items():
 x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
 y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
 
-pls_seeds_first_x_components = {
+pls_all_seeds_first_x_components = {
     "X": x_all_plsr_components,
     "titles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
     "xlabels": descriptors,
@@ -504,12 +509,12 @@ pls_seeds_first_x_components = {
     "meanlabel": "média",
 }
 
-path = f"pls_seeds-first_x_components-sort_{_SORT}-lang_pt"
+path = f"pls_all_seeds-first_x_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
-             **pls_seeds_first_x_components)
+             **pls_all_seeds_first_x_components)
 
 pls_seeds_first_y_components = {
     "X": y_all_plsr_components,
@@ -534,19 +539,29 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 seed = str(None)
 
 # TODO: evaluate stability among runs for each target variable.
-plsr_targets_regressors = pd.Series([PLSRegression(
+plsr_targets = pd.Series([PLSRegression(
     n_components=n_targets).fit(X_all, Y_all)], index=["all"])
 
-plsr_targets_components = pd.DataFrame(
-    plsr_targets_regressors["all"].x_rotations_[:, 0], columns=["all"], index=ds)
+plsr_targets_first_components = pd.DataFrame(
+    plsr_targets["all"].x_rotations_[:, 0], columns=["all"], index=ds)
 
 for t in ts:
     Y_train_target = Y_all[t]
 
-    plsr_targets_regressors[t] = PLSRegression(n_components=n_targets).fit(
-        X_all, Y_train_target)
+    plsr_target = PLSRegression(
+        n_components=n_targets).fit(X_all, Y_train_target)
+    plsr_targets[t] = plsr_target
 
-    plsr_targets_components[t] = plsr_targets_regressors[t].x_rotations_[:, 0]
+    pls_target_x_components = pd.DataFrame(
+        plsr_target.x_rotations_,
+        columns=pls_component_names[:n_max],
+        index=X_all.columns)
+
+    path = f"pls_{detexify(t)}-x_components-seed_{str(seed)}"
+    save_to_csv(pls_target_x_components, path)
+
+    plsr_targets_first_components[t] = plsr_target.x_rotations_[:, 0]
+
 
 # For indexing.
 all_ts = [None, *ts]
@@ -555,16 +570,16 @@ all_targets = ["all", *targets]
 todos_objetivos = ["Todos", *targets]
 
 pls_targets_x_components = {
-    "X": plsr_targets_components,
+    "X": plsr_targets_first_components,
     "titles": [f"Primeiro Componente PLS de X, Objetivo: {o}" for o in todos_objetivos],
     "xlabels": descriptors,
     "ylabel": "Peso",
-    "ncols": plsr_targets_components.shape[1],
+    "ncols": plsr_targets_first_components.shape[1],
     "sort": _SORT,
     "meanlabel": "média",
 }
 
-path = f"pls_targets-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_targets-first_x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -573,28 +588,39 @@ show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
 
 
 plsr_regressors = {}
-plsr_components = {}
+plsr_first_components = {}
 
 for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
     plsr_regressors[semente] = {}
 
-    for t, target in zip(ts, todos_objetivos):
+    for t, target in zip(all_ts, todos_objetivos):
         Y_train_target = Y_train[t] if t is not None else Y_train
 
-        plsr_regressors[semente][t] = PLSRegression(n_components=n_targets).fit(
-            X_train, Y_train_target)
+        plsr_seed_target = PLSRegression(
+            n_components=n_targets).fit(X_train, Y_train_target)
+        plsr_regressors[semente][t] = plsr_seed_target
 
-        target_first_component = plsr_regressors[semente][t].\
+        pls_seed_target_x_components = pd.DataFrame(
+            plsr_seed_target.x_rotations_,
+            columns=pls_component_names[:n_max],
+            index=X_train.columns)
+
+        t = "all" if t is None else t
+        seed = str(None) if semente == "Nenhuma" else semente
+        path = f"pls_{detexify(t)}-x_components-seed_{str(seed)}"
+        save_to_csv(pls_seed_target_x_components, path)
+
+        target_first_component = plsr_seed_target.\
             x_rotations_[:, 0].reshape(-1, 1)
 
         # Only set it in first pass.
         if semente == "Nenhuma":
-            plsr_components[target] = target_first_component
+            plsr_first_components[target] = target_first_component
         else:
-            plsr_components[target] = np.append(
-                plsr_components[target], target_first_component, axis=1)
+            plsr_first_components[target] = np.append(
+                plsr_first_components[target], target_first_component, axis=1)
 
-for target, components in plsr_components.items():
+for target, components in plsr_first_components.items():
     components = normalize(components, axis=0)
 
     pls_target_seeds_first_x_components = {

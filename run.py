@@ -32,9 +32,6 @@ _SHOW = True
 _PAUSE = True
 _SORT = "desc"
 
-NOW = datetime.now()
-TODAY = NOW.strftime("%Y-%m-%d")
-
 X, Y = load_leme()
 
 seeds = X["Semente"].value_counts().index
@@ -216,6 +213,11 @@ pca_explained_variance_ratio = pd.DataFrame(
 
 path = "pca-explained_variance_ratio-seed_None"
 save_to_csv(pca_explained_variance_ratio, path)
+
+
+# YYYY-mm-dd_HH-mm
+_now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+print(_now)
 
 print("PCA\n===")
 print("X and Y\n-------")
@@ -941,3 +943,8 @@ for t in (str(None), "PCA", "PLS"):
     print_r2s(r2s_df, r_labels, ns=ns, t=t)
 
     print_r2s(r2s_df, r_labels, seeds=all_seeds, t=t)
+
+
+# YYYY-mm-dd_HH-mm
+_now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+print(_now)

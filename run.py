@@ -79,7 +79,8 @@ splits = {}
 pcr = {}
 r_pcr = {}
 
-plsr = {}
+# "Todos": all targets (multivariate Y).
+plsr = {"Todos": {}}
 r_plsr = {}
 
 pca_component_names = [f"PCA {i}" for i in range(1, n_features + 1)]
@@ -132,7 +133,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     save_to_csv(pca_explained_variance_ratio, path)
 
     plsr_seed = PLSRegression(n_components=n_max).fit(X_train, Y_train)
-    plsr[semente] = plsr_seed
+    plsr["Todos"][semente] = plsr_seed
 
     # transform(X) = X * x_rotations_
     x_pls_components = pd.DataFrame(
@@ -325,10 +326,10 @@ for semente, split in splits.items():
     _, X_test, _, Y_test = split
 
     X_test_pls, Y_test_pls = (pd.DataFrame(test_t)
-                              for test_t in plsr[semente].transform(X_test, Y_test))
+                              for test_t in plsr["Todos"][semente].transform(X_test, Y_test))
 
     Y_pred_plsr = pd.DataFrame(
-        plsr[semente].predict(X_test), columns=Y_train.columns)
+        plsr["Todos"][semente].predict(X_test), columns=Y_train.columns)
 
     R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
@@ -352,7 +353,7 @@ for semente, split in splits.items():
                  **plsr_predictions)
 
     _, Y_pred_plsr_t = (pd.DataFrame(test_t)
-                        for test_t in plsr[semente].transform(X_test, Y_pred_plsr))
+                        for test_t in plsr["Todos"][semente].transform(X_test, Y_pred_plsr))
 
     R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
 
@@ -411,8 +412,8 @@ ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
 seed, semente = (str(None), "Nenhuma")
 
 # TODO: use correlation, not normalization.
-x_plsr_components = normalize(plsr[semente].x_rotations_, axis=0)
-y_plsr_components = normalize(plsr[semente].y_rotations_, axis=0)
+x_plsr_components = normalize(plsr["Todos"][semente].x_rotations_, axis=0)
+y_plsr_components = normalize(plsr["Todos"][semente].y_rotations_, axis=0)
 
 for i, o in enumerate(ordinais):
     pls_x_component_i = {
@@ -490,8 +491,11 @@ y_all_plsr_components = np.empty((n_targets, 0))
 for semente, split in splits.items():
     X_train, X_test, Y_train, Y_test = split
 
-    x_first_component = plsr[semente].x_rotations_[:, 0].reshape(-1, 1)
-    y_first_component = plsr[semente].y_rotations_[:, 0].reshape(-1, 1)
+    x_rotations = plsr["Todos"][semente].x_rotations_
+    y_rotations = plsr["Todos"][semente].y_rotations_
+
+    x_first_component = x_rotations[:, 0].reshape(-1, 1)
+    y_first_component = y_rotations[:, 0].reshape(-1, 1)
 
     x_all_plsr_components = np.append(x_all_plsr_components,
                                       x_first_component, axis=1)
@@ -541,18 +545,18 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
 seed = str(None)
 
 # TODO: evaluate stability among runs for each target variable.
-plsr_targets = pd.Series([PLSRegression(
-    n_components=n_targets).fit(X_all, Y_all)], index=["all"])
 
 plsr_targets_first_components = pd.DataFrame(
-    plsr_targets["all"].x_rotations_[:, 0], columns=["all"], index=ds)
+    plsr["Todos"]["Nenhuma"].x_rotations_[:, 0], columns=["Todos"], index=ds)
 
-for t in ts:
+for t, target in zip(ts, targets):
+    plsr[target] = {}
+
     Y_train_target = Y_all[t]
 
     plsr_target = PLSRegression(
         n_components=n_targets).fit(X_all, Y_train_target)
-    plsr_targets[t] = plsr_target
+    plsr[target]["Nenhuma"] = plsr_target
 
     pls_target_x_components = pd.DataFrame(
         plsr_target.x_rotations_,
@@ -589,18 +593,16 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_targets_x_components)
 
 
-plsr_regressors = {}
 plsr_first_components = {}
 
-for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
-    plsr_regressors[semente] = {}
 
+for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
     for t, target in zip(all_ts, todos_objetivos):
         Y_train_target = Y_train[t] if t is not None else Y_train
 
         plsr_seed_target = PLSRegression(
             n_components=n_targets).fit(X_train, Y_train_target)
-        plsr_regressors[semente][t] = plsr_seed_target
+        plsr[target][semente] = plsr_seed_target
 
         pls_seed_target_x_components = pd.DataFrame(
             plsr_seed_target.x_rotations_,

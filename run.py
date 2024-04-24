@@ -1,5 +1,3 @@
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -22,13 +20,14 @@ from util import (
     get_globs,
     get_paths,
     latexify,
+    save_or_show,
     save_to_csv,
-    show_or_save,
     try_attr,
     try_transform
 )
 
 
+_SAVE = True
 _SHOW = True
 _PAUSE = True
 _SORT = "desc"
@@ -112,6 +111,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=X_train.columns,
         index=pca_component_names[:n_max])
 
+    # TODO: save correlations between components, features and objectives.
     path = f"pca-x_components-seed_{str(seed)}"
     save_to_csv(x_pca_components, path)
 
@@ -265,7 +265,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
@@ -287,7 +287,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **pcr_predictions_transformed)
 
     X_pred_pcr = pd.DataFrame(
@@ -311,7 +311,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **pcr_predictions_reversed_transformed)
 
 
@@ -346,7 +346,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **plsr_predictions)
 
     _, Y_pred_plsr_t = (pd.DataFrame(test_t)
@@ -369,7 +369,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **plsr_predictions_transformed)
 
     Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
@@ -398,7 +398,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_predictions, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **plsr_predictions_reversed_transformed)
 
 
@@ -427,7 +427,7 @@ for i, o in enumerate(ordinais):
     globs = get_globs(path, prefix, exts)
 
     # NOTE: pausing in a loop isn't practical.
-    show_or_save(paths, globs, plot_components, _SHOW, False,
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
                  **pls_x_component_i)
 
     pls_y_component_i = {
@@ -443,7 +443,7 @@ for i, o in enumerate(ordinais):
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_components, _SHOW, False,
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
                  **pls_y_component_i)
 
 
@@ -461,7 +461,7 @@ path = f"pls_all-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_all_x_components)
 
 pls_y_components = {
@@ -478,7 +478,7 @@ path = f"pls-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_y_components)
 
 
@@ -513,7 +513,7 @@ path = f"pls_all_seeds-first_x_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_all_seeds_first_x_components)
 
 pls_seeds_first_y_components = {
@@ -530,7 +530,7 @@ path = f"pls_seeds-first_y_components-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_seeds_first_y_components)
 
 
@@ -583,7 +583,7 @@ path = f"pls_targets-first_x_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_targets_x_components)
 
 
@@ -637,7 +637,7 @@ for target, components in plsr_first_components.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_components, _SHOW, False,
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
                  **pls_target_seeds_first_x_components)
 
 
@@ -673,7 +673,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     # No pause in for loop.
-    show_or_save(paths, globs, plot_predictions, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **pcr_vs_plsr_predictions)
 
 
@@ -694,7 +694,7 @@ path = f"pca-first_y_component-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pca_first_y_component)
 
 pca_y_components = {
@@ -711,7 +711,7 @@ path = f"pca-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
-show_or_save(paths, globs, plot_components, _SHOW, _PAUSE,
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pca_y_components)
 
 
@@ -750,7 +750,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     # pause=True is not practical in a for-loop.
-    show_or_save(paths, globs, plot_regression, _SHOW, False,
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, False,
                  **pcr_vs_plsr_regression)
 
     R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
@@ -769,7 +769,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    show_or_save(paths, globs, plot_regression, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, _PAUSE,
                  **pcr_vs_plsr_regression_reversed)
 
 

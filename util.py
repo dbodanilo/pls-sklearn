@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -88,6 +89,10 @@ def save_or_show(paths, globs, plot, save=True, show=False, pause=False, **kwarg
 
         if pause:
             input("Press Enter to continue...")
+
+        # close when not showing, or after pausing.
+        if not show or pause:
+            plt.close("all")
 
 
 def try_attr(model, a):

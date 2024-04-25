@@ -92,7 +92,7 @@ def save_or_show(paths, globs, plot, save=True, show=False, pause=False, **kwarg
 
 def try_attr(model, a):
     if hasattr(model, a):
-        return model.a
+        return getattr(model, a)
 
     if hasattr(model, "steps"):
         for _, step in model.steps:

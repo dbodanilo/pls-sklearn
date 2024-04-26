@@ -736,9 +736,26 @@ for semente, split in splits.items():
 
 
 semente, seed = ("Nenhuma", str(None))
+x_pca_components = try_attr(pcr[semente], "components_")
 y_pca_components = try_attr(r_pcr[semente], "components_")
 
 # NOTE: different title for X and Y.
+pca_first_x_component = {
+    "X": x_pca_components[0].reshape(-1, 1),
+    "titles": [f"{o} Componente PCA de X" for o in ordinais],
+    "xlabels": descriptors,
+    "ylabel": "Peso",
+    "sort": _SORT,
+    "meanlabel": "média",
+}
+
+path = f"pca-first_x_component-seed_{seed}-sort_{_SORT}-lang_pt"
+paths, prefix, exts = get_paths(path)
+globs = get_globs(path, prefix, exts)
+
+save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
+             **pca_first_x_component)
+
 pca_first_y_component = {
     "X": y_pca_components[0].reshape(-1, 1),
     "titles": [f"{o} Componente PCA de Y" for o in ordinais],

@@ -23,6 +23,8 @@ def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):
         _now = datetime.now()
         today = _now.strftime("%Y-%m-%d")
 
+        # TODO: use different folders for different data,
+        # e.g., components, predictions, regression.
         # YYYY-mm-dd/
         prefix += f"{today}/"
 

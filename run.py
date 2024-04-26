@@ -1002,6 +1002,8 @@ ns = list(range(1, n_max + 1))
 print("\nPCA vs. PLS vs. DTR", end="")
 print("\n===================", end="")
 
+# TODO: investigate why PCA/PLS-transformed scores are worse
+# than on original feature space.
 for t in (str(None), "PCA", "PLS"):
     print_r2s(r2s_df, model_labels, ns=ns, t=t)
 

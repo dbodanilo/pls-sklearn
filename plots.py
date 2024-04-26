@@ -34,26 +34,34 @@ def plot_components(X, titles, xlabels, ylabel,
         xi = xi.iloc[xi_abs_argsort] if is_pandas else xi[xi_abs_argsort]
         xlabels_i = xlabels[xi_abs_argsort]
 
-        # Force first variable to be positive.
-        xi0 = xi.iat[0] if is_pandas else xi[0]
-        xi *= np.sign(xi0)
+        # TODO: make sure this doesn't stay on the way of
+        # interpreting the components.
+        # Force first variable to be positive?
+        # xi0 = xi.iat[0] if is_pandas else xi[0]
+        # xi *= np.sign(xi0)
 
         ax.bar(xlabels_i, xi)
         ax.set_ylim((-1, 1))
         ax.grid(True, axis="y")
-        ax.set(title=title,
-               ylabel=ylabel)
+        ax.set_ylabel(ylabel)
+
+        if title is not None:
+            ax.set_title(title)
 
         # Reference: https://github.com/matplotlib/matplotlib/issues/13774#issuecomment-478250353
         plt.setp(ax.get_xticklabels(), rotation=45,
                  ha="right", rotation_mode="anchor")
 
-        xi_abs_mean = np.absolute(xi).mean()
-        xi_abs_means = np.repeat(xi_abs_mean, n_xlabels)
+        if meanlabel is not None:
+            xi_abs_mean = np.absolute(xi).mean()
+            xi_abs_means = np.repeat(xi_abs_mean, n_xlabels)
 
-        ax.plot(mean_x,  xi_abs_means, color="g", label=f"$+$|{meanlabel}|")
-        ax.plot(mean_x, -xi_abs_means, color="r", label=f"$-$|{meanlabel}|")
-        ax.legend()
+            ax.plot(mean_x, xi_abs_means, color="g",
+                    label=f"$+$|{meanlabel}|")
+            ax.plot(mean_x, -xi_abs_means, color="r",
+                    label=f"$-$|{meanlabel}|")
+            ax.legend()
+
         ax.set_ylim((-1, 1))
 
     return fig

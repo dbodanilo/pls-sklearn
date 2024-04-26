@@ -7,7 +7,7 @@ from datetime import datetime
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
-from sklearn.preprocessing import FunctionTransformer, normalize
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeRegressor
 
 from decomposition import ScalerPCA, ScalerPCR
@@ -249,8 +249,10 @@ for semente, split in splits.items():
     _, X_test, _, Y_test = split
 
     X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
-    Y_pred_pcr = pd.DataFrame(pcr[semente].predict(
-        X_test), columns=Y_train.columns)
+    Y_pred_pcr = pd.DataFrame(
+        pcr[semente].predict(X_test),
+        columns=Y_train.columns
+    )
 
     pcr_predictions = {
         "xlabels": [f"X's PCA {i}, Semente: {semente}" for i in range(1, n_max + 1)],
@@ -268,6 +270,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
+    # No pause in for loop.
     save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
                  **pcr_predictions)
 
@@ -411,21 +414,47 @@ ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
 
 seed, semente = (str(None), "Nenhuma")
 
-# TODO: use correlation, not normalization.
-x_plsr_components = normalize(plsr["Todos"][semente].x_rotations_, axis=0)
-y_plsr_components = normalize(plsr["Todos"][semente].y_rotations_, axis=0)
+# NOTE: use correlation, not normalization.
+X_all_pls = pd.DataFrame(
+    plsr["Todos"][semente].x_scores_,
+    columns=pls_component_names[:n_targets]
+)
+# ds: descriptors
+X_all_ds_pls = pd.concat((X_all, X_all_pls), axis="columns")
+
+Y_all_pls = pd.DataFrame(
+    plsr["Todos"][semente].y_scores_,
+    columns=pls_component_names[:n_targets]
+)
+# ts: targets
+Y_all_ts_pls = pd.concat((Y_all, Y_all_pls), axis="columns")
+
+# method="pearson"
+x_pls_correlations = X_all_ds_pls.corr().iloc[:n_features, n_features:]
+y_pls_correlations = Y_all_ts_pls.corr().iloc[:n_targets, n_targets:]
+
+_MEANLABEL = None
 
 for i, o in enumerate(ordinais):
+    # .reshape(-1, 1)
+    x_pls_i_corr = pd.DataFrame(
+        x_pls_correlations.iloc[:, i],
+        columns=[x_pls_correlations.columns[0]]
+    )
+    y_pls_i_corr = pd.DataFrame(
+        y_pls_correlations.iloc[:, i],
+        columns=[y_pls_correlations.columns[0]]
+    )
     pls_x_component_i = {
-        "X": x_plsr_components[:, i].reshape(-1, 1),
+        "X": x_pls_i_corr,
         "titles": [f"{o} Componente PLS de X"],
         "xlabels": descriptors,
-        "ylabel": "Peso",  # TODO: usar correlação.
+        "ylabel": "Correlação de Pearson",
         "sort": _SORT,
-        "meanlabel": "média",
+        "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-x_component_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-x_component_{i}_corr-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -434,33 +463,33 @@ for i, o in enumerate(ordinais):
                  **pls_x_component_i)
 
     pls_y_component_i = {
-        "X": y_plsr_components[:, i].reshape(-1, 1),
+        "X": y_pls_i_corr,
         "titles": [f"{o} Componente PLS de Y"],
         "xlabels": targets,
-        "ylabel": "Peso",
+        "ylabel": "Correlação de Pearson",
         "sort": _SORT,
-        "meanlabel": "média",
+        "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-y_component_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-y_component_{i}_corr-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
                  **pls_y_component_i)
 
 
 pls_all_x_components = {
-    "X": x_plsr_components,
+    "X": x_pls_correlations,
     "titles": [f"{o} Componente PLS de X" for o in ordinais],
     "xlabels": descriptors,
-    "ylabel": "Peso",
-    "ncols": x_plsr_components.shape[1],
+    "ylabel": "Correlação de Pearson",
+    "ncols": x_pls_correlations.shape[1],
     "sort": _SORT,
-    "meanlabel": "média",
+    "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-x_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_all-x_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -468,16 +497,16 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_all_x_components)
 
 pls_y_components = {
-    "X": y_plsr_components,
+    "X": y_pls_correlations,
     "titles": [f"{o} Componente PLS de Y" for o in ordinais],
     "xlabels": targets,
-    "ylabel": "Peso",
-    "ncols": y_plsr_components.shape[1],
+    "ylabel": "Correlação de Pearson",
+    "ncols": y_pls_correlations.shape[1],
     "sort": _SORT,
-    "meanlabel": "média",
+    "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls-y_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -485,54 +514,68 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_y_components)
 
 
-x_all_plsr_components = np.empty((n_features, 0))
-y_all_plsr_components = np.empty((n_targets, 0))
+x_seeds_pls_corr = pd.DataFrame(index=X_all.columns)
+y_seeds_pls_corr = pd.DataFrame(index=Y_all.columns)
 
 for semente, split in splits.items():
     X_train, X_test, Y_train, Y_test = split
 
-    x_rotations = plsr["Todos"][semente].x_rotations_
-    y_rotations = plsr["Todos"][semente].y_rotations_
+    x_scores = plsr["Todos"][semente].x_scores_
+    y_scores = plsr["Todos"][semente].y_scores_
 
-    x_first_component = x_rotations[:, 0].reshape(-1, 1)
-    y_first_component = y_rotations[:, 0].reshape(-1, 1)
+    # .reshape(-1, 1)
+    x_first_component = pd.DataFrame(
+        x_scores[:, 0],
+        index=X_train.index,
+        columns=[semente]
+    )
+    y_first_component = pd.DataFrame(
+        y_scores[:, 0],
+        index=Y_train.index,
+        columns=[semente]
+    )
 
-    x_all_plsr_components = np.append(x_all_plsr_components,
-                                      x_first_component, axis=1)
-    y_all_plsr_components = np.append(y_all_plsr_components,
-                                      y_first_component, axis=1)
+    x_ds_first_component = pd.concat(
+        (X_train, x_first_component), axis="columns")
+    y_ts_first_component = pd.concat(
+        (Y_train, y_first_component), axis="columns")
 
-x_all_plsr_components = normalize(x_all_plsr_components, axis=0)
-y_all_plsr_components = normalize(y_all_plsr_components, axis=0)
+    x_ds_first_pls_corr = x_ds_first_component.corr()\
+        .iloc[:n_features, n_features:]
+    y_ts_first_pls_corr = y_ts_first_component.corr()\
+        .iloc[:n_targets, n_targets:]
 
-pls_all_seeds_first_x_components = {
-    "X": x_all_plsr_components,
+    x_seeds_pls_corr[semente] = x_ds_first_pls_corr
+    y_seeds_pls_corr[semente] = y_ts_first_pls_corr
+
+pls_seeds_first_x_components = {
+    "X": x_seeds_pls_corr,
     "titles": [f"Primeiro Componente PLS de X, Semente: {s}" for s in todas_sementes],
     "xlabels": descriptors,
-    "ylabel": "Peso",
-    "ncols": x_all_plsr_components.shape[1],
+    "ylabel": "Correlação de Pearson",
+    "ncols": x_seeds_pls_corr.shape[1],
     "sort": _SORT,
-    "meanlabel": "média",
+    "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all_seeds-first_x_components-sort_{_SORT}-lang_pt"
+path = f"pls_seeds-first_x_components_corr-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pls_all_seeds_first_x_components)
+             **pls_seeds_first_x_components)
 
 pls_seeds_first_y_components = {
-    "X": y_all_plsr_components,
+    "X": y_seeds_pls_corr,
     "titles": [f"Primeiro Componente PLS de Y, Semente: {s}" for s in todas_sementes],
     "xlabels": targets,
-    "ylabel": "Peso",
-    "ncols": y_all_plsr_components.shape[1],
+    "ylabel": "Correlação de Pearson",
+    "ncols": y_seeds_pls_corr.shape[1],
     "sort": _SORT,
-    "meanlabel": "média",
+    "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_seeds-first_y_components-sort_{_SORT}-lang_pt"
+path = f"pls_seeds-first_y_components_corr-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -593,8 +636,7 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pls_targets_x_components)
 
 
-plsr_first_components = {}
-
+plsr_first_components_corrs = {}
 
 for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
     for t, target in zip(all_ts, todos_objetivos):
@@ -614,30 +656,42 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
         path = f"pls_{detexify(t)}-x_components-seed_{str(seed)}"
         save_to_csv(pls_seed_target_x_components, path)
 
-        target_first_component = plsr_seed_target.\
-            x_rotations_[:, 0].reshape(-1, 1)
+        x_scores = plsr_seed_target.x_scores_
+        x_first_component = pd.DataFrame(
+            x_scores[:, 0],
+            index=X_train.index,
+            columns=[semente]
+        )
+
+        x_ds_first_component = pd.concat(
+            (X_train, x_first_component), axis="columns"
+        )
+
+        x_ds_first_pls_corr = x_ds_first_component.corr()\
+            .iloc[:n_features, n_features:]
 
         # Only set it in first pass.
         if semente == "Nenhuma":
-            plsr_first_components[target] = target_first_component
+            plsr_first_components_corrs[target] = pd.DataFrame(
+                x_ds_first_pls_corr,
+                index=X_train.columns,
+                columns=[semente]
+            )
         else:
-            plsr_first_components[target] = np.append(
-                plsr_first_components[target], target_first_component, axis=1)
+            plsr_first_components_corrs[target][semente] = x_ds_first_pls_corr
 
-for target, components in plsr_first_components.items():
-    components = normalize(components, axis=0)
-
+for target, corr in plsr_first_components_corrs.items():
     pls_target_seeds_first_x_components = {
-        "X": components,
+        "X": corr,
         "titles": [f"Primeiro Componente PLS de X para Objetivo: {target}, Semente: {s}" for s in todas_sementes],
         "xlabels": descriptors,
-        "ylabel": "Peso",
-        "ncols": components.shape[1],
+        "ylabel": "Correlação de Pearson",
+        "ncols": corr.shape[1],
         "sort": _SORT,
-        "meanlabel": "média",
+        "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls_{detexify(target)}_seeds-first_x_components-sort_{_SORT}-lang-pt"
+    path = f"pls_{detexify(target)}_seeds-first_x_components_corr-sort_{_SORT}-lang-pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 

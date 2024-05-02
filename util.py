@@ -66,14 +66,14 @@ def latexify(strs):
 
 # format "{:.4f}" was the highest one not to vary on
 # equivalent runs.
-def save_to_csv(X, path, exts=[".csv"], sep="\t", float_format="{:.4f}".format, **kwargs):
+def save_to_csv(X, path, save=True, exts=[".csv"], sep="\t", float_format="{:.4f}".format, **kwargs):
     paths, prefix, exts = get_paths(path, exts=exts)
     globs = get_globs(path, prefix, exts)
 
     path = paths[0]
 
     # Only generate it once.
-    if not any(os.path.exists(glob) for glob in globs):
+    if save and not any(os.path.exists(glob) for glob in globs):
         X.to_csv(path, sep=sep, float_format=float_format, **kwargs)
 
 

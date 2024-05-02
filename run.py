@@ -44,10 +44,10 @@ todas_sementes = ("Nenhuma", *(str(s) for s in seeds))
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
 
 path = "x_all"
-save_to_csv(X_all, path)
+save_to_csv(X_all, path, _SAVE)
 
 path = "y_all"
-save_to_csv(Y_all, path)
+save_to_csv(Y_all, path, _SAVE)
 
 # For indexing (original format).
 ds = X_all.columns
@@ -96,7 +96,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         if seed is None:
             path = "x_all" if label.startswith("x") else "y_all"
 
-        save_to_csv(frame, path)
+        save_to_csv(frame, path, _SAVE)
 
     X_train, _, Y_train, _ = splits[semente]
 
@@ -111,7 +111,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
 
     # TODO: save correlations between components, features and objectives.
     path = f"pca-x_components-seed_{str(seed)}"
-    save_to_csv(x_pca_components, path)
+    save_to_csv(x_pca_components, path, _SAVE)
 
     r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
     y_pca_step: PCA = r_pcr[semente].named_steps["pca"]
@@ -122,7 +122,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=pca_component_names[:n_max])
 
     path = f"pca-y_components-seed_{str(seed)}"
-    save_to_csv(y_pca_components, path)
+    save_to_csv(y_pca_components, path, _SAVE)
 
     pca_explained_variance_ratio = pd.DataFrame(
         {"X": x_pca_step.explained_variance_ratio_,
@@ -130,7 +130,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=pca_component_names[:n_max])
 
     path = f"pca-explained_variance_ratio-seed_{str(seed)}"
-    save_to_csv(pca_explained_variance_ratio, path)
+    save_to_csv(pca_explained_variance_ratio, path, _SAVE)
 
     plsr_seed = PLSRegression(n_components=n_max).fit(X_train, Y_train)
     plsr["Todos"][semente] = plsr_seed
@@ -147,7 +147,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     # non-reversed: because it doesn't make much sense to
     # try to predict 20 variables (X) from a single scalar (y).
     path = f"pls_all-x_components-seed_{str(seed)}"
-    save_to_csv(x_pls_components, path)
+    save_to_csv(x_pls_components, path, _SAVE)
 
     y_pls_components = pd.DataFrame(
         plsr_seed.y_rotations_,
@@ -155,7 +155,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=Y_train.columns)
 
     path = f"pls-y_components-seed_{str(seed)}"
-    save_to_csv(y_pls_components, path)
+    save_to_csv(y_pls_components, path, _SAVE)
 
     r_plsr_seed = PLSRegression(n_components=n_max).fit(Y_train, X_train)
     r_plsr[semente] = r_plsr_seed
@@ -167,7 +167,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=X_train.columns)
 
     path = f"pls-x_components_reversed-seed_{str(seed)}"
-    save_to_csv(x_rpls_components, path)
+    save_to_csv(x_rpls_components, path, _SAVE)
 
     y_rpls_components = pd.DataFrame(
         r_plsr_seed.x_rotations_,
@@ -175,7 +175,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=Y_train.columns)
 
     path = f"pls-y_components_reversed-seed_{str(seed)}"
-    save_to_csv(y_rpls_components, path)
+    save_to_csv(y_rpls_components, path, _SAVE)
 
 
 # === PCA ===
@@ -188,7 +188,7 @@ x_pca_components = pd.DataFrame(
     index=pca_component_names[:x_pca_step.n_components_])
 
 path = "pca-x_components-seed_None"
-save_to_csv(x_pca_components, path)
+save_to_csv(x_pca_components, path, _SAVE)
 
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
 y_pca_step: PCA = y_pca.named_steps["pca"]
@@ -198,7 +198,7 @@ y_pca_components = pd.DataFrame(
     index=pca_component_names[:y_pca_step.n_components_])
 
 path = "pca-y_components-seed_None"
-save_to_csv(y_pca_components, path)
+save_to_csv(y_pca_components, path, _SAVE)
 
 # right-pad Y ratios in order to place X and Y on the same DataFrame.
 y_pca_explained_variance_ratio = np.pad(
@@ -213,7 +213,7 @@ pca_explained_variance_ratio = pd.DataFrame(
     index=pca_component_names[:x_pca_step.n_components_])
 
 path = "pca-explained_variance_ratio-seed_None"
-save_to_csv(pca_explained_variance_ratio, path)
+save_to_csv(pca_explained_variance_ratio, path, _SAVE)
 
 
 # YYYY-mm-dd_HH-mm
@@ -607,7 +607,7 @@ for t, target in zip(ts, targets):
         index=X_all.columns)
 
     path = f"pls_{detexify(t)}-x_components-seed_{str(seed)}"
-    save_to_csv(pls_target_x_components, path)
+    save_to_csv(pls_target_x_components, path, _SAVE)
 
     plsr_targets_first_components[t] = plsr_target.x_rotations_[:, 0]
 
@@ -654,7 +654,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
         t = "all" if t is None else t
         seed = str(None) if semente == "Nenhuma" else semente
         path = f"pls_{detexify(t)}-x_components-seed_{str(seed)}"
-        save_to_csv(pls_seed_target_x_components, path)
+        save_to_csv(pls_seed_target_x_components, path, _SAVE)
 
         x_scores = plsr_seed_target.x_scores_
         x_first_component = pd.DataFrame(
@@ -950,7 +950,7 @@ r2s_df = pd.DataFrame({
 })
 
 path = "r2s"
-save_to_csv(r2s_df, path)
+save_to_csv(r2s_df, path, _SAVE)
 
 
 def print_r2s(df, model_labels, ns=None, seeds=None, t=None):

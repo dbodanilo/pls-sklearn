@@ -412,7 +412,7 @@ for semente, split in splits.items():
 
 # TODO: use itertools for /.*th/ ords.
 ords = ["1st", "2nd", "3rd"]
-ordinais = ["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]
+ordinais = list(enumerate(["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"]))
 
 seed, semente = (str(None), "Nenhuma")
 
@@ -435,18 +435,18 @@ Y_all_ts_pls = pd.concat((Y_all, Y_all_pls), axis="columns")
 x_pls_correlations = X_all_ds_pls.corr().iloc[:n_features, n_features:]
 y_pls_correlations = Y_all_ts_pls.corr().iloc[:n_targets, n_targets:]
 
-for i, o in enumerate(ordinais):
+for i, o in ordinais:
     # .reshape(-1, 1)
-    x_pls_i_corr = pd.DataFrame(
+    x_pls_corr_i = pd.DataFrame(
         x_pls_correlations.iloc[:, i],
-        columns=[x_pls_correlations.columns[0]]
+        columns=[x_pls_correlations.columns[i]]
     )
-    y_pls_i_corr = pd.DataFrame(
+    y_pls_corr_i = pd.DataFrame(
         y_pls_correlations.iloc[:, i],
-        columns=[y_pls_correlations.columns[0]]
+        columns=[y_pls_correlations.columns[i]]
     )
-    pls_x_component_i = {
-        "X": x_pls_i_corr,
+    pls_x_component_corr_i = {
+        "X": x_pls_corr_i,
         "titles": [f"{o} Componente PLS de X"],
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
@@ -454,16 +454,16 @@ for i, o in enumerate(ordinais):
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-x_component_{i}_corr-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-x_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
     # NOTE: pausing in a loop isn't practical.
     save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
-                 **pls_x_component_i)
+                 **pls_x_component_corr_i)
 
-    pls_y_component_i = {
-        "X": y_pls_i_corr,
+    pls_y_component_corr_i = {
+        "X": y_pls_corr_i,
         "titles": [f"{o} Componente PLS de Y"],
         "xlabels": targets,
         "ylabel": "Correlação de Pearson",
@@ -471,17 +471,17 @@ for i, o in enumerate(ordinais):
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-y_component_{i}_corr-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-y_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
     save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pls_y_component_i)
+                 **pls_y_component_corr_i)
 
 
 pls_all_x_components = {
     "X": x_pls_correlations,
-    "titles": [f"{o} Componente PLS de X" for o in ordinais],
+    "titles": [f"{o} Componente PLS de X" for (_, o) in ordinais],
     "xlabels": descriptors,
     "ylabel": "Correlação de Pearson",
     "ncols": x_pls_correlations.shape[1],
@@ -498,7 +498,7 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
 
 pls_y_components = {
     "X": y_pls_correlations,
-    "titles": [f"{o} Componente PLS de Y" for o in ordinais],
+    "titles": [f"{o} Componente PLS de Y" for (_, o) in ordinais],
     "xlabels": targets,
     "ylabel": "Correlação de Pearson",
     "ncols": y_pls_correlations.shape[1],
@@ -774,7 +774,7 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
 
 pca_y_components = {
     "X": y_pca_components.T,
-    "titles": [f"{o} Componente PCA de Y" for o in ordinais],
+    "titles": [f"{o} Componente PCA de Y" for (_, o) in ordinais],
     "xlabels": targets,
     "ylabel": "Peso",
     "ncols": y_pca_components.shape[0],

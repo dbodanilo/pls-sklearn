@@ -739,50 +739,80 @@ semente, seed = ("Nenhuma", str(None))
 x_pca_components = try_attr(pcr[semente], "components_")
 y_pca_components = try_attr(r_pcr[semente], "components_")
 
-# NOTE: different title for X and Y.
-pca_first_x_component = {
-    "X": x_pca_components[0].reshape(-1, 1),
-    "titles": [f"{o} Componente PCA de X" for o in ordinais],
-    "xlabels": descriptors,
-    "ylabel": "Peso",
-    "sort": _SORT,
-    "meanlabel": "média",
-}
+X_all_pca = pd.DataFrame(
+    x_pca_components,
+    columns=pca_component_names[:n_features]
+)
+# ds: descriptors
+X_all_ds_pca = pd.concat((X_all, X_all_pca), axis="columns")
 
-path = f"pca-first_x_component-seed_{seed}-sort_{_SORT}-lang_pt"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+Y_all_pca = pd.DataFrame(
+    y_pca_components,
+    columns=pca_component_names[:n_targets]
+)
+# ts: targets
+Y_all_ts_pca = pd.concat((Y_all, Y_all_pca), axis="columns")
 
-save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pca_first_x_component)
+# NOTE: use correlation, not normalization.
+# method="pearson"
+x_pca_correlations = X_all_ds_pca.corr().iloc[:n_features, n_features:]
+y_pca_correlations = Y_all_ts_pca.corr().iloc[:n_targets, n_targets:]
 
-pca_first_y_component = {
-    "X": y_pca_components[0].reshape(-1, 1),
-    "titles": [f"{o} Componente PCA de Y" for o in ordinais],
-    "xlabels": targets,
-    "ylabel": "Peso",
-    "sort": _SORT,
-    "meanlabel": "média",
-}
+for i, o in ordinais:
+    # .reshape(-1, 1)
+    x_pca_corr_i = pd.DataFrame(
+        x_pca_correlations.iloc[:, i],
+        columns=[x_pca_correlations.columns[i]]
+    )
+    y_pca_corr_i = pd.DataFrame(
+        y_pca_correlations.iloc[:, i],
+        columns=[y_pca_correlations.columns[i]]
+    )
+    # NOTE: different title for X and Y.
+    pca_x_component_corr_i = {
+        "X": x_pca_corr_i,
+        "titles": [f"{o} Componente PCA de X"],
+        "xlabels": descriptors,
+        "ylabel": "Correlação de Pearson",
+        "sort": _SORT,
+        "meanlabel": _MEANLABEL,
+    }
 
-path = f"pca-first_y_component-seed_{seed}-sort_{_SORT}-lang_pt"
-paths, prefix, exts = get_paths(path)
-globs = get_globs(path, prefix, exts)
+    path = f"pca-x_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
 
-save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pca_first_y_component)
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, False,
+                **pca_x_component_corr_i)
 
-pca_y_components = {
-    "X": y_pca_components.T,
+    pca_y_component_corr_i = {
+        "X": y_pca_corr_i,
+        "titles": [f"{o} Componente PCA de Y"],
+        "xlabels": targets,
+        "ylabel": "Correlação de Pearson",
+        "sort": _SORT,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pca-y_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
+
+    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
+                **pca_y_component_corr_i)
+
+
+pca_y_components_corr = {
+    "X": y_pca_correlations,
     "titles": [f"{o} Componente PCA de Y" for (_, o) in ordinais],
     "xlabels": targets,
-    "ylabel": "Peso",
-    "ncols": y_pca_components.shape[0],
+    "ylabel": "Correlação de Pearson",
+    "ncols": y_pca_correlations.shape[0],
     "sort": _SORT,
-    "meanlabel": "média",
+    "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-y_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pca-y_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

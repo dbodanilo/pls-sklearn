@@ -30,6 +30,8 @@ from util import (
 _SAVE = True
 _SHOW = True
 _PAUSE = True
+
+_MEANLABEL = None
 _SORT = "desc"
 
 X, Y = load_leme()
@@ -432,8 +434,6 @@ Y_all_ts_pls = pd.concat((Y_all, Y_all_pls), axis="columns")
 # method="pearson"
 x_pls_correlations = X_all_ds_pls.corr().iloc[:n_features, n_features:]
 y_pls_correlations = Y_all_ts_pls.corr().iloc[:n_targets, n_targets:]
-
-_MEANLABEL = None
 
 for i, o in enumerate(ordinais):
     # .reshape(-1, 1)

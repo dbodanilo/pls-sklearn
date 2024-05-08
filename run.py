@@ -32,7 +32,8 @@ _SHOW = True
 _PAUSE = True
 
 _MEANLABEL = None
-_SORT = "desc"
+_SORT_X = "desc"
+_SORT_Y = None
 
 X, Y = load_leme()
 
@@ -450,11 +451,11 @@ for i, o in ordinais:
         "titles": [f"{o} Componente PLS de X"],
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
-        "sort": _SORT,
+        "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-x_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-x_component_corr_{i}-seed_{seed}-sort_{_SORT_X}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -467,11 +468,11 @@ for i, o in ordinais:
         "titles": [f"{o} Componente PLS de Y"],
         "xlabels": targets,
         "ylabel": "Correlação de Pearson",
-        "sort": _SORT,
+        "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-y_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pls-y_component_corr_{i}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -485,11 +486,11 @@ pls_all_x_components = {
     "xlabels": descriptors,
     "ylabel": "Correlação de Pearson",
     "ncols": x_pls_correlations.shape[1],
-    "sort": _SORT,
+    "sort": _SORT_X,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-x_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_all-x_components_corr-seed_{seed}-sort_{_SORT_X}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -502,11 +503,11 @@ pls_y_components = {
     "xlabels": targets,
     "ylabel": "Correlação de Pearson",
     "ncols": y_pls_correlations.shape[1],
-    "sort": _SORT,
+    "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-y_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls-y_components_corr-seed_{seed}-sort_{_SORT_Y}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -554,11 +555,11 @@ pls_seeds_first_x_components = {
     "xlabels": descriptors,
     "ylabel": "Correlação de Pearson",
     "ncols": x_seeds_pls_corr.shape[1],
-    "sort": _SORT,
+    "sort": _SORT_X,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_seeds-first_x_components_corr-sort_{_SORT}-lang_pt"
+path = f"pls_seeds-first_x_components_corr-sort_{_SORT_X}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -571,11 +572,11 @@ pls_seeds_first_y_components = {
     "xlabels": targets,
     "ylabel": "Correlação de Pearson",
     "ncols": y_seeds_pls_corr.shape[1],
-    "sort": _SORT,
+    "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_seeds-first_y_components_corr-sort_{_SORT}-lang_pt"
+path = f"pls_seeds-first_y_components_corr-sort_{_SORT_Y}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -624,11 +625,11 @@ pls_targets_x_components = {
     "xlabels": descriptors,
     "ylabel": "Peso",
     "ncols": plsr_targets_first_components.shape[1],
-    "sort": _SORT,
+    "sort": _SORT_X,
     "meanlabel": "média",
 }
 
-path = f"pls_targets-first_x_components-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pls_targets-first_x_components-seed_{seed}-sort_{_SORT_X}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -687,11 +688,11 @@ for target, corr in plsr_first_components_corrs.items():
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
         "ncols": corr.shape[1],
-        "sort": _SORT,
+        "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls_{detexify(target)}_seeds-first_x_components_corr-sort_{_SORT}-lang-pt"
+    path = f"pls_{detexify(target)}_seeds-first_x_components_corr-sort_{_SORT_X}-lang-pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -774,11 +775,11 @@ for i, o in ordinais:
         "titles": [f"{o} Componente PCA de X"],
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
-        "sort": _SORT,
+        "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-x_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pca-x_component_corr_{i}-seed_{seed}-sort_{_SORT_X}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -790,11 +791,11 @@ for i, o in ordinais:
         "titles": [f"{o} Componente PCA de Y"],
         "xlabels": targets,
         "ylabel": "Correlação de Pearson",
-        "sort": _SORT,
+        "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-y_component_corr_{i}-seed_{seed}-sort_{_SORT}-lang_pt"
+    path = f"pca-y_component_corr_{i}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -808,11 +809,11 @@ pca_y_components_corr = {
     "xlabels": targets,
     "ylabel": "Correlação de Pearson",
     "ncols": y_pca_correlations.shape[0],
-    "sort": _SORT,
+    "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-y_components_corr-seed_{seed}-sort_{_SORT}-lang_pt"
+path = f"pca-y_components_corr-seed_{seed}-sort_{_SORT_Y}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

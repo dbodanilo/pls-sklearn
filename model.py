@@ -9,8 +9,9 @@ def load_leme(idwl=True, split=True):
     leme_data = pd.read_csv(path, delimiter="\t")
 
     if split:
-        Y = leme_data[["N.", "Semente", "SR",
-                       "Area", "A_{v0}", "f_{T}", "Pwr"]]
+        # Metrics ordered by importance.
+        Y = leme_data[["N.", "Semente", "A_{v0}", "f_{T}",
+                       "Pwr", "SR", "Area"]]
         # Don't drop for X ["N.", "Semente"] id columns.
         X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
 

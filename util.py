@@ -18,7 +18,7 @@ def get_globs(path, prefix, exts):
     return set(g for ext in exts for g in glob(f"{prefix}*[0-9]_{path}{ext}"))
 
 
-def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):
+def get_paths(path, outdir="./out/", prefix="", exts=[".pdf", ".png"], timestamp=True):
     if timestamp:
         _now = datetime.now()
         today = _now.strftime("%Y-%m-%d")
@@ -26,13 +26,16 @@ def get_paths(path, prefix="./out/", exts=[".pdf", ".png"], timestamp=True):
         # TODO: use different folders for different data,
         # e.g., components, predictions, regression.
         # YYYY-mm-dd/
-        prefix += f"{today}/"
-
-        if not os.path.exists(prefix):
-            os.makedirs(prefix, exist_ok=True)
+        outdir += f"{today}/"
 
         # YYYY-mm-dd_HH-mm_<path>
         path = today + _now.strftime("_%H-%M_") + path
+
+    prefix = outdir + prefix
+
+    if not os.path.exists(prefix):
+        os.makedirs(prefix, exist_ok=True)
+
     return ["".join([prefix + path, e]) for e in exts], prefix, exts
 
 
@@ -66,8 +69,8 @@ def latexify(strs):
 
 # format "{:.4f}" was the highest one not to vary on
 # equivalent runs.
-def save_to_csv(X, path, save=True, exts=[".csv"], sep="\t", float_format="{:.4f}".format, **kwargs):
-    paths, prefix, exts = get_paths(path, exts=exts)
+def save_to_csv(X, path, save=True, prefix="", exts=[".csv"], sep="\t", float_format="{:.4f}".format, **kwargs):
+    paths, prefix, exts = get_paths(path, prefix=prefix, exts=exts)
     globs = get_globs(path, prefix, exts)
 
     path = paths[0]

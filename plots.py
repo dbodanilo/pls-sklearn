@@ -11,7 +11,12 @@ def plot_components(X, titles, xlabels, ylabel,
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(10 * ncols, 4 * nrows),
                              layout="constrained", squeeze=False)
+    if type(X) == pd.Series:
+        # single-column DataFrame
+        X = pd.DataFrame({ 0: X })
+
     is_pandas = type(X) == pd.DataFrame
+
     sort_asc = None if sort is None else sort == "asc"
 
     n_xlabels = len(xlabels)
@@ -22,6 +27,7 @@ def plot_components(X, titles, xlabels, ylabel,
     x_abs_argsort = np.arange(X.shape[0])
 
     n = X.shape[1]
+
     for i, (ax, title) in enumerate(zip(axes.flat[:n], titles)):
         xi = X.iloc[:, i] if is_pandas else X[:, i]
 

@@ -1,12 +1,12 @@
-import pandas as pd
+import pandas
 
 
 def load_leme(idwl=True, split=True):
-    path = "leme-fronteira.csv"
+    path = "data/leme-fronteira.csv"
     if idwl:
-        path = "leme-fronteira-IDWL.csv"
+        path = "data/leme-fronteira-IDWL.csv"
 
-    leme_data = pd.read_csv(path, delimiter="\t")
+    leme_data = pandas.read_csv(path, delimiter="\t")
 
     if split:
         # Metrics ordered by importance.

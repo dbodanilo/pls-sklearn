@@ -46,12 +46,6 @@ todas_sementes = ("Nenhuma", *(str(s) for s in seeds))
 
 X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
 
-path = "x_all"
-save_to_csv(X_all, path, _SAVE)
-
-path = "y_all"
-save_to_csv(Y_all, path, _SAVE)
-
 # For indexing (original format).
 ds = X_all.columns
 # Last three targets are the most important (Av0, fT, Pwr).
@@ -93,13 +87,6 @@ pls_component_names = [f"PLS {i}" for i in range(1, n_features + 1)]
 # `seed=None` means all samples (no split).
 for seed, semente in zip((None, *seeds), todas_sementes):
     splits[semente] = train_test_seed_split(X, Y, seed=seed)
-
-    for label, frame in zip(("x_train", "x_test", "y_train", "y_test"), splits[semente]):
-        path = f"{label}-seed_{str(seed)}"
-        if seed is None:
-            path = "x_all" if label.startswith("x") else "y_all"
-
-        save_to_csv(frame, path, _SAVE)
 
     X_train, _, Y_train, _ = splits[semente]
 
@@ -275,8 +262,8 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    # No pause in for loop.
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
+    # pause=False: no pause in for loop.
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
@@ -298,7 +285,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions_transformed)
 
     X_pred_pcr = pd.DataFrame(
@@ -322,7 +309,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions_reversed_transformed)
 
 
@@ -357,7 +344,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions)
 
     _, Y_pred_plsr_t = (pd.DataFrame(test_t)
@@ -380,7 +367,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions_transformed)
 
     Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
@@ -409,7 +396,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions_reversed_transformed)
 
 
@@ -736,7 +723,7 @@ for semente, split in splits.items():
     globs = get_globs(path, prefix, exts)
 
     # No pause in for loop.
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_predictions)
 
 
@@ -824,7 +811,7 @@ paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
 save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pca_y_components)
+             **pca_y_components_corr)
 
 
 algos = ("PCA", "PLS")
@@ -861,8 +848,8 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    # pause=True is not practical in a for-loop.
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, False,
+    # pause=False: pausing is not practical in a for-loop.
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression)
 
     R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
@@ -881,7 +868,7 @@ for semente, split in splits.items():
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, _PAUSE,
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression_reversed)
 
 

@@ -1,4 +1,61 @@
+import numpy
 import pandas
+import pickle
+
+
+IV = ("I_{pol}", "V_{pol}")
+
+PAIRS = ("_{1,2}", "_{3,4}", "_{5,6}", "_{7,8}", "_{9}", "_{10}")
+LS = tuple("L" + p for p in PAIRS)
+WS = tuple("W" + p for p in PAIRS)
+
+# DESCRIPTORS = ("I_{pol}", "V_{pol}",
+#                "W_{1,2}", "L_{1,2}",
+#                "W_{3,4}", "L_{3,4}",
+#                "W_{5,6}", "L_{5,6}",
+#                "W_{7,8}", "L_{7,8}",
+#                "W_{9}", "L_{9}",
+#                "W_{10}", "L_{10}")
+DESCRIPTORS = IV + LS + WS
+
+TARGETS = ("A_{v0}", "f_{T}", "Pwr", "SR", "Area")
+
+
+def load_deap(split=True):
+    deap_data = None
+
+    for s in range(1241, 1246):
+        path = f"data/deap-seed_{s}-pop.pickle"
+
+        with open(path, "rb") as f:
+            deap_data_s = pickle.load(f)
+
+        deap_data_s = pandas.DataFrame(
+            [[*ind, *ind.fitness.values] for ind in deap_data_s],
+            columns=(*DESCRIPTORS, *TARGETS)
+        )
+        deap_data_s["Semente"] = s
+
+        if deap_data is None:
+            deap_data = deap_data_s
+        else:
+            deap_data = pandas.concat(
+                (deap_data, deap_data_s), ignore_index=True)
+
+    deap_data.replace({"Pwr": [numpy.inf, -numpy.inf]},
+                      numpy.nan, inplace=True)
+    deap_data.dropna(axis=0, how="any", inplace=True)
+
+    deap_data["N."] = deap_data.index
+
+    if split:
+        Y = deap_data[["N.", "Semente", "A_{v0}", "f_{T}",
+                       "Pwr", "SR", "Area"]]
+        X = deap_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
+
+        return (X, Y)
+
+    return (deap_data, deap_data)
 
 
 def load_leme(idwl=True, split=True):
@@ -16,8 +73,8 @@ def load_leme(idwl=True, split=True):
         X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
 
         return (X, Y)
-    else:
-        return (leme_data, leme_data)
+
+    return (leme_data, leme_data)
 
 
 # NOTE: seed=1244 was responsible for the worst r2_score for

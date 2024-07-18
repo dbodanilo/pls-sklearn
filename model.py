@@ -21,26 +21,32 @@ DESCRIPTORS = IV + LS + WS
 TARGETS = ("A_{v0}", "f_{T}", "Pwr", "SR", "Area")
 
 
-def load_deap(split=True):
+def load_deap(idwl=True, split=True):
     deap_data = None
 
-    for s in range(1241, 1246):
-        path = f"data/deap-seed_{s}-pop.pickle"
+    if idwl:
+        path = "data/deap-seeds-pop-idwl.pickle"
 
         with open(path, "rb") as f:
-            deap_data_s = pickle.load(f)
+            deap_data = pickle.load(f)
+    else:
+        for s in range(1241, 1246):
+            path = f"data/deap-seed_{s}-pop.pickle"
 
-        deap_data_s = pandas.DataFrame(
-            [[*ind, *ind.fitness.values] for ind in deap_data_s],
-            columns=(*DESCRIPTORS, *TARGETS)
-        )
-        deap_data_s["Semente"] = s
+            with open(path, "rb") as f:
+                deap_data_s = pickle.load(f)
 
-        if deap_data is None:
-            deap_data = deap_data_s
-        else:
-            deap_data = pandas.concat(
-                (deap_data, deap_data_s), ignore_index=True)
+            deap_data_s = pandas.DataFrame(
+                [[*ind, *ind.fitness.values] for ind in deap_data_s],
+                columns=(*DESCRIPTORS, *TARGETS)
+            )
+            deap_data_s["Semente"] = s
+
+            if deap_data is None:
+                deap_data = deap_data_s
+            else:
+                deap_data = pandas.concat(
+                    (deap_data, deap_data_s), ignore_index=True)
 
     deap_data.replace({"Pwr": [numpy.inf, -numpy.inf]},
                       numpy.nan, inplace=True)

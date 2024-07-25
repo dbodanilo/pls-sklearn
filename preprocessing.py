@@ -18,7 +18,7 @@ def scale_transform(scaler, model, X):
 
 
 def extend_deap(loader=load_deap):
-    deap_data, _ = loader(split=False)
+    deap_data, _ = loader(idwl=False, split=False)
 
     for i, wl in enumerate(WLS):
         deap_data[wl] = deap_data[WS[i]] / deap_data[LS[i]]

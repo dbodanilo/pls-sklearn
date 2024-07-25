@@ -11,7 +11,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeRegressor
 
 from decomposition import ScalerPCA, ScalerPCR
-from model import load_leme, train_test_seed_split
+from model import load_deap, load_leme, train_test_seed_split
 from plots import plot_components, plot_predictions, plot_regression
 from util import (
     detexify,
@@ -35,7 +35,9 @@ _MEANLABEL = None
 _SORT_X = "desc"
 _SORT_Y = None
 
-X, Y = load_leme()
+_ALGO = "nsga3"
+
+X, Y = load_deap() if _ALGO == "nsga3" else load_leme()
 
 seeds = X["Semente"].value_counts().index
 
@@ -109,7 +111,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=pca_component_names[:n_max])
 
     # TODO: save correlations between components, features and objectives.
-    path = f"pca-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-seed_{str(seed)}"
     prefix = "x_component/"
     save_to_csv(x_pca_components, path, _SAVE, prefix=prefix)
 
@@ -124,7 +126,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     # X: because Y are the targets themselves;
     # non-reversed: because it doesn't make much sense to
     # try to predict 20 variables (X) from a single scalar (y).
-    path = f"pls_all-seed_{str(seed)}"
+    path = f"pls_all-algo_{_ALGO}-seed_{str(seed)}"
     save_to_csv(x_pls_components, path, _SAVE, prefix=prefix)
 
     # fit(Y, X) -> y_rotations_ transforms our X.
@@ -133,7 +135,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=X_train.columns)
 
-    path = f"pls-reversed-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-reversed-seed_{str(seed)}"
     save_to_csv(x_rpls_components, path, _SAVE, prefix=prefix)
 
     y_pca_components = pd.DataFrame(
@@ -141,7 +143,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=Y_train.columns,
         index=pca_component_names[:n_max])
 
-    path = f"pca-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-seed_{str(seed)}"
     prefix = "y_component/"
     save_to_csv(y_pca_components, path, _SAVE, prefix=prefix)
 
@@ -150,7 +152,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=Y_train.columns)
 
-    path = f"pls-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-seed_{str(seed)}"
     save_to_csv(y_pls_components, path, _SAVE, prefix=prefix)
 
     y_rpls_components = pd.DataFrame(
@@ -158,7 +160,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=Y_train.columns)
 
-    path = f"pls-reversed-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-reversed-seed_{str(seed)}"
     save_to_csv(y_rpls_components, path, _SAVE, prefix=prefix)
 
     pca_explained_variance_ratio = pd.DataFrame(
@@ -166,7 +168,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
          "Y": y_pca_step.explained_variance_ratio_},
         index=pca_component_names[:n_max])
 
-    path = f"pca-explained_variance_ratio-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-explained_variance_ratio-seed_{str(seed)}"
     save_to_csv(pca_explained_variance_ratio, path, _SAVE)
 
 
@@ -179,7 +181,7 @@ x_pca_components = pd.DataFrame(
     x_pca_step.components_, columns=X_all.columns,
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = "pca-x_components-seed_None"
+path = f"pca-x_components-algo_{_ALGO}-seed_None"
 save_to_csv(x_pca_components, path, _SAVE)
 
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
@@ -189,7 +191,7 @@ y_pca_components = pd.DataFrame(
     y_pca_step.components_, columns=Y_all.columns,
     index=pca_component_names[:y_pca_step.n_components_])
 
-path = "pca-y_components-seed_None"
+path = f"pca-y_components-algo_{_ALGO}-seed_None"
 save_to_csv(y_pca_components, path, _SAVE)
 
 # right-pad Y ratios in order to place X and Y on the same DataFrame.
@@ -204,13 +206,16 @@ pca_explained_variance_ratio = pd.DataFrame(
      "Y": y_pca_explained_variance_ratio},
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = "pca-explained_variance_ratio-seed_None"
+path = f"pca-explained_variance_ratio-algo_{_ALGO}-seed_None"
 save_to_csv(pca_explained_variance_ratio, path, _SAVE)
 
 
 # YYYY-mm-dd_HH-mm
 _now = datetime.now().strftime("%Y-%m-%d_%H-%M")
 print(_now)
+
+print("algo:", _ALGO, )
+print("data: (I_D/(W/L))")
 
 print("PCA\n===")
 print("X and Y\n-------")
@@ -258,7 +263,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"pcr-predictions-seed_{seed}"
+    path = f"pcr-predictions-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -281,7 +286,7 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-predictions_transformed-seed_{seed}"
+    path = f"pcr-predictions_transformed-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -305,11 +310,11 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-predictions_reversed_transformed-seed_{seed}"
+    path = f"pcr-predictions_reversed_transformed-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **pcr_predictions_reversed_transformed)
 
 
@@ -340,7 +345,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions-seed_{seed}"
+    path = f"plsr-predictions-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -363,7 +368,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions_transformed-seed_{seed}"
+    path = f"plsr-predictions_transformed-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -392,11 +397,11 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions_reversed_transformed-seed_{seed}"
+    path = f"plsr-predictions_reversed_transformed-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **plsr_predictions_reversed_transformed)
 
 
@@ -446,7 +451,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
     prefix = "x_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -464,7 +469,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
     prefix = "y_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -483,7 +488,7 @@ pls_all_x_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-x_components_corr-seed_{seed}-sort_{_SORT_X}-lang_pt"
+path = f"pls_all-x_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -500,7 +505,7 @@ pls_y_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-y_components_corr-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+path = f"pls-y_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 
@@ -553,7 +558,7 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_0-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
     prefix = "x_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -570,7 +575,7 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_0-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
     prefix = "y_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -606,12 +611,13 @@ for t, objetivo in zip(all_ts, todos_objetivos):
         columns=pls_component_names[:n_max],
         index=X_all.columns)
 
-    path = f"pls-seed_{str(seed)}-target_{detexify(str(t))}"
+    path = f"pls-algo_{_ALGO}-seed_{str(seed)}-target_{detexify(str(t))}"
     prefix = "x_component/"
     save_to_csv(pls_target_x_components, path, _SAVE, prefix=prefix)
 
     pls_target_first_x_component = pls_target_x_components.iloc[:, 0]
 
+    # TODO, 2024-07-25: convert from raw component to correlations.
     pls_target_first_x_component_args = {
         "X": pls_target_first_x_component,
         "titles": [f"Primeiro Componente PLS de X, Objetivo: {objetivo}"],
@@ -621,7 +627,7 @@ for t, objetivo in zip(all_ts, todos_objetivos):
         "meanlabel": "média",
     }
 
-    path = f"pls-comp_0-seed_{seed}-sort_{_SORT_X}-target_{detexify(str(t))}-lang_pt"
+    path = f"pls-comp_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-target_{detexify(str(t))}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -646,7 +652,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         t = "all" if t is None else t
         seed = str(None) if semente == "Nenhuma" else semente
-        path = f"pls-seed_{str(seed)}-target_{detexify(t)}"
+        path = f"pls-algo_{_ALGO}-seed_{str(seed)}-target_{detexify(t)}"
         prefix = "x_component/"
         save_to_csv(pls_seed_target_x_components, path, _SAVE, prefix=prefix)
 
@@ -683,7 +689,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
             "meanlabel": _MEANLABEL,
         }
 
-        path = f"pls-corr_0-seed_{seed}-sort_{_SORT_X}-target_{detexify(t)}-lang-pt"
+        path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-target_{detexify(t)}-lang-pt"
         paths, prefix, exts = get_paths(path, prefix=prefix)
         globs = get_globs(path, prefix, exts)
 
@@ -718,7 +724,7 @@ for semente, split in splits.items():
     }
 
     # NOTE: print seed used when outputting plots and scores.
-    path = f"pcr_vs_plsr-predictions-seed_{seed}"
+    path = f"pcr_vs_plsr-predictions-algo_{_ALGO}-seed_{seed}"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
@@ -770,7 +776,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
     prefix = "x_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -787,7 +793,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
     prefix = "y_component/"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
@@ -806,7 +812,7 @@ pca_y_components_corr = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-y_components_corr-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+path = f"pca-y_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
 paths, prefix, exts = get_paths(path)
 globs = get_globs(path, prefix, exts)
 

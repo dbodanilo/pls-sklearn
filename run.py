@@ -820,7 +820,7 @@ save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
              **pca_y_components_corr)
 
 
-algos = ("PCA", "PLS")
+algos = ("PCR", "PLSR")
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score
 # over rPCR's.
@@ -829,53 +829,109 @@ for semente, split in splits.items():
 
     X_train, X_test, Y_train, Y_test = split
 
-    X_test_pca, X_pred_pcr, X_pred_pcr_t, Y_test_pca, Y_pred_pcr, Y_pred_pcr_t = fit_predict_try_transform(
+    pcr, rpcr, X_pred_pcr, Y_pred_pcr = fit_predict(
         ScalerPCR, *split, n_components=1)
 
-    X_test_pls, X_pred_plsr, X_pred_plsr_t, Y_test_pls, Y_pred_plsr, Y_pred_plsr_t = fit_predict_try_transform(
+    plsr, rplsr, X_pred_plsr, Y_pred_plsr = fit_predict(
         PLSRegression, *split, n_components=1)
+
+    X_test_pca = pd.DataFrame(try_transform(pcr, X_test))
+    Y_test_pca = pd.DataFrame(try_transform(rpcr, Y_test))
+
+    X_test_pls = pd.DataFrame(try_transform(plsr, X_test))
+    Y_test_pls = pd.DataFrame(try_transform(rplsr, Y_test))
+
+    X_pred_pcr_pca = pd.DataFrame(try_transform(pcr, X_pred_pcr))
+    Y_pred_pcr_pca = pd.DataFrame(try_transform(rpcr, Y_pred_pcr))
+
+    X_pred_pcr_pls = pd.DataFrame(try_transform(plsr, X_pred_pcr))
+    Y_pred_pcr_pls = pd.DataFrame(try_transform(rplsr, Y_pred_pcr))
+
+    X_pred_plsr_pca = pd.DataFrame(try_transform(pcr, X_pred_plsr))
+    Y_pred_plsr_pca = pd.DataFrame(try_transform(rpcr, Y_pred_plsr))
+
+    X_pred_plsr_pls = pd.DataFrame(try_transform(plsr, X_pred_plsr))
+    Y_pred_plsr_pls = pd.DataFrame(try_transform(rplsr, Y_pred_plsr))
 
     # NOTE: display R-squared for the prediction of each
     # component.
-    R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
-    R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+    R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca, multioutput="raw_values")
+    R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls, multioutput="raw_values")
+
+    R2_Y_plsr_pca = r2_score(Y_test_pca, Y_pred_plsr_pca, multioutput="raw_values")
+    R2_Y_plsr_pls = r2_score(Y_test_pls, Y_pred_plsr_pls, multioutput="raw_values")
 
     # TODO: split regression plot into two (PCA/ DTR and PLS)
-    pcr_vs_plsr_regression = {
-        "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
-        "Y_pred": pd.concat((Y_pred_pcr_t.iloc[:, 0], Y_pred_plsr_t.iloc[:, 0]), axis="columns"),
-        "xlabels": [f"Primeiro componente {algo} do Y real" for algo in algos],
-        "ylabels": [f"Primeiro componente {algo} do Y predito" for algo in algos],
-        "titles": [f"Regressão com {algo}" for algo in algos],
-        "R2": np.array((R2_Y_pcr_t[0], R2_Y_plsr_t[0])),
+    pcr_vs_plsr_regression_pca = {
+        "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pca.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((Y_pred_pcr_pca.iloc[:, 0], Y_pred_plsr_pca.iloc[:, 0]), axis="columns"),
+        "xlabels": ["Primeiro componente PCA do Y real" for _ in algos],
+        "ylabels": [f"Primeiro componente PCA do Y predito por {algo}" for algo in algos],
+        "titles": algos,
+        "R2": np.array((R2_Y_pcr_pca[0], R2_Y_plsr_pca[0])),
     }
 
-    path = f"pcr_vs_plsr-regression-seed_{seed}-lang_pt"
+    path = f"pcr_vs_plsr-regression-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
     # pause=False: pausing is not practical in a for-loop.
     save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
-                 **pcr_vs_plsr_regression)
+                 **pcr_vs_plsr_regression_pca)
 
-    R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
-    R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
-
-    pcr_vs_plsr_regression_reversed = {
-        "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
-        "Y_pred": pd.concat((X_pred_pcr_t.iloc[:, 0], X_pred_plsr_t.iloc[:, 0]), axis="columns"),
-        "xlabels": [f"Primeiro componente {algo} do X real" for algo in algos],
-        "ylabels": [f"Primeiro componente {algo} do X predito" for algo in algos],
-        "titles": [f"Regressão com {algo}" for algo in algos],
-        "R2": np.array((R2_X_pcr_t[0], R2_X_plsr_t[0])),
+    pcr_vs_plsr_regression_pls = {
+        "Y_true": pd.concat((Y_test_pls.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((Y_pred_pcr_pls.iloc[:, 0], Y_pred_plsr_pls.iloc[:, 0]), axis="columns"),
+        "xlabels": ["Primeiro componente PLS do Y real" for _ in algos],
+        "ylabels": [f"Primeiro componente PLS do Y predito por {algo}" for algo in algos],
+        "titles": algos,
+        "R2": np.array((R2_Y_pcr_pls[0], R2_Y_plsr_pls[0])),
     }
 
-    path = f"pcr_vs_plsr-regression_reversed-seed_{seed}-lang_pt"
+    path = f"pcr_vs_plsr-regression-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
     paths, prefix, exts = get_paths(path)
     globs = get_globs(path, prefix, exts)
 
     save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
-                 **pcr_vs_plsr_regression_reversed)
+                 **pcr_vs_plsr_regression_pls)
+
+    R2_X_pcr_pca = r2_score(X_test_pca, X_pred_pcr_pca, multioutput="raw_values")
+    R2_X_pcr_pls = r2_score(X_test_pls, X_pred_pcr_pls, multioutput="raw_values")
+
+    R2_X_plsr_pca = r2_score(X_test_pca, X_pred_plsr_pca, multioutput="raw_values")
+    R2_X_plsr_pls = r2_score(X_test_pls, X_pred_plsr_pls, multioutput="raw_values")
+
+    pcr_vs_plsr_regression_reversed_pca = {
+        "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pca.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((X_pred_pcr_pca.iloc[:, 0], X_pred_plsr_pca.iloc[:, 0]), axis="columns"),
+        "xlabels": ["Primeiro componente PCA do X real" for _ in algos],
+        "ylabels": [f"Primeiro componente PCA do X predito por {algo}" for algo in algos],
+        "titles": algos,
+        "R2": np.array((R2_X_pcr_pca[0], R2_X_plsr_pca[0])),
+    }
+
+    path = f"pcr_vs_plsr-regression_reversed-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
+
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
+                 **pcr_vs_plsr_regression_reversed_pca)
+
+    pcr_vs_plsr_regression_reversed_pls = {
+        "Y_true": pd.concat((X_test_pls.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+        "Y_pred": pd.concat((X_pred_pcr_pls.iloc[:, 0], X_pred_plsr_pls.iloc[:, 0]), axis="columns"),
+        "xlabels": ["Primeiro componente PLS do X real" for _ in algos],
+        "ylabels": [f"Primeiro componente PLS do X predito por {algo}" for algo in algos],
+        "titles": algos,
+        "R2": np.array((R2_X_pcr_pls[0], R2_X_plsr_pls[0])),
+    }
+
+    path = f"pcr_vs_plsr-regression_reversed-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
+    paths, prefix, exts = get_paths(path)
+    globs = get_globs(path, prefix, exts)
+
+    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, _PAUSE,
+                 **pcr_vs_plsr_regression_reversed_pls)
 
 
 # DOING: train only multi-output regressors.

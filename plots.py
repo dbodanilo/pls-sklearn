@@ -140,10 +140,13 @@ def plot_regression(Y_true, Y_pred, xlabels, ylabels, titles, R2, nrows=1, ncols
         y_max_i = max(Y_true_i.max(), Y_pred_i.max())
         y_limits_i = np.linspace(y_min_i, y_max_i, n_samples)
 
+        title = (titles[i] + ", ") if titles[i] else ""
+        title += f"$R^2 = {R2[i]:.3f}$"
+
         # Identity: Y_pred = Y_true
         ax.plot(y_limits_i, y_limits_i)
         ax.scatter(Y_true_i, Y_pred_i)
         ax.set(xlabel=xlabels[i], ylabel=ylabels[i],
-               title=f"{titles[i]}, $R^2 = {R2[i]:.3f}$")
+               title=title)
 
     return fig

@@ -110,9 +110,9 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=X_train.columns,
         index=pca_component_names[:n_max])
 
-    # TODO: save correlations between components, features and objectives.
     path = f"pca-algo_{_ALGO}-seed_{str(seed)}"
     prefix = "x_component/"
+    # TODO: save correlations, not raw components
     save_to_csv(x_pca_components, path, _SAVE, prefix=prefix)
 
     # transform(X) = X * x_rotations_
@@ -169,7 +169,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         index=pca_component_names[:n_max])
 
     path = f"pca-algo_{_ALGO}-explained_variance_ratio-seed_{str(seed)}"
-    save_to_csv(pca_explained_variance_ratio, path, _SAVE)
+    save_to_csv(pca_explained_variance_ratio, path, save=(seed is None))
 
 
 # === PCA ===
@@ -451,8 +451,12 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
+
+    save_to_csv(x_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_X}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -469,8 +473,12 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
+
+    save_to_csv(y_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_Y}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -488,8 +496,13 @@ pls_all_x_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-x_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
-paths, prefix, exts = get_paths(path)
+path = f"pls_all-corr-algo_{_ALGO}-seed_{seed}"
+prefix = "x_component/"
+
+save_to_csv(x_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
+
+path += f"-sort_{_SORT_X}-lang_pt"
+paths, prefix, exts = get_paths(path, prefix=prefix)
 globs = get_globs(path, prefix, exts)
 
 save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -505,8 +518,13 @@ pls_y_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-y_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
-paths, prefix, exts = get_paths(path)
+path = f"pls-corr-algo_{_ALGO}-seed_{seed}"
+prefix = "y_component/"
+
+save_to_csv(y_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
+
+path += f"-sort_{_SORT_Y}-lang_pt"
+paths, prefix, exts = get_paths(path, prefix=prefix)
 globs = get_globs(path, prefix, exts)
 
 save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -550,7 +568,7 @@ for semente, split in splits.items():
     y_seeds_pls_corr[semente] = y_ts_first_pls_corr
 
     pls_seeds_first_x_components = {
-        "X": x_seeds_pls_corr,
+        "X": x_ds_first_pls_corr,
         "titles": [f"Primeiro Componente PLS de X, Semente: {semente}"],
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
@@ -558,8 +576,12 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pls-ds_corr_0-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
+
+    save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_X}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -567,7 +589,7 @@ for semente, split in splits.items():
                  **pls_seeds_first_x_components)
 
     pls_seeds_first_y_components = {
-        "X": y_seeds_pls_corr,
+        "X": y_ts_first_pls_corr,
         "titles": [f"Primeiro Componente PLS de Y, Semente: {semente}"],
         "xlabels": targets,
         "ylabel": "Correlação de Pearson",
@@ -575,8 +597,12 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pls-ts_corr_0-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
+
+    save_to_csv(y_ts_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_Y}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -689,7 +715,12 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
             "meanlabel": _MEANLABEL,
         }
 
-        path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-target_{detexify(t)}-lang-pt"
+        path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-target_{detexify(t)}"
+        prefix = "x_component/"
+
+        save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+
+        path += f"-sort_{_SORT_X}-lang-pt"
         paths, prefix, exts = get_paths(path, prefix=prefix)
         globs = get_globs(path, prefix, exts)
 
@@ -776,8 +807,12 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-lang_pt"
+    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
+
+    save_to_csv(x_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_X}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -793,8 +828,12 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
+    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
+
+    save_to_csv(y_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
+
+    path += f"-sort_{_SORT_Y}-lang_pt"
     paths, prefix, exts = get_paths(path, prefix=prefix)
     globs = get_globs(path, prefix, exts)
 
@@ -812,8 +851,13 @@ pca_y_components_corr = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-y_components_corr-algo_{_ALGO}-seed_{seed}-sort_{_SORT_Y}-lang_pt"
-paths, prefix, exts = get_paths(path)
+path = f"pca-corr-algo_{_ALGO}-seed_{seed}"
+prefix = "y_component/"
+
+save_to_csv(y_pca_correlations, path, save=(seed==str(None)), prefix=prefix)
+
+path += f"-sort_{_SORT_Y}-lang_pt"
+paths, prefix, exts = get_paths(path, prefix=prefix)
 globs = get_globs(path, prefix, exts)
 
 save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,

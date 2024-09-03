@@ -80,7 +80,10 @@ def save_to_csv(X, path, save=True, prefix="", exts=[".csv"], sep="\t", float_fo
         X.to_csv(path, sep=sep, float_format=float_format, **kwargs)
 
 
-def save_or_show(paths, globs, plot, save=True, show=False, pause=False, **kwargs):
+def save_or_show(path, prefix, plot, save=True, show=False, pause=False, **kwargs):
+    paths, prefix, exts = get_paths(path, prefix=prefix)
+    globs = get_globs(path, prefix, exts)
+
     # Only generate it once.
     if show or (save and not any(os.path.exists(path) for path in globs)):
         fig = plot(**kwargs)

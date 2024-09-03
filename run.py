@@ -17,8 +17,6 @@ from util import (
     detexify,
     fit_predict,
     fit_predict_try_transform,
-    get_globs,
-    get_paths,
     latexify,
     save_or_show,
     save_to_csv,
@@ -263,12 +261,11 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"pcr-predictions-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr-algo_{_ALGO}-seed_{seed}"
+    prefix = "predictions/"
 
     # pause=False: no pause in for loop.
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
@@ -286,11 +283,9 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-predictions_transformed-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr-transformed-algo_{_ALGO}-seed_{seed}"
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions_transformed)
 
     X_pred_pcr = pd.DataFrame(
@@ -310,11 +305,9 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-predictions_reversed_transformed-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr-reversed_transformed-algo_{_ALGO}-seed_{seed}"
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=_PAUSE,
                  **pcr_predictions_reversed_transformed)
 
 
@@ -345,11 +338,10 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"plsr-algo_{_ALGO}-seed_{seed}"
+    prefix = "predictions/"
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions)
 
     _, Y_pred_plsr_t = (pd.DataFrame(test_t)
@@ -368,11 +360,9 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions_transformed-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"plsr-transformed-algo_{_ALGO}-seed_{seed}"
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions_transformed)
 
     Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
@@ -397,11 +387,9 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-predictions_reversed_transformed-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"plsr-reversed_transformed-algo_{_ALGO}-seed_{seed}"
 
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, _PAUSE,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **plsr_predictions_reversed_transformed)
 
 
@@ -654,10 +642,9 @@ for t, objetivo in zip(all_ts, todos_objetivos):
     }
 
     path = f"pls-comp_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-target_{detexify(str(t))}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, pause=False,
+    # NOTE: save and show only correlations, not raw components.
+    save_or_show(path, prefix, plot_components, _SAVE, _SHOW, pause=False,
                  **pls_target_first_x_component_args)
 
 
@@ -755,12 +742,11 @@ for semente, split in splits.items():
     }
 
     # NOTE: print seed used when outputting plots and scores.
-    path = f"pcr_vs_plsr-predictions-algo_{_ALGO}-seed_{seed}"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}"
+    prefix = "predictions/"
 
     # No pause in for loop.
-    save_or_show(paths, globs, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_predictions)
 
 
@@ -915,12 +901,11 @@ for semente, split in splits.items():
         "R2": np.array((R2_Y_pcr_pca[0], R2_Y_plsr_pca[0])),
     }
 
-    path = f"pcr_vs_plsr-regression-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
+    prefix = "regression/"
 
     # pause=False: pausing is not practical in a for-loop.
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression_pca)
 
     pcr_vs_plsr_regression_pls = {
@@ -932,11 +917,9 @@ for semente, split in splits.items():
         "R2": np.array((R2_Y_pcr_pls[0], R2_Y_plsr_pls[0])),
     }
 
-    path = f"pcr_vs_plsr-regression-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
 
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression_pls)
 
     R2_X_pcr_pca = r2_score(X_test_pca, X_pred_pcr_pca, multioutput="raw_values")
@@ -954,11 +937,9 @@ for semente, split in splits.items():
         "R2": np.array((R2_X_pcr_pca[0], R2_X_plsr_pca[0])),
     }
 
-    path = f"pcr_vs_plsr-regression_reversed-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-seed_{seed}-t_pca-lang_pt"
 
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression_reversed_pca)
 
     pcr_vs_plsr_regression_reversed_pls = {
@@ -970,11 +951,9 @@ for semente, split in splits.items():
         "R2": np.array((R2_X_pcr_pls[0], R2_X_plsr_pls[0])),
     }
 
-    path = f"pcr_vs_plsr-regression_reversed-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
-    paths, prefix, exts = get_paths(path)
-    globs = get_globs(path, prefix, exts)
+    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-seed_{seed}-t_pls-lang_pt"
 
-    save_or_show(paths, globs, plot_regression, _SAVE, _SHOW, _PAUSE,
+    save_or_show(path, prefix, plot_regression, _SAVE, _SHOW, pause=_PAUSE,
                  **pcr_vs_plsr_regression_reversed_pls)
 
 

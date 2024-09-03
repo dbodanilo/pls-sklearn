@@ -449,7 +449,7 @@ for i, o in ordinais:
     path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
 
-    save_to_csv(x_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(x_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
@@ -472,7 +472,7 @@ for i, o in ordinais:
     path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
 
-    save_to_csv(y_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(y_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_Y}"
 
@@ -496,7 +496,7 @@ pls_all_x_components = {
 path = f"pls_all-corr-algo_{_ALGO}-seed_{seed}"
 prefix = "x_component/"
 
-save_to_csv(x_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
+save_to_csv(x_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_X}"
 
@@ -519,7 +519,7 @@ pls_y_components = {
 path = f"pls-corr-algo_{_ALGO}-seed_{seed}"
 prefix = "y_component/"
 
-save_to_csv(y_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
+save_to_csv(y_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_X}"
 
@@ -579,7 +579,8 @@ for semente, split in splits.items():
     path = f"pls-ds_corr_0-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
 
-    save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
+                prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
@@ -601,7 +602,8 @@ for semente, split in splits.items():
     path = f"pls-ts_corr_0-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
 
-    save_to_csv(y_ts_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(y_ts_first_pls_corr, path, save=(seed == str(None)),
+                prefix=prefix)
 
     path += f"-sort_{_SORT_Y}"
 
@@ -682,7 +684,8 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
         seed = str(None) if semente == "Nenhuma" else semente
         path = f"pls-algo_{_ALGO}-seed_{str(seed)}-target_{detexify(t)}"
         prefix = "x_component/"
-        save_to_csv(pls_seed_target_x_components, path, _SAVE, prefix=prefix)
+        save_to_csv(pls_seed_target_x_components, path, _SAVE,
+                    prefix=prefix)
 
         x_scores = plsr_seed_target.x_scores_
         x_first_component = pd.DataFrame(
@@ -719,7 +722,8 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
         path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-target_{detexify(t)}"
         prefix = "x_component/"
 
-        save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
+        save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
+                    prefix=prefix)
 
         path += f"-sort_{_SORT_X}"
 
@@ -811,7 +815,7 @@ for i, o in ordinais:
     path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "x_component/"
 
-    save_to_csv(x_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(x_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
@@ -833,7 +837,7 @@ for i, o in ordinais:
     path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
     prefix = "y_component/"
 
-    save_to_csv(y_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
+    save_to_csv(y_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_Y}"
 
@@ -857,7 +861,7 @@ pca_y_components_corr = {
 path = f"pca-corr-algo_{_ALGO}-seed_{seed}"
 prefix = "y_component/"
 
-save_to_csv(y_pca_correlations, path, save=(seed==str(None)), prefix=prefix)
+save_to_csv(y_pca_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_Y}"
 
@@ -904,11 +908,15 @@ for semente, split in splits.items():
 
     # NOTE: display R-squared for the prediction of each
     # component.
-    R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca, multioutput="raw_values")
-    R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls, multioutput="raw_values")
+    R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca,
+                            multioutput="raw_values")
+    R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls,
+                            multioutput="raw_values")
 
-    R2_Y_plsr_pca = r2_score(Y_test_pca, Y_pred_plsr_pca, multioutput="raw_values")
-    R2_Y_plsr_pls = r2_score(Y_test_pls, Y_pred_plsr_pls, multioutput="raw_values")
+    R2_Y_plsr_pca = r2_score(Y_test_pca, Y_pred_plsr_pca,
+                             multioutput="raw_values")
+    R2_Y_plsr_pls = r2_score(Y_test_pls, Y_pred_plsr_pls,
+                             multioutput="raw_values")
 
     # TODO: split regression plot into two (PCA/ DTR and PLS)
     pcr_vs_plsr_regression_pca = {
@@ -941,11 +949,15 @@ for semente, split in splits.items():
     save_or_show(path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
                  **pcr_vs_plsr_regression_pls)
 
-    R2_X_pcr_pca = r2_score(X_test_pca, X_pred_pcr_pca, multioutput="raw_values")
-    R2_X_pcr_pls = r2_score(X_test_pls, X_pred_pcr_pls, multioutput="raw_values")
+    R2_X_pcr_pca = r2_score(X_test_pca, X_pred_pcr_pca,
+                            multioutput="raw_values")
+    R2_X_pcr_pls = r2_score(X_test_pls, X_pred_pcr_pls,
+                            multioutput="raw_values")
 
-    R2_X_plsr_pca = r2_score(X_test_pca, X_pred_plsr_pca, multioutput="raw_values")
-    R2_X_plsr_pls = r2_score(X_test_pls, X_pred_plsr_pls, multioutput="raw_values")
+    R2_X_plsr_pca = r2_score(X_test_pca, X_pred_plsr_pca,
+                             multioutput="raw_values")
+    R2_X_plsr_pls = r2_score(X_test_pls, X_pred_plsr_pls,
+                             multioutput="raw_values")
 
     pcr_vs_plsr_regression_reversed_pca = {
         "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pca.iloc[:, 0]), axis="columns"),

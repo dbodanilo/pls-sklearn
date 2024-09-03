@@ -394,10 +394,18 @@ for semente, split in splits.items():
 
 
 # TODO: use itertools for /.*th/ ords.
-ords = ["1st", "2nd", "3rd"]
-ordinais = list(
-    enumerate(["Primeiro", "Segundo", "Terceiro", "Quarto", "Quinto"])
-)
+ordinais = list(enumerate([
+    {"en": "1st", "pt": "Primeiro"},
+    {"en": "2nd", "pt": "Segundo"},
+    {"en": "3rd", "pt": "Terceiro"},
+    {"en": "4th", "pt": "Quarto"},
+    {"en": "5th", "pt": "Quinto"}
+]))
+
+corr_labels = {
+    "en": "Pearson correlation",
+    "pt": "Correlação de Pearson"
+}
 
 seed, semente = (str(None), "Nenhuma")
 
@@ -432,9 +440,8 @@ for i, o in ordinais:
     )
     pls_x_component_corr_i = {
         "X": x_pls_corr_i,
-        "titles": [f"{o} Componente PLS de X"],
+        "titles": [None],
         "xlabels": descriptors,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -444,19 +451,20 @@ for i, o in ordinais:
 
     save_to_csv(x_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_X}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_X}"
 
-    # NOTE: pausing in a loop isn't practical.
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, pause=False,
-                 **pls_x_component_corr_i)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pls_x_component_corr_i["ylabel"] = label
+
+        # NOTE: pausing in a loop isn't practical.
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_x_component_corr_i)
 
     pls_y_component_corr_i = {
         "X": y_pls_corr_i,
-        "titles": [f"{o} Componente PLS de Y"],
+        "titles": [None],
         "xlabels": targets,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -466,19 +474,20 @@ for i, o in ordinais:
 
     save_to_csv(y_pls_corr_i, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_Y}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_Y}"
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pls_y_component_corr_i)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pls_y_component_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                     **pls_y_component_corr_i)
 
 
 pls_all_x_components = {
     "X": x_pls_correlations,
-    "titles": [f"{o} Componente PLS de X" for (_, o) in ordinais],
+    "titles": [None for _ in ordinais],
     "xlabels": descriptors,
-    "ylabel": "Correlação de Pearson",
     "ncols": x_pls_correlations.shape[1],
     "sort": _SORT_X,
     "meanlabel": _MEANLABEL,
@@ -489,18 +498,19 @@ prefix = "x_component/"
 
 save_to_csv(x_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
 
-path += f"-sort_{_SORT_X}-lang_pt"
-paths, prefix, exts = get_paths(path, prefix=prefix)
-globs = get_globs(path, prefix, exts)
+path += f"-sort_{_SORT_X}"
 
-save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pls_all_x_components)
+for lang, label in corr_labels.items():
+    lang_path = path + "-lang_" + lang
+    pls_all_x_components["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pls_all_x_components)
 
 pls_y_components = {
     "X": y_pls_correlations,
-    "titles": [f"{o} Componente PLS de Y" for (_, o) in ordinais],
+    "titles": [None for _ in ordinais],
     "xlabels": targets,
-    "ylabel": "Correlação de Pearson",
     "ncols": y_pls_correlations.shape[1],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
@@ -511,12 +521,14 @@ prefix = "y_component/"
 
 save_to_csv(y_pls_correlations, path, save=(seed==str(None)), prefix=prefix)
 
-path += f"-sort_{_SORT_Y}-lang_pt"
-paths, prefix, exts = get_paths(path, prefix=prefix)
-globs = get_globs(path, prefix, exts)
+path += f"-sort_{_SORT_X}"
 
-save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pls_y_components)
+for lang, label in corr_labels.items():
+    lang_path = path + "-lang_" + lang
+    pls_y_components["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pls_y_components)
 
 
 x_seeds_pls_corr = pd.DataFrame(index=X_all.columns)
@@ -557,7 +569,7 @@ for semente, split in splits.items():
 
     pls_seeds_first_x_components = {
         "X": x_ds_first_pls_corr,
-        "titles": [f"Primeiro Componente PLS de X, Semente: {semente}"],
+        "titles": [None],
         "xlabels": descriptors,
         "ylabel": "Correlação de Pearson",
         "sort": _SORT_X,
@@ -569,18 +581,19 @@ for semente, split in splits.items():
 
     save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_X}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_X}"
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, pause=False,
-                 **pls_seeds_first_x_components)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pls_seeds_first_x_components["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_seeds_first_x_components)
 
     pls_seeds_first_y_components = {
         "X": y_ts_first_pls_corr,
-        "titles": [f"Primeiro Componente PLS de Y, Semente: {semente}"],
+        "titles": [None],
         "xlabels": targets,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -590,12 +603,14 @@ for semente, split in splits.items():
 
     save_to_csv(y_ts_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_Y}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_Y}"
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pls_seeds_first_y_components)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pls_seeds_first_y_components["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                     **pls_seeds_first_y_components)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -695,9 +710,8 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         pls_target_seed_first_x_component_corr = {
             "X": x_ds_first_pls_corr,
-            "titles": [f"Primeiro Componente PLS de X para Objetivo: {objetivo}, Semente: {semente}"],
+            "titles": [None],
             "xlabels": descriptors,
-            "ylabel": "Correlação de Pearson",
             "sort": _SORT_X,
             "meanlabel": _MEANLABEL,
         }
@@ -707,12 +721,14 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         save_to_csv(x_ds_first_pls_corr, path, save=(seed==str(None)), prefix=prefix)
 
-        path += f"-sort_{_SORT_X}-lang-pt"
-        paths, prefix, exts = get_paths(path, prefix=prefix)
-        globs = get_globs(path, prefix, exts)
+        path += f"-sort_{_SORT_X}"
 
-        save_or_show(paths, globs, plot_components, _SAVE, _SHOW, pause=False,
-                     **pls_target_seed_first_x_component_corr)
+        for lang, label in corr_labels.items():
+            lang_path = path + "-lang_" + lang
+            pls_target_seed_first_x_component_corr["ylabel"] = label
+
+            save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                         **pls_target_seed_first_x_component_corr)
 
 
 # === PCR vs. PLSR ===
@@ -786,9 +802,8 @@ for i, o in ordinais:
     # NOTE: different title for X and Y.
     pca_x_component_corr_i = {
         "X": x_pca_corr_i,
-        "titles": [f"{o} Componente PCA de X"],
+        "titles": [None],
         "xlabels": descriptors,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -798,18 +813,19 @@ for i, o in ordinais:
 
     save_to_csv(x_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_X}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_X}"
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, pause=False,
-                 **pca_x_component_corr_i)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pca_x_component_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pca_x_component_corr_i)
 
     pca_y_component_corr_i = {
         "X": y_pca_corr_i,
-        "titles": [f"{o} Componente PCA de Y"],
+        "titles": [None],
         "xlabels": targets,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -819,19 +835,20 @@ for i, o in ordinais:
 
     save_to_csv(y_pca_corr_i, path, save=(seed==str(None)), prefix=prefix)
 
-    path += f"-sort_{_SORT_Y}-lang_pt"
-    paths, prefix, exts = get_paths(path, prefix=prefix)
-    globs = get_globs(path, prefix, exts)
+    path += f"-sort_{_SORT_Y}"
 
-    save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pca_y_component_corr_i)
+    for lang, label in corr_labels.items():
+        lang_path = path + "-lang_" + lang
+        pca_y_component_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                     **pca_y_component_corr_i)
 
 
 pca_y_components_corr = {
     "X": y_pca_correlations,
-    "titles": [f"{o} Componente PCA de Y" for (_, o) in ordinais],
+    "titles": [None for _ in ordinais],
     "xlabels": targets,
-    "ylabel": "Correlação de Pearson",
     "ncols": y_pca_correlations.shape[0],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
@@ -842,12 +859,14 @@ prefix = "y_component/"
 
 save_to_csv(y_pca_correlations, path, save=(seed==str(None)), prefix=prefix)
 
-path += f"-sort_{_SORT_Y}-lang_pt"
-paths, prefix, exts = get_paths(path, prefix=prefix)
-globs = get_globs(path, prefix, exts)
+path += f"-sort_{_SORT_Y}"
 
-save_or_show(paths, globs, plot_components, _SAVE, _SHOW, _PAUSE,
-             **pca_y_components_corr)
+for lang, label in corr_labels.items():
+    lang_path = path + "-lang_" + lang
+    pca_y_components_corr["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pca_y_components_corr)
 
 
 algos = ("PCR", "PLSR")

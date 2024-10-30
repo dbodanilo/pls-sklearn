@@ -21,66 +21,31 @@ DESCRIPTORS = IV + LS + WS
 TARGETS = ("A_{v0}", "f_{T}", "Pwr", "SR", "Area")
 
 
-def load_deap(idwl=True, split=True):
-    deap_data = None
-
+def load_data(path, idwl=True, split=True):
+    path = "data/" + path
     if idwl:
-        path = "data/deap-seeds-pop-idwl.pickle"
+        path += "-IDWL"
 
-        with open(path, "rb") as f:
-            deap_data = pickle.load(f)
-    else:
-        for s in range(1241, 1246):
-            path = f"data/deap-seed_{s}-pop.pickle"
-
-            with open(path, "rb") as f:
-                deap_data_s = pickle.load(f)
-
-            deap_data_s = pandas.DataFrame(
-                [[*ind, *ind.fitness.values] for ind in deap_data_s],
-                columns=(*DESCRIPTORS, *TARGETS)
-            )
-            deap_data_s["Semente"] = s
-
-            if deap_data is None:
-                deap_data = deap_data_s
-            else:
-                deap_data = pandas.concat(
-                    (deap_data, deap_data_s), ignore_index=True)
-
-    deap_data.replace({"Pwr": [numpy.inf, -numpy.inf]},
-                      numpy.nan, inplace=True)
-    deap_data.dropna(axis=0, how="any", inplace=True)
-
-    deap_data["N."] = deap_data.index
-
-    if split:
-        Y = deap_data[["N.", "Semente", "A_{v0}", "f_{T}",
-                       "Pwr", "SR", "Area"]]
-        X = deap_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
-
-        return (X, Y)
-
-    return (deap_data, deap_data)
-
-
-def load_leme(idwl=True, split=True):
-    path = "data/leme-fronteira.csv"
-    if idwl:
-        path = "data/leme-fronteira-IDWL.csv"
-
-    leme_data = pandas.read_csv(path, delimiter="\t")
+    data = pandas.read_csv(path + ".csv", delimiter="\t")
 
     if split:
         # Metrics ordered by importance.
-        Y = leme_data[["N.", "Semente", "A_{v0}", "f_{T}",
-                       "Pwr", "SR", "Area"]]
+        Y = data[["N.", "Semente", "A_{v0}", "f_{T}",
+                  "Pwr", "SR", "Area"]]
         # Don't drop for X ["N.", "Semente"] id columns.
-        X = leme_data.drop(columns=Y.columns.drop(["N.", "Semente"]))
+        X = data.drop(columns=Y.columns.drop(["N.", "Semente"]))
 
         return (X, Y)
 
-    return (leme_data, leme_data)
+    return (data, data)
+
+
+def load_deap(idwl=True, split=True):
+    return load_data("deap-fronteira", idwl, split)
+
+
+def load_leme(idwl=True, split=True):
+    return load_data("leme-fronteira", idwl, split)
 
 
 # NOTE: seed=1244 was responsible for the worst r2_score for

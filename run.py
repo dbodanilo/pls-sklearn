@@ -34,8 +34,10 @@ _SORT_X = "desc"
 _SORT_Y = None
 
 _ALGO = "nsga3"
+_IDWL = True
+_DATA = "idwl" if _IDWL else "wliv"
 
-X, Y = load_deap() if _ALGO == "nsga3" else load_leme()
+X, Y = load_deap(idwl=_IDWL) if _ALGO == "nsga3" else load_leme(idwl=_IDWL)
 
 seeds = X["Semente"].value_counts().index
 
@@ -48,7 +50,7 @@ X_all, _, Y_all, _ = train_test_seed_split(X, Y, seed=None)
 
 # For indexing (original format).
 ds = X_all.columns
-# Last three targets are the most important (Av0, fT, Pwr).
+# First two targets are the most important (Av0, fT).
 ts = Y_all.columns
 
 # For plotting (ensure LaTeX formatting).
@@ -108,7 +110,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=X_train.columns,
         index=pca_component_names[:n_max])
 
-    path = f"pca-algo_{_ALGO}-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     prefix = "x_component/"
     # TODO: save correlations, not raw components
     save_to_csv(x_pca_components, path, _SAVE, prefix=prefix)
@@ -124,7 +126,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     # X: because Y are the targets themselves;
     # non-reversed: because it doesn't make much sense to
     # try to predict 20 variables (X) from a single scalar (y).
-    path = f"pls_all-algo_{_ALGO}-seed_{str(seed)}"
+    path = f"pls_all-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     save_to_csv(x_pls_components, path, _SAVE, prefix=prefix)
 
     # fit(Y, X) -> y_rotations_ transforms our X.
@@ -133,7 +135,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=X_train.columns)
 
-    path = f"pls-algo_{_ALGO}-reversed-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-data_{_DATA}-reversed-seed_{str(seed)}"
     save_to_csv(x_rpls_components, path, _SAVE, prefix=prefix)
 
     y_pca_components = pd.DataFrame(
@@ -141,7 +143,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=Y_train.columns,
         index=pca_component_names[:n_max])
 
-    path = f"pca-algo_{_ALGO}-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     prefix = "y_component/"
     save_to_csv(y_pca_components, path, _SAVE, prefix=prefix)
 
@@ -150,7 +152,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=Y_train.columns)
 
-    path = f"pls-algo_{_ALGO}-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     save_to_csv(y_pls_components, path, _SAVE, prefix=prefix)
 
     y_rpls_components = pd.DataFrame(
@@ -158,7 +160,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
         columns=pls_component_names[:n_max],
         index=Y_train.columns)
 
-    path = f"pls-algo_{_ALGO}-reversed-seed_{str(seed)}"
+    path = f"pls-algo_{_ALGO}-data_{_DATA}-reversed-seed_{str(seed)}"
     save_to_csv(y_rpls_components, path, _SAVE, prefix=prefix)
 
     pca_explained_variance_ratio = pd.DataFrame(
@@ -166,7 +168,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
          "Y": y_pca_step.explained_variance_ratio_},
         index=pca_component_names[:n_max])
 
-    path = f"pca-algo_{_ALGO}-explained_variance_ratio-seed_{str(seed)}"
+    path = f"pca-algo_{_ALGO}-data_{_DATA}-explained_variance_ratio-seed_{str(seed)}"
     save_to_csv(pca_explained_variance_ratio, path, save=(seed is None))
 
 
@@ -179,7 +181,7 @@ x_pca_components = pd.DataFrame(
     x_pca_step.components_, columns=X_all.columns,
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = f"pca-x_components-algo_{_ALGO}-seed_None"
+path = f"pca-x_components-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(x_pca_components, path, _SAVE)
 
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
@@ -189,7 +191,7 @@ y_pca_components = pd.DataFrame(
     y_pca_step.components_, columns=Y_all.columns,
     index=pca_component_names[:y_pca_step.n_components_])
 
-path = f"pca-y_components-algo_{_ALGO}-seed_None"
+path = f"pca-y_components-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(y_pca_components, path, _SAVE)
 
 # right-pad Y ratios in order to place X and Y on the same DataFrame.
@@ -204,7 +206,7 @@ pca_explained_variance_ratio = pd.DataFrame(
      "Y": y_pca_explained_variance_ratio},
     index=pca_component_names[:x_pca_step.n_components_])
 
-path = f"pca-explained_variance_ratio-algo_{_ALGO}-seed_None"
+path = f"pca-explained_variance_ratio-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(pca_explained_variance_ratio, path, _SAVE)
 
 
@@ -213,7 +215,7 @@ _now = datetime.now().strftime("%Y-%m-%d_%H-%M")
 print(_now)
 
 print("algo:", _ALGO, )
-print("data: (I_D/(W/L))")
+print("data:", "(I_D/(W/L))" if _IDWL else "Ws, Ls, biases")
 
 print("PCA\n===")
 print("X and Y\n-------")
@@ -261,7 +263,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"pcr-algo_{_ALGO}-seed_{seed}"
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "predictions/"
 
     # pause=False: no pause in for loop.
@@ -283,7 +285,7 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-transformed-algo_{_ALGO}-seed_{seed}"
+    path = f"pcr-transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions_transformed)
@@ -305,7 +307,7 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    path = f"pcr-reversed_transformed-algo_{_ALGO}-seed_{seed}"
+    path = f"pcr-reversed_transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=_PAUSE,
                  **pcr_predictions_reversed_transformed)
@@ -338,7 +340,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-algo_{_ALGO}-seed_{seed}"
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "predictions/"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
@@ -360,7 +362,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-transformed-algo_{_ALGO}-seed_{seed}"
+    path = f"plsr-transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions_transformed)
@@ -387,7 +389,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-reversed_transformed-algo_{_ALGO}-seed_{seed}"
+    path = f"plsr-reversed_transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **plsr_predictions_reversed_transformed)
@@ -446,7 +448,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
+    path = f"pls-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
 
     save_to_csv(x_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
@@ -469,7 +471,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-seed_{seed}"
+    path = f"pls-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "y_component/"
 
     save_to_csv(y_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
@@ -493,7 +495,7 @@ pls_all_x_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-corr-algo_{_ALGO}-seed_{seed}"
+path = f"pls_all-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 prefix = "x_component/"
 
 save_to_csv(x_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
@@ -516,7 +518,7 @@ pls_y_components = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-corr-algo_{_ALGO}-seed_{seed}"
+path = f"pls-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 prefix = "y_component/"
 
 save_to_csv(y_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
@@ -576,7 +578,7 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-ds_corr_0-algo_{_ALGO}-seed_{seed}"
+    path = f"pls-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
 
     save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
@@ -599,7 +601,7 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-ts_corr_0-algo_{_ALGO}-seed_{seed}"
+    path = f"pls-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "y_component/"
 
     save_to_csv(y_ts_first_pls_corr, path, save=(seed == str(None)),
@@ -642,7 +644,7 @@ for t, objetivo in zip(all_ts, todos_objetivos):
         columns=pls_component_names[:n_max],
         index=X_all.columns)
 
-    path = f"pls-algo_{_ALGO}-seed_{str(seed)}-target_{detexify(str(t))}"
+    path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}-target_{detexify(str(t))}"
     prefix = "x_component/"
     save_to_csv(pls_target_x_components, path, _SAVE, prefix=prefix)
 
@@ -658,7 +660,7 @@ for t, objetivo in zip(all_ts, todos_objetivos):
         "meanlabel": "média",
     }
 
-    path = f"pls-comp_0-algo_{_ALGO}-seed_{seed}-sort_{_SORT_X}-target_{detexify(str(t))}-lang_pt"
+    path = f"pls-comp_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}-sort_{_SORT_X}-target_{detexify(str(t))}-lang_pt"
 
     # NOTE: save and show only correlations, not raw components.
     save_or_show(path, prefix, plot_components, _SAVE, _SHOW, pause=False,
@@ -682,7 +684,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         t = "all" if t is None else t
         seed = str(None) if semente == "Nenhuma" else semente
-        path = f"pls-algo_{_ALGO}-seed_{str(seed)}-target_{detexify(t)}"
+        path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}-target_{detexify(t)}"
         prefix = "x_component/"
         save_to_csv(pls_seed_target_x_components, path, _SAVE,
                     prefix=prefix)
@@ -719,7 +721,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
             "meanlabel": _MEANLABEL,
         }
 
-        path = f"pls-corr_0-algo_{_ALGO}-seed_{seed}-target_{detexify(t)}"
+        path = f"pls-corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}-target_{detexify(t)}"
         prefix = "x_component/"
 
         save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
@@ -762,7 +764,7 @@ for semente, split in splits.items():
     }
 
     # NOTE: print seed used when outputting plots and scores.
-    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}"
+    path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "predictions/"
 
     # No pause in for loop.
@@ -812,7 +814,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
+    path = f"pca-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
 
     save_to_csv(x_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
@@ -834,7 +836,7 @@ for i, o in ordinais:
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-seed_{seed}"
+    path = f"pca-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "y_component/"
 
     save_to_csv(y_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
@@ -858,7 +860,7 @@ pca_y_components_corr = {
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-corr-algo_{_ALGO}-seed_{seed}"
+path = f"pca-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 prefix = "y_component/"
 
 save_to_csv(y_pca_correlations, path, save=(seed == str(None)), prefix=prefix)
@@ -940,7 +942,7 @@ for semente, split in splits.items():
     }
 
     t = "pca"
-    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}-t_{t}"
+    path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
     prefix = "regression/"
 
     for lang, a_labels in regression_labels[t]["actual"].items():
@@ -962,7 +964,7 @@ for semente, split in splits.items():
     }
 
     t = "pls"
-    path = f"pcr_vs_plsr-algo_{_ALGO}-seed_{seed}-t_{t}"
+    path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
@@ -992,7 +994,7 @@ for semente, split in splits.items():
     }
 
     t = "pca"
-    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-seed_{seed}-t_{t}"
+    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
@@ -1012,7 +1014,7 @@ for semente, split in splits.items():
     }
 
     t = "pls"
-    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-seed_{seed}-t_{t}"
+    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
@@ -1125,7 +1127,7 @@ r2s_df = pd.DataFrame({
     "t": t_col
 })
 
-path = "r2s"
+path = f"r2s-algo_{_ALGO}-data_{_DATA}"
 save_to_csv(r2s_df, path, _SAVE)
 
 

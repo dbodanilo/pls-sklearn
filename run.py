@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -434,14 +433,9 @@ y_pls_correlations = Y_all_ts_pls.corr().iloc[:n_targets, n_targets:]
 
 for i, o in ordinais:
     # .reshape(-1, 1)
-    x_pls_corr_i = pd.DataFrame(
-        x_pls_correlations.iloc[:, i],
-        columns=[x_pls_correlations.columns[i]]
-    )
-    y_pls_corr_i = pd.DataFrame(
-        y_pls_correlations.iloc[:, i],
-        columns=[y_pls_correlations.columns[i]]
-    )
+    x_pls_corr_i = pd.DataFrame(x_pls_correlations.iloc[:, i])
+    y_pls_corr_i = pd.DataFrame(y_pls_correlations.iloc[:, i])
+
     pls_x_component_corr_i = {
         "X": x_pls_corr_i,
         "titles": [None],
@@ -614,7 +608,8 @@ for semente, split in splits.items():
     for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
 
-        pls_seeds_first_y_components["X"] = y_ts_first_pls_corr.rename(index=mapper)
+        pls_seeds_first_y_components["X"] = y_ts_first_pls_corr.rename(
+            index=mapper)
         pls_seeds_first_y_components["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -709,11 +704,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         # Only set it in first pass.
         if semente == "Nenhuma":
-            plsr_first_components_corrs[objetivo] = pd.DataFrame(
-                x_ds_first_pls_corr,
-                index=X_train.columns,
-                columns=[semente]
-            )
+            plsr_first_components_corrs[objetivo] = x_ds_first_pls_corr
         else:
             plsr_first_components_corrs[objetivo][semente] = x_ds_first_pls_corr
 
@@ -799,14 +790,9 @@ y_pca_correlations = Y_all_ts_pca.corr().iloc[:n_targets, n_targets:]
 
 for i, o in ordinais:
     # .reshape(-1, 1)
-    x_pca_corr_i = pd.DataFrame(
-        x_pca_correlations.iloc[:, i],
-        columns=[x_pca_correlations.columns[i]]
-    )
-    y_pca_corr_i = pd.DataFrame(
-        y_pca_correlations.iloc[:, i],
-        columns=[y_pca_correlations.columns[i]]
-    )
+    x_pca_corr_i = pd.DataFrame(x_pca_correlations.iloc[:, i])
+    y_pca_corr_i = pd.DataFrame(y_pca_correlations.iloc[:, i])
+
     # NOTE: different title for X and Y.
     pca_x_component_corr_i = {
         "X": x_pca_corr_i,

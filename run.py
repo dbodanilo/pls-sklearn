@@ -777,20 +777,18 @@ for semente, split in splits.items():
 
 
 semente, seed = ("Nenhuma", str(None))
-x_pca_components = try_attr(pcr[semente], "components_")
-y_pca_components = try_attr(r_pcr[semente], "components_")
+X_pca_scores = pd.DataFrame(try_transform(pcr[semente], X_all))
+Y_pca_scores = pd.DataFrame(try_transform(r_pcr[semente], Y_all))
 
-X_all_pca = pd.DataFrame(
-    x_pca_components,
-    columns=pca_component_names[:n_features]
-)
+X_all_pca = X_pca_scores.rename(columns=dict(
+    enumerate(pca_component_names[:n_features])))
+
 # ds: descriptors
 X_all_ds_pca = pd.concat((X_all, X_all_pca), axis="columns")
 
-Y_all_pca = pd.DataFrame(
-    y_pca_components,
-    columns=pca_component_names[:n_targets]
-)
+Y_all_pca = Y_pca_scores.rename(columns=dict(
+    enumerate(pca_component_names[:n_targets])))
+
 # ts: targets
 Y_all_ts_pca = pd.concat((Y_all, Y_all_pca), axis="columns")
 

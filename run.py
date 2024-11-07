@@ -881,6 +881,86 @@ for lang, label, mapper in corr_labels:
                  **pca_y_components_corr)
 
 
+x_seeds_pca_corr = pd.DataFrame(index=X_all.columns)
+y_seeds_pca_corr = pd.DataFrame(index=Y_all.columns)
+
+for semente, split in splits.items():
+    seed = str(None) if semente == "Nenhuma" else semente
+
+    X_train, X_test, Y_train, Y_test = split
+
+    x_scores = pd.DataFrame(try_transform(pcr[semente], X_train))
+    y_scores = pd.DataFrame(try_transform(r_pcr[semente], Y_train))
+
+    x_first_component = pd.DataFrame(
+        {semente: x_scores.iloc[:, 0], },
+    )
+    y_first_component = pd.DataFrame(
+        {semente: y_scores.iloc[:, 0], },
+    )
+
+    x_ds_first_component = pd.concat(
+        (X_train, x_first_component), axis="columns")
+    y_ts_first_component = pd.concat(
+        (Y_train, y_first_component), axis="columns")
+
+    x_ds_first_pca_corr = x_ds_first_component.corr()\
+        .iloc[:n_features, n_features:]
+    y_ts_first_pca_corr = y_ts_first_component.corr()\
+        .iloc[:n_targets, n_targets:]
+
+    x_seeds_pca_corr[semente] = x_ds_first_pca_corr
+    y_seeds_pca_corr[semente] = y_ts_first_pca_corr
+
+    pca_seeds_first_x_components = {
+        "X": x_ds_first_pca_corr,
+        "titles": [None],
+        "xlabels": [None for _ in descriptors],
+        "sort": _SORT_X,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pca-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    prefix = "x_component/"
+
+    save_to_csv(x_ds_first_pca_corr, path, save=(seed == str(None)),
+                prefix=prefix)
+
+    path += f"-sort_{_SORT_X}"
+
+    for lang, label, _ in corr_labels:
+        lang_path = path + "-lang_" + lang
+        pca_seeds_first_x_components["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pca_seeds_first_x_components)
+
+    pca_seeds_first_y_components = {
+        "titles": [None],
+        "xlabels": [None for _ in targets],
+        "sort": _SORT_Y,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pca-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    prefix = "y_component/"
+
+    save_to_csv(y_ts_first_pca_corr, path, save=(seed == str(None)),
+                prefix=prefix)
+
+    path += f"-sort_{_SORT_Y}"
+
+    for lang, label, mapper in corr_labels:
+        lang_path = path + "-lang_" + lang
+
+        pca_seeds_first_y_components["X"] = y_ts_first_pca_corr.rename(
+            index=mapper)
+        pca_seeds_first_y_components["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                     **pca_seeds_first_y_components)
+
+
 algos = ("PCR", "PLSR")
 
 regression_labels = {

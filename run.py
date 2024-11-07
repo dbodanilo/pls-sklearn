@@ -445,7 +445,7 @@ for i, o in ordinais:
     pls_x_component_corr_i = {
         "X": x_pls_corr_i,
         "titles": [None],
-        "xlabels": descriptors,
+        "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -467,7 +467,7 @@ for i, o in ordinais:
 
     pls_y_component_corr_i = {
         "titles": [None],
-        "xlabels": targets,
+        "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -492,7 +492,7 @@ for i, o in ordinais:
 pls_all_x_components = {
     "X": x_pls_correlations,
     "titles": [None for _ in ordinais],
-    "xlabels": descriptors,
+    "xlabels": [None for _ in descriptors],
     "ncols": x_pls_correlations.shape[1],
     "sort": _SORT_X,
     "meanlabel": _MEANLABEL,
@@ -514,7 +514,7 @@ for lang, label, _ in corr_labels:
 
 pls_y_components = {
     "titles": [None for _ in ordinais],
-    "xlabels": targets,
+    "xlabels": [None for _ in targets],
     "ncols": y_pls_correlations.shape[1],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
@@ -576,7 +576,7 @@ for semente, split in splits.items():
     pls_seeds_first_x_components = {
         "X": x_ds_first_pls_corr,
         "titles": [None],
-        "xlabels": descriptors,
+        "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -598,7 +598,7 @@ for semente, split in splits.items():
 
     pls_seeds_first_y_components = {
         "titles": [None],
-        "xlabels": targets,
+        "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -657,8 +657,8 @@ for t, objetivo in zip(all_ts, todos_objetivos):
     # TODO, 2024-07-25: convert from raw component to correlations.
     pls_target_first_x_component_args = {
         "X": pls_target_first_x_component,
-        "titles": [f"Primeiro Componente PLS de X, Objetivo: {objetivo}"],
-        "xlabels": descriptors,
+        "titles": [None],
+        "xlabels": [None for _ in descriptors],
         "ylabel": "Peso",
         "sort": _SORT_X,
         "meanlabel": "média",
@@ -720,7 +720,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
         pls_target_seed_first_x_component_corr = {
             "X": x_ds_first_pls_corr,
             "titles": [None],
-            "xlabels": descriptors,
+            "xlabels": [None for _ in descriptors],
             "sort": _SORT_X,
             "meanlabel": _MEANLABEL,
         }
@@ -813,7 +813,7 @@ for i, o in ordinais:
     pca_x_component_corr_i = {
         "X": x_pca_corr_i,
         "titles": [None],
-        "xlabels": descriptors,
+        "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -834,7 +834,7 @@ for i, o in ordinais:
 
     pca_y_component_corr_i = {
         "titles": [None],
-        "xlabels": targets,
+        "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
@@ -858,7 +858,7 @@ for i, o in ordinais:
 
 pca_y_components_corr = {
     "titles": [None for _ in ordinais],
-    "xlabels": targets,
+    "xlabels": [None for _ in targets],
     "ncols": y_pca_correlations.shape[0],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,

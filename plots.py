@@ -19,6 +19,7 @@ def plot_components(X, titles, xlabels, ylabel,
 
     sort_asc = None if sort is None else sort == "asc"
 
+    xlabels = latexify(X.index) if is_pandas else xlabels
     n_xlabels = len(xlabels)
 
     mean_x = np.linspace(-1, n_xlabels, n_xlabels)

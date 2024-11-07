@@ -53,6 +53,8 @@ ds = X_all.columns
 # First two targets are the most important (Av0, fT).
 ts = Y_all.columns
 
+ts_pt = {"Area": "Área", "Pwr": "P"}
+
 # For plotting (ensure LaTeX formatting).
 descriptors = latexify(ds)
 targets = latexify(ts)
@@ -404,10 +406,10 @@ ordinais = list(enumerate([
     {"en": "5th", "pt": "Quinto"}
 ]))
 
-corr_labels = {
-    "en": "Pearson correlation",
-    "pt": "Correlação de Pearson"
-}
+corr_labels = (
+    ("en", "Pearson correlation", {}),
+    ("pt", "Correlação de Pearson", ts_pt),
+)
 
 seed, semente = (str(None), "Nenhuma")
 
@@ -455,7 +457,7 @@ for i, o in ordinais:
 
     path += f"-sort_{_SORT_X}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
         pls_x_component_corr_i["ylabel"] = label
 
@@ -464,7 +466,6 @@ for i, o in ordinais:
                      **pls_x_component_corr_i)
 
     pls_y_component_corr_i = {
-        "X": y_pls_corr_i,
         "titles": [None],
         "xlabels": targets,
         "sort": _SORT_Y,
@@ -478,8 +479,10 @@ for i, o in ordinais:
 
     path += f"-sort_{_SORT_Y}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
+
+        pls_y_component_corr_i["X"] = y_pls_corr_i.rename(index=mapper)
         pls_y_component_corr_i["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -502,7 +505,7 @@ save_to_csv(x_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_X}"
 
-for lang, label in corr_labels.items():
+for lang, label, _ in corr_labels:
     lang_path = path + "-lang_" + lang
     pls_all_x_components["ylabel"] = label
 
@@ -510,7 +513,6 @@ for lang, label in corr_labels.items():
                  **pls_all_x_components)
 
 pls_y_components = {
-    "X": y_pls_correlations,
     "titles": [None for _ in ordinais],
     "xlabels": targets,
     "ncols": y_pls_correlations.shape[1],
@@ -525,8 +527,10 @@ save_to_csv(y_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_X}"
 
-for lang, label in corr_labels.items():
+for lang, label, mapper in corr_labels:
     lang_path = path + "-lang_" + lang
+
+    pls_y_components["X"] = y_pls_correlations.rename(index=mapper)
     pls_y_components["ylabel"] = label
 
     save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -573,7 +577,6 @@ for semente, split in splits.items():
         "X": x_ds_first_pls_corr,
         "titles": [None],
         "xlabels": descriptors,
-        "ylabel": "Correlação de Pearson",
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
@@ -586,7 +589,7 @@ for semente, split in splits.items():
 
     path += f"-sort_{_SORT_X}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
         pls_seeds_first_x_components["ylabel"] = label
 
@@ -594,7 +597,6 @@ for semente, split in splits.items():
                      **pls_seeds_first_x_components)
 
     pls_seeds_first_y_components = {
-        "X": y_ts_first_pls_corr,
         "titles": [None],
         "xlabels": targets,
         "sort": _SORT_Y,
@@ -609,8 +611,10 @@ for semente, split in splits.items():
 
     path += f"-sort_{_SORT_Y}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
+
+        pls_seeds_first_y_components["X"] = y_ts_first_pls_corr.rename(index=mapper)
         pls_seeds_first_y_components["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -729,7 +733,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         path += f"-sort_{_SORT_X}"
 
-        for lang, label in corr_labels.items():
+        for lang, label, _ in corr_labels:
             lang_path = path + "-lang_" + lang
             pls_target_seed_first_x_component_corr["ylabel"] = label
 
@@ -821,7 +825,7 @@ for i, o in ordinais:
 
     path += f"-sort_{_SORT_X}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
         pca_x_component_corr_i["ylabel"] = label
 
@@ -829,7 +833,6 @@ for i, o in ordinais:
                      **pca_x_component_corr_i)
 
     pca_y_component_corr_i = {
-        "X": y_pca_corr_i,
         "titles": [None],
         "xlabels": targets,
         "sort": _SORT_Y,
@@ -843,8 +846,10 @@ for i, o in ordinais:
 
     path += f"-sort_{_SORT_Y}"
 
-    for lang, label in corr_labels.items():
+    for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
+
+        pca_y_component_corr_i["X"] = y_pca_corr_i.rename(index=mapper)
         pca_y_component_corr_i["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
@@ -852,7 +857,6 @@ for i, o in ordinais:
 
 
 pca_y_components_corr = {
-    "X": y_pca_correlations,
     "titles": [None for _ in ordinais],
     "xlabels": targets,
     "ncols": y_pca_correlations.shape[0],
@@ -867,8 +871,10 @@ save_to_csv(y_pca_correlations, path, save=(seed == str(None)), prefix=prefix)
 
 path += f"-sort_{_SORT_Y}"
 
-for lang, label in corr_labels.items():
+for lang, label, mapper in corr_labels:
     lang_path = path + "-lang_" + lang
+
+    pca_y_components_corr["X"] = y_pca_correlations.rename(index=mapper)
     pca_y_components_corr["ylabel"] = label
 
     save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,

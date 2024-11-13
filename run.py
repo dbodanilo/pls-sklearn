@@ -379,13 +379,23 @@ for semente, split in splits.items():
 
     _, X_test, _, Y_test = split
 
-    X_test_pls, Y_test_pls = (pd.DataFrame(test_t)
-                              for test_t in plsr["Todos"][semente].transform(X_test, Y_test))
+    X_test_pls, Y_test_pls = (pd.DataFrame(test_pls)
+                              for test_pls in plsr["Todos"][semente].transform(X_test, Y_test))
 
     Y_pred_plsr = pd.DataFrame(
-        plsr["Todos"][semente].predict(X_test), columns=Y_train.columns)
+        plsr["Todos"][semente].predict(X_test),
+        columns=Y_train.columns
+    )
 
-    R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
+    R2_Y_plsr = pd.Series(
+        r2_score(Y_test, Y_pred_plsr, multioutput="raw_values"),
+        index=Y_test.columns
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
+    prefix = "y_pred/"
+
+    save_to_csv(R2_Y_plsr, path, save=_SAVE, prefix=prefix)
 
     plsr_predictions = {
         "X": X_test_pls,
@@ -399,59 +409,104 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    path = f"plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "predictions/"
-
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions)
 
-    _, Y_pred_plsr_t = (pd.DataFrame(test_t)
-                        for test_t in plsr["Todos"][semente].transform(X_test, Y_pred_plsr))
+    _, Y_pred_plsr_pls = (pd.DataFrame(test_pls)
+                          for test_pls in plsr["Todos"][semente].transform(X_test, Y_pred_plsr))
 
-    R2_Y_plsr_t = r2_score(Y_test_pls, Y_pred_plsr_t, multioutput="raw_values")
+    R2_Y_plsr_pls = pd.Series(
+        r2_score(Y_test_pls, Y_pred_plsr_pls, multioutput="raw_values")
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
+
+    save_to_csv(R2_Y_plsr_pls, path, save=_SAVE, prefix=prefix)
 
     plsr_predictions_transformed = {
         "X": X_test_pls,
         "Y_true": Y_test_pls,
-        "Y_pred": Y_pred_plsr_t,
+        "Y_pred": Y_pred_plsr_pls,
         "xlabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
         "ylabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
-        "R2": R2_Y_plsr_t,
+        "R2": R2_Y_plsr_pls,
         "ncols": 3,
         "nrows": 2,
     }
-
-    path = f"plsr-transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **plsr_predictions_transformed)
 
-    Y_test_pls, X_test_pls = (pd.DataFrame(test_t)
-                              for test_t in r_plsr[semente].transform(Y_test, X_test))
+    Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
+    Y_pred_plsr_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_pred_plsr))
+    R2_Y_plsr_pca = pd.Series(
+        r2_score(Y_test_pca, Y_pred_plsr_pca, multioutput="raw_values")
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
+
+    save_to_csv(R2_Y_plsr_pca, path, save=_SAVE, prefix=prefix)
+
+    Y_test_pls, X_test_pls = (pd.DataFrame(test_pls)
+                              for test_pls in r_plsr[semente].transform(Y_test, X_test))
 
     X_pred_plsr = pd.DataFrame(
         r_plsr[semente].predict(Y_test), columns=X_train.columns)
 
-    _, X_pred_plsr_t = (pd.DataFrame(test_t)
-                        for test_t in r_plsr[semente].transform(Y_test, X_pred_plsr))
+    R2_X_plsr = pd.Series(
+        r2_score(X_test, X_pred_plsr, multioutput="raw_values"),
+        index=X_test.columns
+    )
 
-    R2_X_plsr_t = r2_score(X_test_pls, X_pred_plsr_t, multioutput="raw_values")
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
+    prefix = "x_pred/"
+
+    save_to_csv(R2_X_plsr, path, save=_SAVE, prefix=prefix)
+
+    _, X_pred_plsr_pls = (pd.DataFrame(test_pls)
+                          for test_pls in r_plsr[semente].transform(Y_test, X_pred_plsr))
+
+    R2_X_plsr_pls = pd.Series(
+        r2_score(X_test_pls, X_pred_plsr_pls, multioutput="raw_values")
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
+
+    save_to_csv(R2_X_plsr_pls, path, save=_SAVE, prefix=prefix)
 
     plsr_predictions_reversed_transformed = {
         "X": Y_test_pls,
         "Y_true": X_test_pls,
-        "Y_pred": X_pred_plsr_t,
+        "Y_pred": X_pred_plsr_pls,
         "xlabels": [f"Y's PLS {i}" for i in range(1, n_max + 1)],
         "ylabels": [f"X's PLS {i}" for i in range(1, n_max + 1)],
-        "R2": R2_X_plsr_t,
+        "R2": R2_X_plsr_pls,
         "ncols": 3,
         "nrows": 2,
     }
 
-    path = f"plsr-reversed_transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, _PAUSE,
                  **plsr_predictions_reversed_transformed)
+
+    X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
+    X_pred_plsr_pca = pd.DataFrame(try_transform(pcr[semente], X_pred_plsr))
+    R2_X_plsr_pca = pd.Series(
+        r2_score(X_test_pca, X_pred_plsr_pca, multioutput="raw_values")
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
+
+    save_to_csv(R2_X_plsr_pca, path, save=_SAVE, prefix=prefix)
+
+    X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
+    X_pred_plsr_pca = pd.DataFrame(try_transform(pcr[semente], X_pred_plsr))
+    R2_X_plsr_pca = pd.Series(
+        r2_score(X_test_pca, X_pred_plsr_pca, multioutput="raw_values")
+    )
+
+    path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
+
+    save_to_csv(R2_X_plsr_pca, path, save=_SAVE, prefix=prefix)
 
 
 # TODO: use itertools for /.*th/ ords.

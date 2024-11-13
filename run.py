@@ -291,7 +291,7 @@ for semente, split in splits.items():
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
-    Y_pred_pcr_pca = pd.DataFrame(pcr[semente].predict(Y_test))
+    Y_pred_pcr_pca = pd.DataFrame(pcr[semente].predict(X_test))
     R2_Y_pcr_pca = pd.Series(
         r2_score(Y_test_pca, Y_pred_pcr_pca, multioutput="raw_values"))
 

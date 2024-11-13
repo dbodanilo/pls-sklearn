@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import datetime
 
 from sklearn.cross_decomposition import PLSRegression
-from sklearn.decomposition import PCA
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeRegressor
@@ -77,14 +76,19 @@ n_max = min(n_train, n_features, n_targets)
 splits = {}
 
 pcr = {}
+p_pcr = {}
+
 r_pcr = {}
+pr_pcr = {}
 
 # "Todos": all targets (multivariate Y).
 plsr = {"Todos": {}}
 r_plsr = {}
 
-pca_component_names = [f"PCA {i}" for i in range(1, n_features + 1)]
-pls_component_names = [f"PLS {i}" for i in range(1, n_features + 1)]
+component_names = {
+    "pca": [f"PCA {i}" for i in range(1, n_features + 1)],
+    "pls": [f"PLS {i}" for i in range(1, n_features + 1)]
+}
 
 # NOTE: evaluate stability among runs for each target variable.
 # `seed=None` means all samples (no split).
@@ -93,23 +97,26 @@ for seed, semente in zip((None, *seeds), todas_sementes):
 
     X_train, _, Y_train, _ = splits[semente]
 
-    pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
-    x_pca_step: PCA = pcr[semente].named_steps["pca"]
+    p_pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train)
+    pr_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
+
+    X_train_pca = try_transform(p_pcr[semente], X_train)
+    Y_train_pca = try_transform(pr_pcr[semente], Y_train)
+
+    pcr[semente] = ScalerPCR(n_components=n_max).fit(X_train, Y_train_pca)
+    r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train_pca)
 
     plsr_seed = PLSRegression(n_components=n_max).fit(X_train, Y_train)
     plsr["Todos"][semente] = plsr_seed
-
-    r_pcr[semente] = ScalerPCR(n_components=n_max).fit(Y_train, X_train)
-    y_pca_step: PCA = r_pcr[semente].named_steps["pca"]
 
     r_plsr_seed = PLSRegression(n_components=n_max).fit(Y_train, X_train)
     r_plsr[semente] = r_plsr_seed
 
     # transform(X) = X * V = X * transpose(Vt), components_ = Vt.
     x_pca_components = pd.DataFrame(
-        x_pca_step.components_,
+        try_attr(pcr[semente], "components_"),
         columns=X_train.columns,
-        index=pca_component_names[:n_max])
+        index=component_names["pca"][:n_max])
 
     path = f"pca-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     prefix = "x_component/"
@@ -119,7 +126,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     # transform(X) = X * x_rotations_
     x_pls_components = pd.DataFrame(
         plsr_seed.x_rotations_,
-        columns=pls_component_names[:n_max],
+        columns=component_names["pls"][:n_max],
         index=X_train.columns)
 
     # "all" means all targets, only applies to:
@@ -133,16 +140,16 @@ for seed, semente in zip((None, *seeds), todas_sementes):
     # fit(Y, X) -> y_rotations_ transforms our X.
     x_rpls_components = pd.DataFrame(
         r_plsr_seed.y_rotations_,
-        columns=pls_component_names[:n_max],
+        columns=component_names["pls"][:n_max],
         index=X_train.columns)
 
     path = f"pls-algo_{_ALGO}-data_{_DATA}-reversed-seed_{str(seed)}"
     save_to_csv(x_rpls_components, path, _SAVE, prefix=prefix)
 
     y_pca_components = pd.DataFrame(
-        y_pca_step.components_,
+        try_attr(r_pcr[semente], "components_"),
         columns=Y_train.columns,
-        index=pca_component_names[:n_max])
+        index=component_names["pca"][:n_max])
 
     path = f"pca-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
     prefix = "y_component/"
@@ -150,7 +157,7 @@ for seed, semente in zip((None, *seeds), todas_sementes):
 
     y_pls_components = pd.DataFrame(
         plsr_seed.y_rotations_,
-        columns=pls_component_names[:n_max],
+        columns=component_names["pls"][:n_max],
         index=Y_train.columns)
 
     path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}"
@@ -158,54 +165,56 @@ for seed, semente in zip((None, *seeds), todas_sementes):
 
     y_rpls_components = pd.DataFrame(
         r_plsr_seed.x_rotations_,
-        columns=pls_component_names[:n_max],
+        columns=component_names["pls"][:n_max],
         index=Y_train.columns)
 
     path = f"pls-algo_{_ALGO}-data_{_DATA}-reversed-seed_{str(seed)}"
     save_to_csv(y_rpls_components, path, _SAVE, prefix=prefix)
 
     pca_explained_variance_ratio = pd.DataFrame(
-        {"X": x_pca_step.explained_variance_ratio_,
-         "Y": y_pca_step.explained_variance_ratio_},
-        index=pca_component_names[:n_max])
+        {"X": try_attr(pcr[semente], "explained_variance_ratio_"),
+         "Y": try_attr(r_pcr[semente], "explained_variance_ratio_")},
+        index=component_names["pca"][:n_max])
 
     path = f"pca-algo_{_ALGO}-data_{_DATA}-explained_variance_ratio-seed_{str(seed)}"
-    save_to_csv(pca_explained_variance_ratio, path, save=(seed is None))
+    save_to_csv(pca_explained_variance_ratio, path, save=_SAVE)
 
 
 # === PCA ===
 
 x_pca = ScalerPCA(n_components=n_features).fit(X_all)
-x_pca_step: PCA = x_pca.named_steps["pca"]
 
 x_pca_components = pd.DataFrame(
-    x_pca_step.components_, columns=X_all.columns,
-    index=pca_component_names[:x_pca_step.n_components_])
+    try_attr(x_pca, "components_"),
+    columns=X_all.columns,
+    index=component_names["pca"][:try_attr(x_pca, "n_components_")])
 
 path = f"pca-x_components-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(x_pca_components, path, _SAVE)
 
 y_pca = ScalerPCA(n_components=n_targets).fit(Y_all)
-y_pca_step: PCA = y_pca.named_steps["pca"]
 
 y_pca_components = pd.DataFrame(
-    y_pca_step.components_, columns=Y_all.columns,
-    index=pca_component_names[:y_pca_step.n_components_])
+    try_attr(y_pca, "components_"),
+    columns=Y_all.columns,
+    index=component_names["pca"][:try_attr(y_pca, "n_components_")])
 
 path = f"pca-y_components-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(y_pca_components, path, _SAVE)
 
+x_pca_explained_variance_ratio = try_attr(x_pca, "explained_variance_ratio_")
+
 # right-pad Y ratios in order to place X and Y on the same DataFrame.
 y_pca_explained_variance_ratio = np.pad(
-    y_pca_step.explained_variance_ratio_,
+    try_attr(y_pca, "explained_variance_ratio_"),
     (0, n_features - n_targets),
     mode="constant",
     constant_values=np.nan)
 
 pca_explained_variance_ratio = pd.DataFrame(
-    {"X": x_pca_step.explained_variance_ratio_,
+    {"X": x_pca_explained_variance_ratio,
      "Y": y_pca_explained_variance_ratio},
-    index=pca_component_names[:x_pca_step.n_components_])
+    index=component_names["pca"][:try_attr(x_pca, "n_components_")])
 
 path = f"pca-explained_variance_ratio-algo_{_ALGO}-data_{_DATA}-seed_None"
 save_to_csv(pca_explained_variance_ratio, path, _SAVE)
@@ -223,8 +232,8 @@ print("X and Y\n-------")
 for n in range(1, n_targets + 1):
     # TODO: as with the R-square at the end:
     # aggregate metric over all seeds (mean)
-    x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
-    y_explained = y_pca_step.explained_variance_ratio_[:n].sum()
+    x_explained = x_pca_explained_variance_ratio[:n].sum()
+    y_explained = y_pca_explained_variance_ratio[:n].sum()
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
     print(f"{100*y_explained:.2f}% of Y's variance explained")
@@ -234,7 +243,7 @@ for n in range(1, n_targets + 1):
 # TODO: go back to exploring n > 5, at least for X.
 print("\nOnly X\n------")
 for n in range(n_targets + 1, n_features + 1):
-    x_explained = x_pca_step.explained_variance_ratio_[:n].sum()
+    x_explained = x_pca_explained_variance_ratio[:n].sum()
     print("\nn =", n)
     print(f"{100*x_explained:.2f}% of X's variance explained")
 
@@ -248,9 +257,22 @@ for semente, split in splits.items():
 
     X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
     Y_pred_pcr = pd.DataFrame(
-        pcr[semente].predict(X_test),
+        p_pcr[semente].predict(X_test),
         columns=Y_train.columns
     )
+
+
+    # TODO: file fixes an algorithm (PCR) and a transformation (None),
+    # store seed as a column.
+    R2_Y_pcr = pd.Series(
+        r2_score(Y_test, Y_pred_pcr, multioutput="raw_values"),
+        index=Y_test.columns
+    )
+
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
+    prefix = "y_pred/"
+
+    save_to_csv(R2_Y_pcr, path, save=_SAVE, prefix=prefix)
 
     pcr_predictions = {
         "xlabels": [f"X's PCA {i}, Semente: {semente}" for i in range(1, n_max + 1)],
@@ -258,60 +280,96 @@ for semente, split in splits.items():
         "X": X_test_pca,
         "Y_true": Y_test,
         "Y_pred": Y_pred_pcr,
-        "R2": r2_score(Y_test, Y_pred_pcr, multioutput="raw_values"),
+        "R2": R2_Y_pcr,
         "iter_x": False,
         "ncols": 3,
         "nrows": 2,
     }
-
-    path = f"pcr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "predictions/"
 
     # pause=False: no pause in for loop.
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
-    Y_pred_pcr_t = pd.DataFrame(try_transform(r_pcr[semente], Y_pred_pcr))
+    Y_pred_pcr_pca = pd.DataFrame(pcr[semente].predict(Y_test))
+    R2_Y_pcr_pca = pd.Series(
+        r2_score(Y_test_pca, Y_pred_pcr_pca, multioutput="raw_values"))
 
-    R2_Y_pcr_t = r2_score(Y_test_pca, Y_pred_pcr_t, multioutput="raw_values")
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
+
+    save_to_csv(R2_Y_pcr_pca, path, save=_SAVE, prefix=prefix)
 
     pcr_predictions_transformed = {
         "X": X_test_pca,
         "Y_true": Y_test_pca,
-        "Y_pred": Y_pred_pcr_t,
+        "Y_pred": Y_pred_pcr_pca,
         "xlabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
         "ylabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
-        "R2": R2_Y_pcr_t,
+        "R2": R2_Y_pcr_pca,
         "ncols": 3,
     }
-
-    path = f"pcr-transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
                  **pcr_predictions_transformed)
 
-    X_pred_pcr = pd.DataFrame(
-        r_pcr[semente].predict(Y_test), columns=X_train.columns)
-    X_pred_pcr_t = pd.DataFrame(try_transform(pcr[semente], X_pred_pcr))
+    Y_test_pls = pd.DataFrame(try_transform(r_plsr[semente], Y_test))
+    Y_pred_pcr_pls = pd.DataFrame(try_transform(r_plsr[semente], Y_pred_pcr))
+    R2_Y_pcr_pls = pd.Series(
+        r2_score(Y_test_pls, Y_pred_pcr_pls, multioutput="raw_values"))
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
 
-    R2_X_pcr_t = r2_score(X_test_pca, X_pred_pcr_t, multioutput="raw_values")
+    save_to_csv(R2_Y_pcr_pls, path, save=_SAVE, prefix=prefix)
+
+    X_pred_pcr = pd.DataFrame(
+        pr_pcr[semente].predict(Y_test),
+        columns=X_train.columns
+    )
+    R2_X_pcr = pd.Series(
+        r2_score(X_test, X_pred_pcr, multioutput="raw_values"),
+        index=X_test.columns
+    )
+
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
+    prefix = "x_pred/"
+
+    save_to_csv(R2_X_pcr, path, save=_SAVE, prefix=prefix)
+
+    X_pred_pcr_pca = pd.DataFrame(r_pcr[semente].predict(Y_test))
+    R2_X_pcr_pca = pd.Series(
+        r2_score(X_test_pca, X_pred_pcr_pca, multioutput="raw_values")
+    )
+
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
+
+    save_to_csv(R2_X_pcr_pca, path, save=_SAVE, prefix=prefix)
 
     pcr_predictions_reversed_transformed = {
         "X": Y_test_pca,
         "Y_true": X_test_pca,
-        "Y_pred": X_pred_pcr_t,
+        "Y_pred": X_pred_pcr_pca,
         "xlabels": [f"Y's PCA {i}" for i in range(1, n_targets + 1)],
         "ylabels": [f"X's PCA {i}" for i in range(1, n_targets + 1)],
         "iter_x": False,
-        "R2": R2_X_pcr_t,
+        "R2": R2_X_pcr_pca,
         "ncols": 3,
     }
 
-    path = f"pcr-reversed_transformed-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=_PAUSE,
                  **pcr_predictions_reversed_transformed)
+
+
+    X_test_pls = pd.DataFrame(try_transform(plsr["Todos"][semente], X_test))
+    X_pred_pcr_pls = pd.DataFrame(
+        try_transform(plsr["Todos"][semente], X_pred_pcr)
+    )
+    R2_X_pcr_pls = pd.Series(
+        r2_score(X_test_pls, X_pred_pcr_pls, multioutput="raw_values")
+    )
+    path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
+
+    save_to_csv(R2_Y_pcr_pls, path, save=_SAVE, prefix=prefix)
 
 
 # === PLSR ===
@@ -415,14 +473,14 @@ seed, semente = (str(None), "Nenhuma")
 # NOTE: use correlation, not normalization.
 X_all_pls = pd.DataFrame(
     plsr["Todos"][semente].x_scores_,
-    columns=pls_component_names[:n_targets]
+    columns=component_names["pls"][:n_targets]
 )
 # ds: descriptors
 X_all_ds_pls = pd.concat((X_all, X_all_pls), axis="columns")
 
 Y_all_pls = pd.DataFrame(
     plsr["Todos"][semente].y_scores_,
-    columns=pls_component_names[:n_targets]
+    columns=component_names["pls"][:n_targets]
 )
 # ts: targets
 Y_all_ts_pls = pd.concat((Y_all, Y_all_pls), axis="columns")
@@ -640,7 +698,7 @@ for t, objetivo in zip(all_ts, todos_objetivos):
 
     pls_target_x_components = pd.DataFrame(
         plsr_target.x_rotations_,
-        columns=pls_component_names[:n_max],
+        columns=component_names["pls"][:n_max],
         index=X_all.columns)
 
     path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}-target_{detexify(str(t))}"
@@ -678,7 +736,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         pls_seed_target_x_components = pd.DataFrame(
             plsr_seed_target.x_rotations_,
-            columns=pls_component_names[:n_max],
+            columns=component_names["pls"][:n_max],
             index=X_train.columns)
 
         t = "all" if t is None else t
@@ -760,7 +818,7 @@ for semente, split in splits.items():
 
     # NOTE: print seed used when outputting plots and scores.
     path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "predictions/"
+    prefix = "y_pred/"
 
     # No pause in for loop.
     save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
@@ -772,13 +830,13 @@ X_pca_scores = pd.DataFrame(try_transform(pcr[semente], X_all))
 Y_pca_scores = pd.DataFrame(try_transform(r_pcr[semente], Y_all))
 
 X_all_pca = X_pca_scores.rename(columns=dict(
-    enumerate(pca_component_names[:n_features])))
+    enumerate(component_names["pca"][:n_features])))
 
 # ds: descriptors
 X_all_ds_pca = pd.concat((X_all, X_all_pca), axis="columns")
 
 Y_all_pca = Y_pca_scores.rename(columns=dict(
-    enumerate(pca_component_names[:n_targets])))
+    enumerate(component_names["pca"][:n_targets])))
 
 # ts: targets
 Y_all_ts_pca = pd.concat((Y_all, Y_all_pca), axis="columns")
@@ -946,18 +1004,19 @@ for semente, split in splits.items():
 
 
 algos = ("PCR", "PLSR")
+trans = ("pca", "pls")
 
 regression_labels = {
     t.lower(): {
         "actual": {
-            "en": [f"Actual first {t} component" for _ in algos],
-            "pt": [f"Primeiro componente {t} real" for _ in algos]
+            "en": [f"Actual first {t.upper()} component" for _ in algos],
+            "pt": [f"Primeiro componente {t.upper()} real" for _ in algos]
         },
         "predicted": {
-            "en": [f"Predicted first {t} component" for _ in algos],
-            "pt": [f"Primeiro componente {t} predito" for _ in algos]
+            "en": [f"Predicted first {t.upper()} component" for _ in algos],
+            "pt": [f"Primeiro componente {t.upper()} predito" for _ in algos]
         }
-    } for t in ("PCA", "PLS")
+    } for t in trans
 }
 
 # seed=1241 was the best for the ratio of rPLSR's r2_score

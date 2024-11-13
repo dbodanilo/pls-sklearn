@@ -1226,8 +1226,10 @@ for semente, split in splits.items():
                 # whether the regressor performs worse than
                 # DummyRegressor(strategy='mean').
                 # r2 = max(r2_score(Y_test, Y_pred), 0)
-                r2_m = r2_score(Y_test_t, Y_pred_t)
-                r2_rm = r2_score(X_test_t, X_pred_t)
+                r2_m = r2_score(Y_test_t, Y_pred_t,
+                                multioutput="variance_weighted")
+                r2_rm = r2_score(X_test_t, X_pred_t,
+                                 multioutput="variance_weighted")
 
                 for algo, r2 in ((label, r2_m), (r_label, r2_rm)):
                     # A numpy.ndarray for each column.
@@ -1256,7 +1258,7 @@ r2s_df = pd.DataFrame({
     "t": t_col
 })
 
-path = f"r2s-algo_{_ALGO}-data_{_DATA}"
+path = f"r2s-algo_{_ALGO}-data_{_DATA}-multi_vw"
 save_to_csv(r2s_df, path, _SAVE)
 
 

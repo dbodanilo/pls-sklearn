@@ -359,7 +359,6 @@ for semente, split in splits.items():
     save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **pcr_predictions_reversed_transformed)
 
-
     X_test_pls = pd.DataFrame(try_transform(plsr["Todos"][semente], X_test))
     X_pred_pcr_pls = pd.DataFrame(
         try_transform(plsr["Todos"][semente], X_pred_pcr)
@@ -1009,7 +1008,7 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
             pls_target_seed_first_x_component_ts_corr["ylabel"] = label
 
             save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                        **pls_target_seed_first_x_component_ts_corr)
+                         **pls_target_seed_first_x_component_ts_corr)
 
 
 # === PCR vs. PLSR ===
@@ -1041,17 +1040,21 @@ for semente, split in splits.items():
     R2_Y_pcr = r2_score(Y_test, Y_pred_pcr, multioutput="raw_values")
     R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
 
-    R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca, multioutput="raw_values")
-    R2_Y_plsr_pca = r2_score(Y_test_pca, Y_pred_plsr_pca, multioutput="raw_values")
+    R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca,
+                            multioutput="raw_values")
+    R2_Y_plsr_pca = r2_score(Y_test_pca, Y_pred_plsr_pca,
+                             multioutput="raw_values")
 
-    R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls, multioutput="raw_values")
-    R2_Y_plsr_pls = r2_score(Y_test_pls, Y_pred_plsr_pls, multioutput="raw_values")
+    R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls,
+                            multioutput="raw_values")
+    R2_Y_plsr_pls = r2_score(Y_test_pls, Y_pred_plsr_pls,
+                             multioutput="raw_values")
 
     # TODO:
     # 1. plot Y predictions transformed with PLS.
     # 2. plot X predictions.
     pcr_vs_plsr_predictions_pca = {
-        "X": pd.concat((X_test_pca.iloc[:, 0],) * 2 , axis="columns"),
+        "X": pd.concat((X_test_pca.iloc[:, 0],) * 2, axis="columns"),
         "Y_true": pd.concat((Y_test_pca.iloc[:, 0],) * 2, axis="columns"),
         "Y_pred": pd.concat((Y_pred_pcr_pca.iloc[:, 0], Y_pred_plsr_pca.iloc[:, 0]), axis="columns"),
         "xlabels": ["X's PCA 1",] * 2,
@@ -1393,32 +1396,53 @@ for semente, split in splits.items():
 
     X_train, X_test, Y_train, Y_test = split
 
-    pcr, rpcr, X_pred_pcr, Y_pred_pcr = fit_predict(
-        ScalerPCR, *split, n_components=1)
+    # TODO? Iterate over values of n_components ([1..5]).
+    n = 1
 
-    plsr, rplsr, X_pred_plsr, Y_pred_plsr = fit_predict(
-        PLSRegression, *split, n_components=1)
+    pcr_seed, r_pcr_seed, X_pred_pcr, Y_pred_pcr = fit_predict(
+        ScalerPCR, *split, n_components=n)
 
-    X_test_pca = pd.DataFrame(try_transform(pcr, X_test))
-    Y_test_pca = pd.DataFrame(try_transform(rpcr, Y_test))
+    plsr_seed, r_plsr_seed, X_pred_plsr, Y_pred_plsr = fit_predict(
+        PLSRegression, *split, n_components=n)
 
-    X_test_pls = pd.DataFrame(try_transform(plsr, X_test))
-    Y_test_pls = pd.DataFrame(try_transform(rplsr, Y_test))
+    # NOTE: use canonical transformers
+    # (*pcr and *plsr dicts).
+    X_test_pca = pd.DataFrame(
+        try_transform(pcr[semente], X_test)[:, :n])
+    Y_test_pca = pd.DataFrame(
+        try_transform(r_pcr[semente], Y_test)[:, :n])
 
-    X_pred_pcr_pca = pd.DataFrame(try_transform(pcr, X_pred_pcr))
-    Y_pred_pcr_pca = pd.DataFrame(try_transform(rpcr, Y_pred_pcr))
+    X_test_pls = pd.DataFrame(
+        try_transform(plsr["Todos"][semente], X_test)[:, :n])
+    Y_test_pls = pd.DataFrame(
+        try_transform(r_plsr[semente], Y_test)[:, :n])
 
-    X_pred_pcr_pls = pd.DataFrame(try_transform(plsr, X_pred_pcr))
-    Y_pred_pcr_pls = pd.DataFrame(try_transform(rplsr, Y_pred_pcr))
+    X_pred_pcr_pca = pd.DataFrame(
+        try_transform(pcr[semente], X_pred_pcr)[:, :n])
+    Y_pred_pcr_pca = pd.DataFrame(
+        try_transform(r_pcr[semente], Y_pred_pcr)[:, :n])
 
-    X_pred_plsr_pca = pd.DataFrame(try_transform(pcr, X_pred_plsr))
-    Y_pred_plsr_pca = pd.DataFrame(try_transform(rpcr, Y_pred_plsr))
+    X_pred_pcr_pls = pd.DataFrame(
+        try_transform(plsr["Todos"][semente], X_pred_pcr)[:, :n])
+    Y_pred_pcr_pls = pd.DataFrame(
+        try_transform(r_plsr[semente], Y_pred_pcr)[:, :n])
 
-    X_pred_plsr_pls = pd.DataFrame(try_transform(plsr, X_pred_plsr))
-    Y_pred_plsr_pls = pd.DataFrame(try_transform(rplsr, Y_pred_plsr))
+    X_pred_plsr_pca = pd.DataFrame(
+        try_transform(pcr[semente], X_pred_plsr)[:, :n])
+    Y_pred_plsr_pca = pd.DataFrame(
+        try_transform(r_pcr[semente], Y_pred_plsr)[:, :n])
+
+    X_pred_plsr_pls = pd.DataFrame(
+        try_transform(plsr["Todos"][semente], X_pred_plsr)[:, :n])
+    Y_pred_plsr_pls = pd.DataFrame(
+        try_transform(r_plsr[semente], Y_pred_plsr)[:, :n])
 
     # NOTE: display R-squared for the prediction of each
     # component.
+
+    R2_Y_pcr = r2_score(Y_test, Y_pred_pcr, multioutput="raw_values")
+    R2_Y_plsr = r2_score(Y_test, Y_pred_plsr, multioutput="raw_values")
+
     R2_Y_pcr_pca = r2_score(Y_test_pca, Y_pred_pcr_pca,
                             multioutput="raw_values")
     R2_Y_pcr_pls = r2_score(Y_test_pls, Y_pred_pcr_pls,
@@ -1430,47 +1454,64 @@ for semente, split in splits.items():
                              multioutput="raw_values")
 
     # TODO: split regression plot into two (PCA/ DTR and PLS)
-    pcr_vs_plsr_regression_pca = {
-        "Y_true": pd.concat((Y_test_pca.iloc[:, 0], Y_test_pca.iloc[:, 0]), axis="columns"),
+    pcr_vs_plsr_y_pred_pca = {
+        "Y_true": pd.concat((Y_test_pca.iloc[:, 0],) * 2, axis="columns"),
         "Y_pred": pd.concat((Y_pred_pcr_pca.iloc[:, 0], Y_pred_plsr_pca.iloc[:, 0]), axis="columns"),
         "titles": algos,
         "R2": np.array((R2_Y_pcr_pca[0], R2_Y_plsr_pca[0])),
     }
 
+    R2_Y_pca = pd.DataFrame(
+        {"PCA": R2_Y_pcr_pca, "PLS": R2_Y_plsr_pca}
+    )
+
     t = "pca"
-    path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
-    prefix = "regression/"
+    path = f"r2s-algo_{_ALGO}-data_{_DATA}-n_{n}-t_{t}-seed_{seed}"
+    prefix = "y_pred/"
+
+    save_to_csv(R2_Y_pca, path, save=_SAVE, prefix=prefix)
+
+    path = path.replace("r2s", "pcr_vs_plsr")
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
         p_labels = regression_labels[t]["predicted"][lang]
 
-        pcr_vs_plsr_regression_pca["xlabels"] = a_labels
-        pcr_vs_plsr_regression_pca["ylabels"] = p_labels
+        pcr_vs_plsr_y_pred_pca["xlabels"] = a_labels
+        pcr_vs_plsr_y_pred_pca["ylabels"] = p_labels
 
         # pause=False: pausing is not practical in a for-loop.
         save_or_show(lang_path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
-                     **pcr_vs_plsr_regression_pca)
+                     **pcr_vs_plsr_y_pred_pca)
 
-    pcr_vs_plsr_regression_pls = {
-        "Y_true": pd.concat((Y_test_pls.iloc[:, 0], Y_test_pls.iloc[:, 0]), axis="columns"),
+    pcr_vs_plsr_y_pred_pls = {
+        "Y_true": pd.concat((Y_test_pls.iloc[:, 0],) * 2, axis="columns"),
         "Y_pred": pd.concat((Y_pred_pcr_pls.iloc[:, 0], Y_pred_plsr_pls.iloc[:, 0]), axis="columns"),
         "titles": algos,
         "R2": np.array((R2_Y_pcr_pls[0], R2_Y_plsr_pls[0])),
     }
 
+    R2_Y_pls = pd.DataFrame(
+        {"PCA": R2_Y_pcr_pls, "PLS": R2_Y_plsr_pls}
+    )
+
     t = "pls"
-    path = f"pcr_vs_plsr-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
+    path = f"r2s-algo_{_ALGO}-data_{_DATA}-n_{n}-t_{t}-seed_{seed}"
+
+    save_to_csv(R2_Y_pls, path, save=_SAVE, prefix=prefix)
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
         p_labels = regression_labels[t]["predicted"][lang]
 
-        pcr_vs_plsr_regression_pls["xlabels"] = a_labels
-        pcr_vs_plsr_regression_pls["ylabels"] = p_labels
+        pcr_vs_plsr_y_pred_pls["xlabels"] = a_labels
+        pcr_vs_plsr_y_pred_pls["ylabels"] = p_labels
 
         save_or_show(lang_path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
-                     **pcr_vs_plsr_regression_pls)
+                     **pcr_vs_plsr_y_pred_pls)
+
+    R2_X_pcr = r2_score(X_test, X_pred_pcr, multioutput="raw_values")
+    R2_X_plsr = r2_score(X_test, X_pred_plsr, multioutput="raw_values")
 
     R2_X_pcr_pca = r2_score(X_test_pca, X_pred_pcr_pca,
                             multioutput="raw_values")
@@ -1482,45 +1523,62 @@ for semente, split in splits.items():
     R2_X_plsr_pls = r2_score(X_test_pls, X_pred_plsr_pls,
                              multioutput="raw_values")
 
-    pcr_vs_plsr_regression_reversed_pca = {
-        "Y_true": pd.concat((X_test_pca.iloc[:, 0], X_test_pca.iloc[:, 0]), axis="columns"),
-        "Y_pred": pd.concat((X_pred_pcr_pca.iloc[:, 0], X_pred_plsr_pca.iloc[:, 0]), axis="columns"),
+    pcr_vs_plsr_x_pred_pca = {
+        "Y_true": pd.concat((X_test_pca.iloc[:, 0],) * 2, axis="columns"),
+        "Y_pred": pd.concat([X_pred_pcr_pca.iloc[:, 0], X_pred_plsr_pca.iloc[:, 0]], axis="columns"),
         "titles": algos,
         "R2": np.array((R2_X_pcr_pca[0], R2_X_plsr_pca[0])),
     }
 
+    R2_X_pca = pd.DataFrame(
+        {"PCA": R2_X_pcr_pca, "PLS": R2_X_plsr_pca}
+    )
+
     t = "pca"
-    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
+    path = f"r2s-algo_{_ALGO}-data_{_DATA}-n_{n}-t_{t}-seed_{seed}"
+    prefix = "x_pred/"
+
+    save_to_csv(R2_X_pca, path, save=_SAVE, prefix=prefix)
+
+    path = path.replace("r2s", "pcr_vs_plsr")
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
         p_labels = regression_labels[t]["predicted"][lang]
 
-        pcr_vs_plsr_regression_reversed_pca["xlabels"] = a_labels
-        pcr_vs_plsr_regression_reversed_pca["ylabels"] = p_labels
+        pcr_vs_plsr_x_pred_pca["xlabels"] = a_labels
+        pcr_vs_plsr_x_pred_pca["ylabels"] = p_labels
 
         save_or_show(lang_path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
-                     **pcr_vs_plsr_regression_reversed_pca)
+                     **pcr_vs_plsr_x_pred_pca)
 
-    pcr_vs_plsr_regression_reversed_pls = {
-        "Y_true": pd.concat((X_test_pls.iloc[:, 0], X_test_pls.iloc[:, 0]), axis="columns"),
+    pcr_vs_plsr_x_pred_pls = {
+        "Y_true": pd.concat((X_test_pls.iloc[:, 0],) * 2, axis="columns"),
         "Y_pred": pd.concat((X_pred_pcr_pls.iloc[:, 0], X_pred_plsr_pls.iloc[:, 0]), axis="columns"),
         "titles": algos,
         "R2": np.array((R2_X_pcr_pls[0], R2_X_plsr_pls[0])),
     }
 
+    R2_X_pls = pd.DataFrame(
+        {"PCA": R2_X_pcr_pls, "PLS": R2_X_plsr_pls}
+    )
+
     t = "pls"
-    path = f"pcr_vs_plsr-reversed-algo_{_ALGO}-data_{_DATA}-seed_{seed}-t_{t}"
+    path = f"r2s-algo_{_ALGO}-data_{_DATA}-n_{n}-t_{t}-seed_{seed}"
+
+    save_to_csv(R2_X_pls, path, save=_SAVE, prefix=prefix)
+
+    path = path.replace("r2s", "pcr_vs_plsr")
 
     for lang, a_labels in regression_labels[t]["actual"].items():
         lang_path = path + "-lang_" + lang
         p_labels = regression_labels[t]["predicted"][lang]
 
-        pcr_vs_plsr_regression_reversed_pls["xlabels"] = a_labels
-        pcr_vs_plsr_regression_reversed_pls["ylabels"] = p_labels
+        pcr_vs_plsr_x_pred_pls["xlabels"] = a_labels
+        pcr_vs_plsr_x_pred_pls["ylabels"] = p_labels
 
-        save_or_show(lang_path, prefix, plot_regression, _SAVE, _SHOW, pause=False,
-                     **pcr_vs_plsr_regression_reversed_pls)
+        save_or_show(lang_path, prefix, plot_regression, _SAVE, _SHOW, _PAUSE,
+                     **pcr_vs_plsr_x_pred_pls)
 
 # DOING: train only multi-output regressors.
 model_labels = ["PCR", "PLSR", "DTR"]  # , "SVR"

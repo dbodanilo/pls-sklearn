@@ -249,7 +249,8 @@ for n in range(n_targets + 1, n_features + 1):
 
 
 # === PCR ===
-
+# --- Predictions ---
+# save=False because they are not in the dissertation.
 for semente, split in splits.items():
     seed = str(None) if semente == "Nenhuma" else semente
 
@@ -261,7 +262,6 @@ for semente, split in splits.items():
         columns=Y_train.columns
     )
 
-
     # TODO: file fixes an algorithm (PCR) and a transformation (None),
     # store seed as a column.
     R2_Y_pcr = pd.Series(
@@ -272,7 +272,7 @@ for semente, split in splits.items():
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
     prefix = "y_pred/"
 
-    save_to_csv(R2_Y_pcr, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_pcr, path, save=False, prefix=prefix)
 
     pcr_predictions = {
         "xlabels": [f"X's PCA {i}, Semente: {semente}" for i in range(1, n_max + 1)],
@@ -287,7 +287,7 @@ for semente, split in splits.items():
     }
 
     # pause=False: no pause in for loop.
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **pcr_predictions)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
@@ -297,7 +297,7 @@ for semente, split in splits.items():
 
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_to_csv(R2_Y_pcr_pca, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_pcr_pca, path, save=False, prefix=prefix)
 
     pcr_predictions_transformed = {
         "X": X_test_pca,
@@ -309,7 +309,7 @@ for semente, split in splits.items():
         "ncols": 3,
     }
 
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **pcr_predictions_transformed)
 
     Y_test_pls = pd.DataFrame(try_transform(r_plsr[semente], Y_test))
@@ -318,7 +318,7 @@ for semente, split in splits.items():
         r2_score(Y_test_pls, Y_pred_pcr_pls, multioutput="raw_values"))
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
 
-    save_to_csv(R2_Y_pcr_pls, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_pcr_pls, path, save=False, prefix=prefix)
 
     X_pred_pcr = pd.DataFrame(
         pr_pcr[semente].predict(Y_test),
@@ -332,7 +332,7 @@ for semente, split in splits.items():
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
     prefix = "x_pred/"
 
-    save_to_csv(R2_X_pcr, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_pcr, path, save=False, prefix=prefix)
 
     X_pred_pcr_pca = pd.DataFrame(r_pcr[semente].predict(Y_test))
     R2_X_pcr_pca = pd.Series(
@@ -341,7 +341,7 @@ for semente, split in splits.items():
 
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_to_csv(R2_X_pcr_pca, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_pcr_pca, path, save=False, prefix=prefix)
 
     pcr_predictions_reversed_transformed = {
         "X": Y_test_pca,
@@ -356,7 +356,7 @@ for semente, split in splits.items():
 
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=_PAUSE,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **pcr_predictions_reversed_transformed)
 
 
@@ -369,7 +369,7 @@ for semente, split in splits.items():
     )
     path = f"pcr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
 
-    save_to_csv(R2_Y_pcr_pls, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_pcr_pls, path, save=False, prefix=prefix)
 
 
 # === PLSR ===
@@ -395,7 +395,7 @@ for semente, split in splits.items():
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
     prefix = "y_pred/"
 
-    save_to_csv(R2_Y_plsr, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_plsr, path, save=False, prefix=prefix)
 
     plsr_predictions = {
         "X": X_test_pls,
@@ -409,7 +409,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **plsr_predictions)
 
     _, Y_pred_plsr_pls = (pd.DataFrame(test_pls)
@@ -421,7 +421,7 @@ for semente, split in splits.items():
 
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
 
-    save_to_csv(R2_Y_plsr_pls, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_plsr_pls, path, save=False, prefix=prefix)
 
     plsr_predictions_transformed = {
         "X": X_test_pls,
@@ -434,7 +434,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **plsr_predictions_transformed)
 
     Y_test_pca = pd.DataFrame(try_transform(r_pcr[semente], Y_test))
@@ -445,7 +445,7 @@ for semente, split in splits.items():
 
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_to_csv(R2_Y_plsr_pca, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_Y_plsr_pca, path, save=False, prefix=prefix)
 
     Y_test_pls, X_test_pls = (pd.DataFrame(test_pls)
                               for test_pls in r_plsr[semente].transform(Y_test, X_test))
@@ -461,7 +461,7 @@ for semente, split in splits.items():
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_None-seed_{seed}"
     prefix = "x_pred/"
 
-    save_to_csv(R2_X_plsr, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_plsr, path, save=False, prefix=prefix)
 
     _, X_pred_plsr_pls = (pd.DataFrame(test_pls)
                           for test_pls in r_plsr[semente].transform(Y_test, X_pred_plsr))
@@ -472,7 +472,7 @@ for semente, split in splits.items():
 
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pls-seed_{seed}"
 
-    save_to_csv(R2_X_plsr_pls, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_plsr_pls, path, save=False, prefix=prefix)
 
     plsr_predictions_reversed_transformed = {
         "X": Y_test_pls,
@@ -485,7 +485,7 @@ for semente, split in splits.items():
         "nrows": 2,
     }
 
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, _PAUSE,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **plsr_predictions_reversed_transformed)
 
     X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
@@ -496,7 +496,7 @@ for semente, split in splits.items():
 
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_to_csv(R2_X_plsr_pca, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_plsr_pca, path, save=False, prefix=prefix)
 
     X_test_pca = pd.DataFrame(try_transform(pcr[semente], X_test))
     X_pred_plsr_pca = pd.DataFrame(try_transform(pcr[semente], X_pred_plsr))
@@ -506,7 +506,7 @@ for semente, split in splits.items():
 
     path = f"plsr-algo_{_ALGO}-data_{_DATA}-t_pca-seed_{seed}"
 
-    save_to_csv(R2_X_plsr_pca, path, save=_SAVE, prefix=prefix)
+    save_to_csv(R2_X_plsr_pca, path, save=False, prefix=prefix)
 
 
 # TODO: use itertools for /.*th/ ords.
@@ -531,202 +531,342 @@ X_all_pls = pd.DataFrame(
     columns=component_names["pls"][:n_targets]
 )
 # ds: descriptors
-X_all_ds_pls = pd.concat((X_all, X_all_pls), axis="columns")
+X_all_pls_ds = pd.concat((X_all_pls, X_all), axis="columns")
+X_all_pls_ts = pd.concat((X_all_pls, Y_all), axis="columns")
 
 Y_all_pls = pd.DataFrame(
     plsr["Todos"][semente].y_scores_,
     columns=component_names["pls"][:n_targets]
 )
 # ts: targets
-Y_all_ts_pls = pd.concat((Y_all, Y_all_pls), axis="columns")
+Y_all_pls_ts = pd.concat((Y_all_pls, Y_all), axis="columns")
+Y_all_pls_ds = pd.concat((Y_all_pls, X_all), axis="columns")
 
 # method="pearson"
-x_pls_correlations = X_all_ds_pls.corr().iloc[:n_features, n_features:]
-y_pls_correlations = Y_all_ts_pls.corr().iloc[:n_targets, n_targets:]
+x_pls_ds_correlations = X_all_pls_ds.corr().iloc[-n_features:, :-n_features]
+x_pls_ts_correlations = X_all_pls_ts.corr().iloc[-n_targets:, :-n_targets]
+
+y_pls_ts_correlations = Y_all_pls_ts.corr().iloc[-n_targets:, :-n_targets]
+y_pls_ds_correlations = Y_all_pls_ds.corr().iloc[-n_features:, :-n_features]
 
 for i, o in ordinais:
     # .reshape(-1, 1)
-    x_pls_corr_i = pd.DataFrame(x_pls_correlations.iloc[:, i])
-    y_pls_corr_i = pd.DataFrame(y_pls_correlations.iloc[:, i])
+    x_pls_ds_corr_i = pd.DataFrame(x_pls_ds_correlations.iloc[:, i])
+    x_pls_ts_corr_i = pd.DataFrame(x_pls_ts_correlations.iloc[:, i])
 
-    pls_x_component_corr_i = {
-        "X": x_pls_corr_i,
+    y_pls_ts_corr_i = pd.DataFrame(y_pls_ts_correlations.iloc[:, i])
+    y_pls_ds_corr_i = pd.DataFrame(y_pls_ds_correlations.iloc[:, i])
+
+    pls_x_component_ds_corr_i = {
+        "X": x_pls_ds_corr_i,
         "titles": [None],
         "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pls_ord-ds_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
-
-    save_to_csv(x_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
     for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
-        pls_x_component_corr_i["ylabel"] = label
+        pls_x_component_ds_corr_i["ylabel"] = label
 
         # NOTE: pausing in a loop isn't practical.
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
-                     **pls_x_component_corr_i)
+                     **pls_x_component_ds_corr_i)
 
-    pls_y_component_corr_i = {
+    pls_x_component_ts_corr_i = {
         "titles": [None],
         "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "y_component/"
-
-    save_to_csv(y_pls_corr_i, path, save=(seed == str(None)), prefix=prefix)
+    path = f"pls_ord-ts_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     path += f"-sort_{_SORT_Y}"
 
     for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
 
-        pls_y_component_corr_i["X"] = y_pls_corr_i.rename(index=mapper)
-        pls_y_component_corr_i["ylabel"] = label
+        pls_x_component_ts_corr_i["X"] = x_pls_ts_corr_i.rename(index=mapper)
+        pls_x_component_ts_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_x_component_ts_corr_i)
+
+    pls_y_component_ts_corr_i = {
+        "titles": [None],
+        "xlabels": [None for _ in targets],
+        "sort": _SORT_Y,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pls_ord-ts_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    prefix = "y_component/"
+
+    path += f"-sort_{_SORT_Y}"
+
+    for lang, label, mapper in corr_labels:
+        lang_path = path + "-lang_" + lang
+
+        pls_y_component_ts_corr_i["X"] = y_pls_ts_corr_i.rename(index=mapper)
+        pls_y_component_ts_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_y_component_ts_corr_i)
+
+    pls_y_component_ds_corr_i = {
+        "X": y_pls_ds_corr_i,
+        "titles": [None],
+        "xlabels": [None for _ in descriptors],
+        "sort": _SORT_X,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pls_ord-ds_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+
+    path += f"-sort_{_SORT_X}"
+
+    for lang, label, _ in corr_labels:
+        lang_path = path + "-lang_" + lang
+        pls_y_component_ds_corr_i["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                     **pls_y_component_corr_i)
+                     **pls_y_component_ds_corr_i)
 
 
-pls_all_x_components = {
-    "X": x_pls_correlations,
+pls_all_x_components_ds = {
+    "X": x_pls_ds_correlations,
     "titles": [None for _ in ordinais],
     "xlabels": [None for _ in descriptors],
-    "ncols": x_pls_correlations.shape[1],
+    "ncols": x_pls_ds_correlations.shape[1],
     "sort": _SORT_X,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls_all-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+path = f"pls_all-ds_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 prefix = "x_component/"
 
-save_to_csv(x_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
+save_to_csv(x_pls_ds_correlations, path, save=_SAVE, prefix=prefix)
 
 path += f"-sort_{_SORT_X}"
 
 for lang, label, _ in corr_labels:
     lang_path = path + "-lang_" + lang
-    pls_all_x_components["ylabel"] = label
+    pls_all_x_components_ds["ylabel"] = label
 
     save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pls_all_x_components)
+                 **pls_all_x_components_ds)
 
-pls_y_components = {
+pls_x_components_ts = {
     "titles": [None for _ in ordinais],
     "xlabels": [None for _ in targets],
-    "ncols": y_pls_correlations.shape[1],
+    "ncols": x_pls_ts_correlations.shape[1],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pls-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-prefix = "y_component/"
+path = f"pls-ts_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
-save_to_csv(y_pls_correlations, path, save=(seed == str(None)), prefix=prefix)
+save_to_csv(x_pls_ts_correlations, path, save=_SAVE, prefix=prefix)
 
-path += f"-sort_{_SORT_X}"
+path += f"-sort_{_SORT_Y}"
 
 for lang, label, mapper in corr_labels:
     lang_path = path + "-lang_" + lang
 
-    pls_y_components["X"] = y_pls_correlations.rename(index=mapper)
-    pls_y_components["ylabel"] = label
+    pls_x_components_ts["X"] = x_pls_ts_correlations.rename(index=mapper)
+    pls_x_components_ts["ylabel"] = label
 
     save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pls_y_components)
+                 **pls_x_components_ts)
+
+pls_y_components_ts = {
+    "titles": [None for _ in ordinais],
+    "xlabels": [None for _ in targets],
+    "ncols": y_pls_ts_correlations.shape[1],
+    "sort": _SORT_Y,
+    "meanlabel": _MEANLABEL,
+}
+
+path = f"pls-ts_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+prefix = "y_component/"
+
+save_to_csv(y_pls_ts_correlations, path, save=_SAVE, prefix=prefix)
+
+path += f"-sort_{_SORT_Y}"
+
+for lang, label, mapper in corr_labels:
+    lang_path = path + "-lang_" + lang
+
+    pls_y_components_ts["X"] = y_pls_ts_correlations.rename(index=mapper)
+    pls_y_components_ts["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pls_y_components_ts)
+
+pls_all_y_components_ds = {
+    "X": y_pls_ds_correlations,
+    "titles": [None for _ in ordinais],
+    "xlabels": [None for _ in descriptors],
+    "ncols": y_pls_ds_correlations.shape[1],
+    "sort": _SORT_X,
+    "meanlabel": _MEANLABEL,
+}
+
+path = f"pls_all-ds_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+
+save_to_csv(y_pls_ds_correlations, path, save=_SAVE, prefix=prefix)
+
+path += f"-sort_{_SORT_X}"
+
+for lang, label, _ in corr_labels:
+    lang_path = path + "-lang_" + lang
+    pls_all_y_components_ds["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pls_all_y_components_ds)
 
 
-x_seeds_pls_corr = pd.DataFrame(index=X_all.columns)
-y_seeds_pls_corr = pd.DataFrame(index=Y_all.columns)
+x_seeds_pls_ds_corr = pd.DataFrame(index=X_all.columns)
+x_seeds_pls_ts_corr = pd.DataFrame(index=Y_all.columns)
+
+y_seeds_pls_ts_corr = pd.DataFrame(index=Y_all.columns)
+y_seeds_pls_ds_corr = pd.DataFrame(index=X_all.columns)
 
 for semente, split in splits.items():
     seed = str(None) if semente == "Nenhuma" else semente
 
     X_train, X_test, Y_train, Y_test = split
 
-    x_scores = plsr["Todos"][semente].x_scores_
-    y_scores = plsr["Todos"][semente].y_scores_
-
-    # .reshape(-1, 1)
-    x_first_component = pd.DataFrame(
-        x_scores[:, 0],
-        index=X_train.index,
-        columns=[semente]
+    x_scores = pd.DataFrame(
+        plsr["Todos"][semente].x_scores_,
+        columns=component_names["pls"][:n_max]
     )
-    y_first_component = pd.DataFrame(
-        y_scores[:, 0],
-        index=Y_train.index,
-        columns=[semente]
+    y_scores = pd.DataFrame(
+        plsr["Todos"][semente].y_scores_,
+        columns=component_names["pls"][:n_max]
     )
 
-    x_ds_first_component = pd.concat(
-        (X_train, x_first_component), axis="columns")
-    y_ts_first_component = pd.concat(
-        (Y_train, y_first_component), axis="columns")
+    x_seed_ds = pd.concat(
+        (x_scores, X_train), axis="columns")
+    x_seed_ts = pd.concat(
+        (x_scores, Y_train), axis="columns")
 
-    x_ds_first_pls_corr = x_ds_first_component.corr()\
-        .iloc[:n_features, n_features:]
-    y_ts_first_pls_corr = y_ts_first_component.corr()\
-        .iloc[:n_targets, n_targets:]
+    y_seed_ts = pd.concat(
+        (y_scores, Y_train), axis="columns")
+    y_seed_ds = pd.concat(
+        (y_scores, X_train), axis="columns")
 
-    x_seeds_pls_corr[semente] = x_ds_first_pls_corr
-    y_seeds_pls_corr[semente] = y_ts_first_pls_corr
+    x_seed_pls_ds_corr = x_seed_ds.corr()\
+        .iloc[-n_features:, :-n_features]
+    x_seed_pls_ts_corr = x_seed_ts.corr()\
+        .iloc[-n_targets:, :-n_targets]
 
-    pls_seeds_first_x_components = {
-        "X": x_ds_first_pls_corr,
+    y_seed_pls_ts_corr = y_seed_ts.corr()\
+        .iloc[-n_targets:, :-n_targets]
+    y_seed_pls_ds_corr = y_seed_ds.corr()\
+        .iloc[-n_features:, :-n_features]
+
+    x_seeds_pls_ds_corr[semente] = x_seed_pls_ds_corr.iloc[:, 0]
+    x_seeds_pls_ts_corr[semente] = x_seed_pls_ts_corr.iloc[:, 0]
+
+    y_seeds_pls_ts_corr[semente] = y_seed_pls_ts_corr.iloc[:, 0]
+    y_seeds_pls_ds_corr[semente] = y_seed_pls_ds_corr.iloc[:, 0]
+
+    pls_seeds_first_x_components_ds = {
+        "X": x_seed_pls_ds_corr,
         "titles": [None],
         "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pls_seeds-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
 
-    save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
-                prefix=prefix)
+    save_to_csv(x_seed_pls_ds_corr, path, save=_SAVE, prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
     for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
-        pls_seeds_first_x_components["ylabel"] = label
+        pls_seeds_first_x_components_ds["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
-                     **pls_seeds_first_x_components)
+                     **pls_seeds_first_x_components_ds)
 
-    pls_seeds_first_y_components = {
+    pls_seeds_first_x_components_ts = {
         "titles": [None],
         "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pls-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "y_component/"
+    path = f"pls_seeds-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
-    save_to_csv(y_ts_first_pls_corr, path, save=(seed == str(None)),
-                prefix=prefix)
+    save_to_csv(x_seed_pls_ts_corr, path, save=_SAVE, prefix=prefix)
 
     path += f"-sort_{_SORT_Y}"
 
     for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
 
-        pls_seeds_first_y_components["X"] = y_ts_first_pls_corr.rename(
+        pls_seeds_first_x_components_ts["X"] = x_seed_pls_ts_corr.rename(
             index=mapper)
-        pls_seeds_first_y_components["ylabel"] = label
+        pls_seeds_first_x_components_ts["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_seeds_first_x_components_ts)
+
+    pls_seeds_first_y_components_ts = {
+        "titles": [None],
+        "xlabels": [None for _ in targets],
+        "sort": _SORT_Y,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pls_seeds-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    prefix = "y_component/"
+
+    save_to_csv(y_seed_pls_ts_corr, path, save=_SAVE, prefix=prefix)
+
+    path += f"-sort_{_SORT_Y}"
+
+    for lang, label, mapper in corr_labels:
+        lang_path = path + "-lang_" + lang
+
+        pls_seeds_first_y_components_ts["X"] = y_seed_pls_ts_corr.rename(
+            index=mapper)
+        pls_seeds_first_y_components_ts["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pls_seeds_first_y_components_ts)
+
+    pls_seeds_y_components_ds = {
+        "X": y_seed_pls_ds_corr,
+        "titles": [None],
+        "xlabels": [None for _ in descriptors],
+        "sort": _SORT_X,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pls_seeds-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+
+    save_to_csv(y_seed_pls_ds_corr, path, save=_SAVE, prefix=prefix)
+
+    path += f"-sort_{_SORT_X}"
+
+    for lang, label, _ in corr_labels:
+        lang_path = path + "-lang_" + lang
+        pls_seeds_y_components_ds["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                     **pls_seeds_first_y_components)
+                     **pls_seeds_y_components_ds)
 
 
 # seed=1241: best seed for `X = predict(Y)` and second-best
@@ -779,7 +919,8 @@ for t, objetivo in zip(all_ts, todos_objetivos):
                  **pls_target_first_x_component_args)
 
 
-plsr_first_components_corrs = {}
+plsr_first_components_ds_corrs = {}
+plsr_first_components_ts_corrs = {}
 
 for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
     for t, objetivo in zip(all_ts, todos_objetivos):
@@ -796,53 +937,79 @@ for semente, (X_train, X_test, Y_train, Y_test) in splits.items():
 
         t = "all" if t is None else t
         seed = str(None) if semente == "Nenhuma" else semente
-        path = f"pls-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}-target_{detexify(t)}"
+        path = f"pls_seeds_ts-comps-algo_{_ALGO}-data_{_DATA}-seed_{str(seed)}-target_{detexify(t)}"
         prefix = "x_component/"
         save_to_csv(pls_seed_target_x_components, path, _SAVE,
                     prefix=prefix)
 
-        x_scores = plsr_seed_target.x_scores_
-        x_first_component = pd.DataFrame(
-            x_scores[:, 0],
-            index=X_train.index,
-            columns=[semente]
+        x_scores = pd.DataFrame(
+            plsr_seed_target.x_scores_,
+            columns=component_names["pls"][:n_max]
         )
 
-        x_ds_first_component = pd.concat(
-            (X_train, x_first_component), axis="columns"
+        x_seed_t_component_ds = pd.concat(
+            (x_scores, X_train), axis="columns"
+        )
+        x_seed_t_component_ts = pd.concat(
+            (x_scores, Y_train), axis="columns"
         )
 
-        x_ds_first_pls_corr = x_ds_first_component.corr()\
-            .iloc[:n_features, n_features:]
+        x_seed_t_pls_ds_corr = x_seed_t_component_ds.corr()\
+            .iloc[-n_features:, :-n_features]
+        x_seed_t_pls_ts_corr = x_seed_t_component_ts.corr()\
+            .iloc[-n_targets:, :-n_targets]
 
         # Only set it in first pass.
         if semente == "Nenhuma":
-            plsr_first_components_corrs[objetivo] = x_ds_first_pls_corr
+            plsr_first_components_ds_corrs[objetivo] = x_seed_t_pls_ds_corr.iloc[:, 0]
+            plsr_first_components_ts_corrs[objetivo] = x_seed_t_pls_ts_corr.iloc[:, 0]
         else:
-            plsr_first_components_corrs[objetivo][semente] = x_ds_first_pls_corr
+            plsr_first_components_ds_corrs[objetivo][semente] = x_seed_t_pls_ds_corr.iloc[:, 0]
+            plsr_first_components_ts_corrs[objetivo][semente] = x_seed_t_pls_ts_corr.iloc[:, 0]
 
-        pls_target_seed_first_x_component_corr = {
-            "X": x_ds_first_pls_corr,
+        pls_target_seed_first_x_component_ds_corr = {
+            "X": x_seed_t_pls_ds_corr,
             "titles": [None],
             "xlabels": [None for _ in descriptors],
             "sort": _SORT_X,
             "meanlabel": _MEANLABEL,
         }
 
-        path = f"pls-corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}-target_{detexify(t)}"
-        prefix = "x_component/"
+        path = f"pls_seeds_ts-ds_corrs-algo_{_ALGO}-data_{_DATA}-seed_{seed}-target_{detexify(t)}"
 
-        save_to_csv(x_ds_first_pls_corr, path, save=(seed == str(None)),
-                    prefix=prefix)
+        save_to_csv(x_seed_t_pls_ds_corr, path, save=_SAVE, prefix=prefix)
 
         path += f"-sort_{_SORT_X}"
 
         for lang, label, _ in corr_labels:
             lang_path = path + "-lang_" + lang
-            pls_target_seed_first_x_component_corr["ylabel"] = label
+            pls_target_seed_first_x_component_ds_corr["ylabel"] = label
 
             save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
-                         **pls_target_seed_first_x_component_corr)
+                         **pls_target_seed_first_x_component_ds_corr)
+
+        pls_target_seed_first_x_component_ts_corr = {
+            "titles": [None],
+            "xlabels": [None for _ in targets],
+            "sort": _SORT_Y,
+            "meanlabel": _MEANLABEL,
+        }
+
+        path = f"pls_seeds_ts-ts_corrs-algo_{_ALGO}-data_{_DATA}-seed_{seed}-target_{detexify(t)}"
+
+        save_to_csv(x_seed_t_pls_ts_corr, path, save=_SAVE, prefix=prefix)
+
+        path += f"-sort_{_SORT_Y}"
+
+        for lang, label, mapper in corr_labels:
+            lang_path = path + "-lang_" + lang
+
+            pls_target_seed_first_x_component_ts_corr["X"] = x_seed_t_pls_ts_corr.rename(
+                index=mapper)
+            pls_target_seed_first_x_component_ts_corr["ylabel"] = label
+
+            save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                        **pls_target_seed_first_x_component_ts_corr)
 
 
 # === PCR vs. PLSR ===
@@ -876,7 +1043,7 @@ for semente, split in splits.items():
     prefix = "y_pred/"
 
     # No pause in for loop.
-    save_or_show(path, prefix, plot_predictions, _SAVE, _SHOW, pause=False,
+    save_or_show(path, prefix, plot_predictions, save=False, show=False, pause=False,
                  **pcr_vs_plsr_predictions)
 
 
@@ -888,98 +1055,214 @@ X_all_pca = X_pca_scores.rename(columns=dict(
     enumerate(component_names["pca"][:n_features])))
 
 # ds: descriptors
-X_all_ds_pca = pd.concat((X_all, X_all_pca), axis="columns")
+X_all_pca_ds = pd.concat((X_all_pca, X_all), axis="columns")
+
+# ts: targets
+X_all_pca_ts = pd.concat((X_all_pca, Y_all), axis="columns")
 
 Y_all_pca = Y_pca_scores.rename(columns=dict(
     enumerate(component_names["pca"][:n_targets])))
 
-# ts: targets
-Y_all_ts_pca = pd.concat((Y_all, Y_all_pca), axis="columns")
+Y_all_pca_ts = pd.concat((Y_all_pca, Y_all), axis="columns")
+Y_all_pca_ds = pd.concat((Y_all_pca, X_all), axis="columns")
 
 # NOTE: use correlation, not normalization.
 # method="pearson"
-x_pca_correlations = X_all_ds_pca.corr().iloc[:n_features, n_features:]
-y_pca_correlations = Y_all_ts_pca.corr().iloc[:n_targets, n_targets:]
+x_pca_ds_correlations = X_all_pca_ds.corr().iloc[-n_features:, :-n_features]
+x_pca_ts_correlations = X_all_pca_ts.corr().iloc[-n_targets:, :-n_targets]
+
+y_pca_ts_correlations = Y_all_pca_ts.corr().iloc[-n_targets:, :-n_targets]
+y_pca_ds_correlations = Y_all_pca_ds.corr().iloc[-n_features:, :-n_features]
 
 for i, o in ordinais:
     # .reshape(-1, 1)
-    x_pca_corr_i = pd.DataFrame(x_pca_correlations.iloc[:, i])
-    y_pca_corr_i = pd.DataFrame(y_pca_correlations.iloc[:, i])
+    x_pca_ds_corr_i = pd.DataFrame(x_pca_ds_correlations.iloc[:, i])
+    x_pca_ts_corr_i = pd.DataFrame(x_pca_ts_correlations.iloc[:, i])
+
+    y_pca_ts_corr_i = pd.DataFrame(y_pca_ts_correlations.iloc[:, i])
+    y_pca_ds_corr_i = pd.DataFrame(y_pca_ds_correlations.iloc[:, i])
 
     # NOTE: different title for X and Y.
-    pca_x_component_corr_i = {
-        "X": x_pca_corr_i,
+    pca_x_component_ds_corr_i = {
+        "X": x_pca_ds_corr_i,
         "titles": [None],
         "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pca_ords-ds_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
-
-    save_to_csv(x_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
     for lang, label, _ in corr_labels:
         lang_path = path + "-lang_" + lang
-        pca_x_component_corr_i["ylabel"] = label
+        pca_x_component_ds_corr_i["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
-                     **pca_x_component_corr_i)
+                     **pca_x_component_ds_corr_i)
 
-    pca_y_component_corr_i = {
+    pca_x_component_ts_corr_i = {
         "titles": [None],
         "xlabels": [None for _ in targets],
         "sort": _SORT_Y,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-    prefix = "y_component/"
-
-    save_to_csv(y_pca_corr_i, path, save=(seed == str(None)), prefix=prefix)
+    path = f"pca_ords-ts_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
     path += f"-sort_{_SORT_Y}"
 
     for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
 
-        pca_y_component_corr_i["X"] = y_pca_corr_i.rename(index=mapper)
-        pca_y_component_corr_i["ylabel"] = label
+        pca_x_component_ts_corr_i["X"] = x_pca_ts_corr_i.rename(index=mapper)
+        pca_x_component_ts_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pca_x_component_ts_corr_i)
+
+    pca_y_component_ts_corr_i = {
+        "titles": [None],
+        "xlabels": [None for _ in targets],
+        "sort": _SORT_Y,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pca_ords-ts_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    prefix = "y_component/"
+
+    path += f"-sort_{_SORT_Y}"
+
+    for lang, label, mapper in corr_labels:
+        lang_path = path + "-lang_" + lang
+
+        pca_y_component_ts_corr_i["X"] = y_pca_ts_corr_i.rename(index=mapper)
+        pca_y_component_ts_corr_i["ylabel"] = label
+
+        save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, pause=False,
+                     **pca_y_component_ts_corr_i)
+
+    pca_y_component_ds_corr_i = {
+        "X": y_pca_ds_corr_i,
+        "titles": [None],
+        "xlabels": [None for _ in descriptors],
+        "sort": _SORT_X,
+        "meanlabel": _MEANLABEL,
+    }
+
+    path = f"pca_ords-ds_corr_{i}-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+
+    path += f"-sort_{_SORT_X}"
+
+    for lang, label, _ in corr_labels:
+        lang_path = path + "-lang_" + lang
+        pca_y_component_ds_corr_i["ylabel"] = label
 
         save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                     **pca_y_component_corr_i)
+                     **pca_y_component_ds_corr_i)
 
+pca_x_components_ds_corr = {
+    "X": x_pca_ds_correlations,
+    "titles": [None for _ in ordinais],
+    "xlabels": [None for _ in descriptors],
+    "ncols": x_pca_ds_correlations.shape[0],
+    "sort": _SORT_X,
+    "meanlabel": _MEANLABEL,
+}
 
-pca_y_components_corr = {
+path = f"pca-ds_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+prefix = "x_component/"
+
+save_to_csv(x_pca_ds_correlations, path, save=_SAVE, prefix=prefix)
+
+path += f"-sort_{_SORT_X}"
+
+for lang, label, _ in corr_labels:
+    lang_path = path + "-lang_" + lang
+
+    pca_x_components_ds_corr["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pca_x_components_ds_corr)
+
+pca_x_components_ts_corr = {
     "titles": [None for _ in ordinais],
     "xlabels": [None for _ in targets],
-    "ncols": y_pca_correlations.shape[0],
+    "ncols": x_pca_ts_correlations.shape[0],
     "sort": _SORT_Y,
     "meanlabel": _MEANLABEL,
 }
 
-path = f"pca-corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
-prefix = "y_component/"
+path = f"pca-ts_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
 
-save_to_csv(y_pca_correlations, path, save=(seed == str(None)), prefix=prefix)
+save_to_csv(x_pca_ts_correlations, path, save=_SAVE, prefix=prefix)
 
 path += f"-sort_{_SORT_Y}"
 
 for lang, label, mapper in corr_labels:
     lang_path = path + "-lang_" + lang
 
-    pca_y_components_corr["X"] = y_pca_correlations.rename(index=mapper)
-    pca_y_components_corr["ylabel"] = label
+    pca_x_components_ts_corr["X"] = x_pca_ts_correlations.rename(index=mapper)
+    pca_x_components_ts_corr["ylabel"] = label
 
     save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
-                 **pca_y_components_corr)
+                 **pca_x_components_ts_corr)
+
+pca_y_components_ts_corr = {
+    "titles": [None for _ in ordinais],
+    "xlabels": [None for _ in targets],
+    "ncols": y_pca_ts_correlations.shape[0],
+    "sort": _SORT_Y,
+    "meanlabel": _MEANLABEL,
+}
+
+path = f"pca-ts_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+prefix = "y_component/"
+
+save_to_csv(y_pca_ts_correlations, path, save=_SAVE, prefix=prefix)
+
+path += f"-sort_{_SORT_Y}"
+
+for lang, label, mapper in corr_labels:
+    lang_path = path + "-lang_" + lang
+
+    pca_y_components_ts_corr["X"] = y_pca_ts_correlations.rename(index=mapper)
+    pca_y_components_ts_corr["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pca_y_components_ts_corr)
+
+pca_y_components_ds_corr = {
+    "X": y_pca_ds_correlations,
+    "titles": [None for _ in ordinais],
+    "xlabels": [None for _ in descriptors],
+    "ncols": y_pca_ds_correlations.shape[0],
+    "sort": _SORT_X,
+    "meanlabel": _MEANLABEL,
+}
+
+path = f"pca-ds_corr-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+
+save_to_csv(y_pca_ds_correlations, path, save=_SAVE, prefix=prefix)
+
+path += f"-sort_{_SORT_X}"
+
+for lang, label, _ in corr_labels:
+    lang_path = path + "-lang_" + lang
+
+    pca_y_components_ds_corr["ylabel"] = label
+
+    save_or_show(lang_path, prefix, plot_components, _SAVE, _SHOW, _PAUSE,
+                 **pca_y_components_ds_corr)
 
 
-x_seeds_pca_corr = pd.DataFrame(index=X_all.columns)
-y_seeds_pca_corr = pd.DataFrame(index=Y_all.columns)
+x_seeds_pca_ds_corr = pd.DataFrame(index=X_all.columns)
+x_seeds_pca_ts_corr = pd.DataFrame(index=Y_all.columns)
+
+y_seeds_pca_ts_corr = pd.DataFrame(index=Y_all.columns)
+y_seeds_pca_ds_corr = pd.DataFrame(index=X_all.columns)
 
 for semente, split in splits.items():
     seed = str(None) if semente == "Nenhuma" else semente
@@ -989,39 +1272,48 @@ for semente, split in splits.items():
     x_scores = pd.DataFrame(try_transform(pcr[semente], X_train))
     y_scores = pd.DataFrame(try_transform(r_pcr[semente], Y_train))
 
-    x_first_component = pd.DataFrame(
-        {semente: x_scores.iloc[:, 0], },
+    x_seed_components_ds = pd.concat(
+        (x_scores, X_train), axis="columns"
     )
-    y_first_component = pd.DataFrame(
-        {semente: y_scores.iloc[:, 0], },
+    x_seed_components_ts = pd.concat(
+        (x_scores, Y_train), axis="columns"
     )
 
-    x_ds_first_component = pd.concat(
-        (X_train, x_first_component), axis="columns")
-    y_ts_first_component = pd.concat(
-        (Y_train, y_first_component), axis="columns")
+    y_seed_components_ts = pd.concat(
+        (y_scores, Y_train), axis="columns"
+    )
+    y_seed_components_ds = pd.concat(
+        (y_scores, X_train), axis="columns"
+    )
 
-    x_ds_first_pca_corr = x_ds_first_component.corr()\
-        .iloc[:n_features, n_features:]
-    y_ts_first_pca_corr = y_ts_first_component.corr()\
-        .iloc[:n_targets, n_targets:]
+    x_seed_pca_ds_corr = x_seed_components_ds.corr()\
+        .iloc[-n_features:, :-n_features]
+    x_seed_pca_ts_corr = x_seed_components_ts.corr()\
+        .iloc[-n_targets:, :-n_targets]
 
-    x_seeds_pca_corr[semente] = x_ds_first_pca_corr
-    y_seeds_pca_corr[semente] = y_ts_first_pca_corr
+    y_seed_pca_ts_corr = y_seed_components_ts.corr()\
+        .iloc[-n_targets:, :-n_targets]
+    y_seed_pca_ds_corr = y_seed_components_ds.corr()\
+        .iloc[-n_features:, :-n_features]
+
+    x_seeds_pca_ds_corr[semente] = x_seed_pca_ds_corr.iloc[:, 0]
+    x_seeds_pca_ts_corr[semente] = x_seed_pca_ts_corr.iloc[:, 0]
+
+    y_seeds_pca_ts_corr[semente] = y_seed_pca_ts_corr.iloc[:, 0]
+    y_seeds_pca_ds_corr[semente] = y_seed_pca_ds_corr.iloc[:, 0]
 
     pca_seeds_first_x_components = {
-        "X": x_ds_first_pca_corr,
+        "X": x_seed_pca_ds_corr,
         "titles": [None],
         "xlabels": [None for _ in descriptors],
         "sort": _SORT_X,
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pca_seeds-ds_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "x_component/"
 
-    save_to_csv(x_ds_first_pca_corr, path, save=(seed == str(None)),
-                prefix=prefix)
+    save_to_csv(x_seed_pca_ds_corr, path, save=_SAVE, prefix=prefix)
 
     path += f"-sort_{_SORT_X}"
 
@@ -1039,18 +1331,17 @@ for semente, split in splits.items():
         "meanlabel": _MEANLABEL,
     }
 
-    path = f"pca-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
+    path = f"pca_seeds-ts_corr_0-algo_{_ALGO}-data_{_DATA}-seed_{seed}"
     prefix = "y_component/"
 
-    save_to_csv(y_ts_first_pca_corr, path, save=(seed == str(None)),
-                prefix=prefix)
+    save_to_csv(y_seed_pca_ts_corr, path, save=_SAVE, prefix=prefix)
 
     path += f"-sort_{_SORT_Y}"
 
     for lang, label, mapper in corr_labels:
         lang_path = path + "-lang_" + lang
 
-        pca_seeds_first_y_components["X"] = y_ts_first_pca_corr.rename(
+        pca_seeds_first_y_components["X"] = y_seed_pca_ts_corr.rename(
             index=mapper)
         pca_seeds_first_y_components["ylabel"] = label
 

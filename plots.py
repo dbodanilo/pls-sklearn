@@ -99,6 +99,7 @@ def plot_correlations():
     plt.show()
 
 
+# TODO: different labels for Y_true and Y_pred.
 def plot_predictions(xlabels, ylabels, X, Y_true, Y_pred, R2, iter_x=True, iter_y=True, nrows=1, ncols=2):
     fig, axes = plt.subplots(nrows, ncols,
                              figsize=(5 * ncols, 4 * nrows), layout="constrained")

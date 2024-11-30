@@ -140,6 +140,8 @@ class Evol():
             pinv(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False)
         )
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+
+        # NOTE: column names must match for the multiplication to broadcast.
         self.coef_ = pd.DataFrame(self.coef_, columns=Y.columns, index=X.columns)
         self.coef_ = (self.coef_ * self._y_std).T
         self.intercept_ = self._y_mean

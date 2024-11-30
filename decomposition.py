@@ -11,3 +11,6 @@ def ScalerPCA(n_components=2):
 
 def ScalerPCR(n_components=2):
     return make_pipeline(StandardScaler(), PCA(n_components=n_components), LinearRegression())
+
+# NOTE: ScalerPLSR() would be redundant,
+# as PLSRegression already scales its input by default.

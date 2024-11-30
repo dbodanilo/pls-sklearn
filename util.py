@@ -50,19 +50,6 @@ def fit_predict(model, X_train, X_test, Y_train, Y_test, **mkargs):
     return m, rm, X_pred, Y_pred
 
 
-def fit_predict_try_transform(model, X_train, X_test, Y_train, Y_test, **mkargs):
-    m, rm, X_pred, Y_pred = fit_predict(
-        model, X_train, X_test, Y_train, Y_test, **mkargs)
-
-    X_test_t = pd.DataFrame(try_transform(m, X_test))
-    Y_test_t = pd.DataFrame(try_transform(rm, Y_test))
-
-    X_pred_t = pd.DataFrame(try_transform(m, X_pred))
-    Y_pred_t = pd.DataFrame(try_transform(rm, Y_pred))
-
-    return X_test_t, X_pred, X_pred_t, Y_test_t, Y_pred, Y_pred_t
-
-
 def latexify(strs):
     return np.fromiter((f"${s}$" if s.find("_") > 0 else s for s in strs), dtype="<U21")
 

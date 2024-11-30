@@ -14,7 +14,6 @@ from plots import plot_components, plot_predictions, plot_regression
 from util import (
     detexify,
     fit_predict,
-    fit_predict_try_transform,
     latexify,
     save_or_show,
     save_to_csv,
@@ -1288,6 +1287,8 @@ x_seeds_pca_ts_corr = pd.DataFrame(index=Y_all.columns)
 y_seeds_pca_ts_corr = pd.DataFrame(index=Y_all.columns)
 y_seeds_pca_ds_corr = pd.DataFrame(index=X_all.columns)
 
+# NOTE: iterate over all seeds and perform corr() over
+# X_train and Y_train
 for semente, split in splits.items():
     seed = str(None) if semente == "Nenhuma" else semente
 
@@ -1594,6 +1595,7 @@ r2_col = np.empty(N, dtype=float)
 seed_col = np.empty(N, dtype=object)
 t_col = np.empty(N, dtype=object)
 i = 0
+# NOTE: do not slice splits, as they're used to populate r2s
 for semente, split in splits.items():
     seed = str(None) if semente == "Nenhuma" else semente
 
